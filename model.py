@@ -56,8 +56,6 @@ resource_table = schema.Table('resource', metadata,
 Relationships - definitions
 """
 orm.mapper(cls.User, user_table, properties={
-    'character':orm.relation(cls.Character, backref='user'),
-	'tasks':orm.relation(cls.UserTask, backref='user'),
 
 })
 
@@ -73,33 +71,6 @@ orm.mapper(cls.Bid, bid_table, properties={
 
 })
 
-"""
-Relationships - definitions
-"""
-orm.mapper(cls.Monster, monster_table)
-
-# define the relation between town -> events:
-orm.mapper(cls.Town, town_table, properties={
-    'events':orm.relation(cls.Event, backref='town'),
-	'tasks':orm.relation(cls.LocationTask, backref='town'),
-
-    'monsters':orm.relation(cls.Monster, secondary=townmonster_table,backref="towns"),
-
-})
-
-orm.mapper(cls.Event, event_table)
-orm.mapper(cls.LocationTask, location_task_table)
-orm.mapper(cls.Log, log_table)
-
-"""
-Character -> User
-"""
-# define the relation between User -> character:
-orm.mapper(cls.User, user_table, properties={
-    'character':orm.relation(cls.Character, backref='user'),
-	'tasks':orm.relation(cls.UserTask, backref='user'),
-
-})
 
 
 """

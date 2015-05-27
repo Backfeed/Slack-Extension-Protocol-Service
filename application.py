@@ -26,8 +26,6 @@ cors = CORS(application)
 api = Api(application)
 
 from resources import UserResource
-from resources import UserTaskResource
-
 from resources import BidResource
 
 api.add_resource(UserResource, '/users/<string:id>', endpoint='users')
@@ -36,8 +34,6 @@ api.add_resource(UserResource, '/users', endpoint='user')
 api.add_resource(BidResource, '/bids/<string:id>', endpoint='bids')
 api.add_resource(BidResource, '/bids', endpoint='bid')
 
-api.add_resource(UserTaskResource, '/userTasks/<string:id>', endpoint='userTasks')
-api.add_resource(UserTaskResource, '/userTasks', endpoint='userTask')
 
 
 if __name__ == '__main__':
