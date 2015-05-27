@@ -57,10 +57,6 @@ class BaseObject(object):
 	
 class User(BaseObject):
 	pass
-
-class UserTask(BaseObject):
-	pass
-
 	
 class Resource(BaseObject):
 	pass
