@@ -33,24 +33,41 @@ bid_table = schema.Table('bid', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('bid_seq_id', optional=True), primary_key=True),
     schema.Column('owner', types.Integer,
-        schema.ForeignKey('user.id')),
-    schema.Column('resourceid', types.Integer,
-        schema.ForeignKey('resource.id')),
+        schema.ForeignKey('user.id')),   
+    schema.Column('contribution_id', types.Integer,
+        schema.ForeignKey('contribution.id')),
     schema.Column('tokens', types.Integer),
     schema.Column('reputation',  types.Integer),
 )
 
+
 """
-Resource - schema definition:
+Contribution - schema definition:
 """
-resource_table = schema.Table('resource', metadata,
+contribution_table = schema.Table('contribution', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('resource_seq_id', optional=True), primary_key=True),
+        schema.Sequence('contribution_seq_id', optional=True), primary_key=True),
     schema.Column('owner', types.Integer,
         schema.ForeignKey('user.id')),
-    schema.Column('content', types.Text()),
-    schema.Column('resource_id', types.Unicode(255)),
+    schema.Column('min_reputation_to_close',  types.Integer,nullable=True),
+    schema.Column('time_created', types.DateTime(), default=now),
+    schema.Column('file', types.Text()),
+    schema.Column('status', types.String,default='Open'),
 )
+
+"""
+Contribution Contributers List - schema definition:
+"""
+contribution_contributers_table = schema.Table('contribution_contributers', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('contribution_contributers_seq_id', optional=True), primary_key=True),
+    schema.Column('contribution_id', types.Integer,
+        schema.ForeignKey('contribution.id')),
+    schema.Column('contributer_id', types.Integer,
+        schema.ForeignKey('user.id')),
+    schema.Column('contributer_percentage', types.INTEGER),   
+)
+
 
 """
 Relationships - definitions
@@ -59,16 +76,19 @@ orm.mapper(cls.User, user_table, properties={
 
 })
 
-orm.mapper(cls.Resource, resource_table, properties={
-    'res_owner':orm.relation(cls.User, backref='resource'),
-	'bids':orm.relation(cls.Bid),
-
+orm.mapper(cls.Contribution, contribution_table, properties={
+    'contribution_owner':orm.relation(cls.User, backref='contribution'),
+    'bids':orm.relation(cls.Bid, backref='contribution'),  
+    'contributionContributers':orm.relation(cls.ContributionContributers, backref='contribution'),                                                  
 })
 
-orm.mapper(cls.Bid, bid_table, properties={
-    'bid_owner':orm.relation(cls.User, backref='bid'),
-	'resource':orm.relation(cls.Resource),
+orm.mapper(cls.ContributionContributers, contribution_contributers_table, properties={
+    'contribution_user':orm.relation(cls.User, backref='contributer'),                                                
+})
 
+
+orm.mapper(cls.Bid, bid_table, properties={
+    'bid_owner':orm.relation(cls.User, backref='bid'),	
 })
 
 

@@ -9,7 +9,7 @@ class BaseObject(object):
 		#session = db.getSession()
 		myAttributes = [a for a in dir(self) if not a.startswith('__') and not callable(getattr(self,a)) and not a.startswith('_') and not a == ('id')]
 		for key in json :
-			value = json[key]
+			value = json[key]			
 			#check if value is a dict
 			if type(value) is dict:
 				# value is a complex object
@@ -57,11 +57,14 @@ class BaseObject(object):
 	
 class User(BaseObject):
 	pass
-	
-class Resource(BaseObject):
-	pass
 
 class Bid(BaseObject):
+	pass
+
+class Contribution(BaseObject):
+	pass
+
+class ContributionContributers(BaseObject):
 	pass
 
 
