@@ -27,6 +27,8 @@ api = Api(application)
 
 from resources import UserResource
 from resources import BidResource
+from resources import ContributionResource
+from resources import CloseContributionResource
 
 api.add_resource(UserResource, '/users/<string:id>', endpoint='users')
 api.add_resource(UserResource, '/users', endpoint='user')
@@ -35,7 +37,14 @@ api.add_resource(BidResource, '/bids/<string:id>', endpoint='bids')
 api.add_resource(BidResource, '/bids', endpoint='bid')
 
 
+api.add_resource(ContributionResource, '/contribution', endpoint='contribution')
+api.add_resource(ContributionResource, '/contribution/<string:id>', endpoint='contributions')
 
+api.add_resource(CloseContributionResource, '/closeContribution/<string:id>', endpoint='closeContribution')
+
+
+
+    
 if __name__ == '__main__':
     #application.run(host='0.0.0.0',debug=True)
     application.run(debug=True)

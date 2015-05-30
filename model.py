@@ -58,9 +58,9 @@ contribution_table = schema.Table('contribution', metadata,
 """
 Contribution Contributers List - schema definition:
 """
-contribution_contributers_table = schema.Table('contribution_contributers', metadata,
+contribution_contributer_table = schema.Table('contribution_contributer', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('contribution_contributers_seq_id', optional=True), primary_key=True),
+        schema.Sequence('contribution_contributer_seq_id', optional=True), primary_key=True),
     schema.Column('contribution_id', types.Integer,
         schema.ForeignKey('contribution.id')),
     schema.Column('contributer_id', types.Integer,
@@ -79,10 +79,10 @@ orm.mapper(cls.User, user_table, properties={
 orm.mapper(cls.Contribution, contribution_table, properties={
     'contribution_owner':orm.relation(cls.User, backref='contribution'),
     'bids':orm.relation(cls.Bid, backref='contribution'),  
-    'contributionContributers':orm.relation(cls.ContributionContributers, backref='contribution'),                                                  
+    'contributionContributers':orm.relation(cls.ContributionContributer, backref='contribution'),                                                  
 })
 
-orm.mapper(cls.ContributionContributers, contribution_contributers_table, properties={
+orm.mapper(cls.ContributionContributer, contribution_contributer_table, properties={
     'contribution_user':orm.relation(cls.User, backref='contributer'),                                                
 })
 
