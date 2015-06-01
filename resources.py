@@ -2,18 +2,18 @@
 from db import session
 import classes as cls
 #import modules.SparkWorldEng.main as worldEng
-import modules.taskDispatcher as dispatcher
 
 from flask.ext.restful import reqparse
 from flask.ext.restful import abort
 from flask.ext.restful import Resource
 from flask.ext.restful import fields
 from flask.ext.restful import marshal_with
-import json   
+import json
 
 userParser = reqparse.RequestParser()
 contributionParser = reqparse.RequestParser()
 bidParser = reqparse.RequestParser()
+closeContributionParser = reqparse.RequestParser()
 
 contributionParser.add_argument('contributers', type=cls.Contributer, action='append')
 contributionParser.add_argument('intialBid', type=cls.IntialBid,required=True)
@@ -27,8 +27,10 @@ userParser.add_argument('slackId', type=str)
 
 bidParser.add_argument('tokens', type=str,required=True)
 bidParser.add_argument('reputation', type=str,required=True)    
-bidParser.add_argument('contributionId', type=str,required=True)
+bidParser.add_argument('contribution_id', type=str,required=True)
 bidParser.add_argument('owner', type=int,required=True)
+
+closeContributionParser.add_argument('owner', type=int,required=True)
 
 user_fields = {
     'id': fields.Integer,
@@ -115,7 +117,7 @@ class BidResource(Resource):
     @marshal_with(bid_fields)
     def post(self):
         parsed_args = bidParser.parse_args()
-        contributionid = parsed_args['contributionId']
+        contributionid = parsed_args['contribution_id']
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionid).first()
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(contributionid))
@@ -123,11 +125,11 @@ class BidResource(Resource):
             abort(404, message="Contribution {} is not Open".format(contributionid))
         userObj = getUser(parsed_args['owner'])        
         if not userObj:
-            abort(404, message="User who is creating contribution {} doesn't exist".format(parsed_args['owner']))     
+            abort(404, message="User {} who is creating bid  doesn't exist".format(parsed_args['owner']))     
         jsonStr = {"tokens":parsed_args['tokens'],
                    "reputation":parsed_args['reputation'],
                    "owner":parsed_args['owner'],
-                   "contribution_id":parsed_args['contributionId']
+                   "contribution_id":parsed_args['contribution_id']
                     }
         bid = cls.Bid(jsonStr,session)                       
         session.add(bid)
@@ -187,12 +189,20 @@ class ContributionResource(Resource):
 
 class CloseContributionResource(Resource):
     @marshal_with(contribution_fields)   
-    def post(self,id):        
+    def post(self,id):      
+        parsed_args = closeContributionParser.parse_args()   
+        ownerId = parsed_args['owner'] 
+        userObj = getUser(ownerId)  
+        if not userObj:
+            abort(404, message="User who is closing contribution {} doesn't exist".format(ownerId)) 
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(id))
-        contributionObject.status='Closed'      
-        
+        if contributionObject.status != 'Open':
+            abort(404, message="Contribution {} is already closed".format(id))        
+        if userObj.id != contributionObject.owner:
+            abort(404, message="Only contribution owner can close this contribution".format(ownerId)) 
+        contributionObject.status='Closed'
         session.add(contributionObject)
         session.commit()        
        
