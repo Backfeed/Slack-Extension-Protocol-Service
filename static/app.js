@@ -55,7 +55,7 @@ angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStra
         }
       });
 
-    $urlRouterProvider.otherwise('/users');
+    $urlRouterProvider.otherwise('/contributions');
 
 	$authProvider.slack({
       clientId: '2969711723.3476875864'
