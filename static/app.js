@@ -13,7 +13,7 @@ angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStra
       })
 	  .state('contributions', {
 		controller: 'ContributionsCtrl',
-        url: '/users',
+        url: '/contributions',
         templateUrl: 'partials/contributions.html'
       })
       .state('home', {
