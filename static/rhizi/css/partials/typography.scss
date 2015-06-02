@@ -1,0 +1,31 @@
+/* Headings */
+
+h1 {
+  font-size: $h1-size;
+}
+
+h2 {
+  font-size: $h2-size;
+}
+
+h3 {
+  font-size: $h3-size;
+}
+
+h4 {
+  font-size: $h4-size;
+}
+
+h5 {
+  font-size: $h5-size;
+  line-height: $base-line-height;
+}
+
+
+/* Paragraph */
+
+p {
+  font-size: $base-font-size;
+  color: $dark-grey;
+  line-height: $base-line-height;
+}

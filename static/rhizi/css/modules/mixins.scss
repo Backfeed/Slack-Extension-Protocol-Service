@@ -1,0 +1,17 @@
+@mixin rz-box-shadow($offset-x, $offset-y, $blur, $spread, $color) {
+	-webkit-box-shadow: $offset-x $offset-y $blur $spread $color;
+	   -moz-box-shadow: $offset-x $offset-y $blur $spread $color;
+	        box-shadow: $offset-x $offset-y $blur $spread $color;	
+}
+
+@mixin rz-box-sizing-border() {
+	-webkit-box-sizing: border-box;
+	   -moz-box-sizing: border-box;
+	        box-sizing: border-box;
+}
+
+@mixin rz-box-sizing-padding() {
+	-webkit-box-sizing: padding-box;
+	   -moz-box-sizing: padding-box;
+	        box-sizing: padding-box;
+}

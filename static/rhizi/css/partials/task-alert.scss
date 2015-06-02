@@ -1,0 +1,37 @@
+.task-alert{
+  position:relative;
+  width: 100%;
+  min-height:$four-baselines;
+  text-align: center;
+  background-color: $light-cyan;
+  color: $darker-cyan;
+  border-top: 1px solid $dark-cyan;
+  border-bottom: 1px solid $dark-cyan;
+}
+
+.task-desc{
+  display: inline-block;
+  width:70%;
+  text-align: center;
+  font-size: $h3-size;
+  margin: 12px $doc-margin 12px $doc-margin;
+}
+
+.task-close-button {
+  cursor: pointer;
+  font-size: $h4-size;
+  margin: 15px $doc-margin 15px 15px;
+  float: right;
+  width: $doc-margin;
+  text-align: right;
+} 
+
+.task-close-button:after {
+  content: " ";
+  min-height: $icon-height;
+  padding-right: $icon-height;
+  margin-left: 4px;
+  background: url(../img/close-alert-button.png);
+  background-position: center;
+  background-repeat: no-repeat;
+}

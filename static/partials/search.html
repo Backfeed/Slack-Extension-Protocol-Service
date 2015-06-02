@@ -1,0 +1,157 @@
+<div>
+<html>
+<head>
+	<!-- Rhizi: --> 
+	<link href="stylesheets/jquery-ui.min.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/ui-lightness/jquery-ui.css" />
+
+	<link href="rhizi/css/vendor/jquery-ui.theme.min.css" rel="stylesheet">
+
+	 <link href="rhizi/css/vendor/jquery.multiselect.css" rel="stylesheet">
+	 <link href="rhizi/css/feedback.css" rel="stylesheet" type="text/css">
+	 <link href="rhizi/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	<!--
+  <script type="text/javascript">
+  var logged_username = "{{ username }}";
+  </script>
+  <div id="chromeinputbugworkaround" style="position:fixed; top:0px; left:0px; width:100%">
+  <span id="measure-node" class="graph nodetext" style="position: absolute; display: inline; top: -300px; left: 0px;">suicide squade, attack!</span>
+  <span id="measure-link" class="graph linklabel" style="position: absolute; display: inline; top: -300px; left: 0px;">those who are about to cry, we kaput you.</span>
+
+  <div class="top-bar">
+    <h3 class="doc-title">Server test</h3>
+    <div class="user-area">
+      <div class="username">
+        <div class="profile-circle"></div>
+        <span class="profile-initials">{{ profileinitials }}</span>
+         <div class="profile-username">Welcome&nbsp;<span id="user_id">{{ username }}</span>! <span id="logout-button" class="button">Logout</span></div>
+      </div>
+      <img class="organization-logo" src="rhizi/img/CRI-logo.png">
+    </div>
+  </div>
+-->
+
+
+	  <div class="panel panel-default filter-container">
+
+	    <div class="panel-body btn-group-vertical">
+
+	        	<input id="search" placeholder="Search"/>
+	      		<div id="search-suggestion" class="suggestion" style="display: none"></div>
+	
+		      <div  ng-repeat = "filter in filterData">
+
+				<button ng-class="filter.style" class="btn btn-sm filter-buton " ng-if="filter.selected" ng-click="filterClick(filter)">
+			      <i class="fa fa-trello"></i> {{filter.type}}
+			    </button>
+		       	<button ng-class="filter.styleUnselected" class=" btn btn-sm  btn-default filter-buton" ng-if="!filter.selected" ng-click="filterClick(filter)">
+			      <i class="fa fa-trello"></i> {{filter.type}}
+			    </button>
+		   	 </div>
+		   
+		</div>
+	  </div>
+
+
+	 
+
+<!--
+		<div>
+	    	<input id="feedback-check" type="checkbox"/>
+	    	<label for="check" class="ui-widget"> Feedback</label>
+		</div>
+		<div>
+	    	<input id="user-check" type="checkbox"/>
+	    	<label for="check" class="ui-widget"> Users</label>
+		</div>
+		<div>
+	    	<input id="task-check" type="checkbox"/>
+	    	<label for="check" class="ui-widget"> Tasks</label>
+		</div>
+	
+      <div class="export">
+        <a href="#">Export</a>
+      </div>
+     -->
+
+
+
+<!--
+  <div id="intro-task" class="task-alert" style="display:none">
+    <h3 class="task-desc">Connect between <span>yourself</span> and the  <span> clubs,</span><span> internship proposals,</span><span> skills,</span><span> and</span><span> scientific interests</span></span> you have:
+    </h3>
+    <div class="task-close-button">got it</div>
+  </div>
+-->
+  <div class="graph-view">
+<!--
+    <div class="input-container">
+      <form>
+        <input class="input-bar" id="textanalyser" placeholder="Add nodes and relationships"/>
+        <button class="add-button"></button>
+      </form>
+      <div id="input-suggestion" class="suggestion" style="display: none">
+      </div>
+    </div>
+-->
+    <div class="info-container">
+	
+      <div class="edge_info" style="display:none">Title: <span id="edgetitle"></span><br/>
+          <button id="deleteedge">Cancel</button>
+      </div>
+
+      <div class="info" style="display:none">
+	
+		<form id="editbox" class="form">
+			<p class="name"> 
+		        <label for="editformname">My Feedback on:</label> 
+		        <p id="editformname" class="info-card-attr"></p> 
+				
+		    </p>
+
+			<p class="name"> 
+		        <label for="slider">Quality</label> 
+		        <div id="slider"><div id="RGB"></div></div>
+		    </p>
+
+			<p class="name"> 
+		        <label for="description">Description</label> 
+		        <div id="description"><textarea id="editdescription"></textarea></div>
+		    </p> 
+			
+			<hr></hr>
+			<p class="submit"> 
+			      <button id="edit-node-dialog__save" class="btn-regular btn-regular-outline">Save</button>
+		          <button id="edit-node-dialog__delete" class="btn-regular btn-regular-outline">Delete</button>
+			</p>
+		</form>
+
+      </div>
+    </div>
+
+    <div class="typeselection" style="display:none">
+      <table>
+        <tr id="intro"><td>Use [Tab] to change node type</td></tr>
+        <tr id="chosentypelabel"><td>Chosen Type: <span id="chosentypename"/></td></tr>
+        <tr id="chosentypedesc"><td></td></tr>
+      </table>
+    </div>
+
+ 
+    </div>
+  </div>
+
+  <div class="rhizi-logo"><a href="http://www.rhizi.org">
+    <img src="rhizi/img/rhizi-logo.png"/></a>
+  </div>
+  </div>
+
+<!-- Rhizi:  --> 
+<script data-main='rhizi/app.js' src="rhizi/lib/require.js"></script>
+
+
+</body>
+</html>
+</div>

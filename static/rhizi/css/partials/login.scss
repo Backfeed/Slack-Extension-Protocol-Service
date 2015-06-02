@@ -1,0 +1,172 @@
+* {
+    box-sizing: border-box;
+
+    &:before,
+    &:after {
+      box-sizing: border-box;
+    }
+
+  }
+
+.login-background {
+  background: url(../img/login-background.jpg);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.welcome-box {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 50px;
+  padding-bottom: 10px;
+  width: 445px;
+  height: auto;
+  background: white;
+}
+
+.login-rhizi-logo {
+  margin-left: auto;
+  display: block;
+  margin-right: auto;
+  padding-top: 25px;
+}
+
+.login-header {
+  margin-top: 35px;
+  margin-bottom: 35px;
+  text-align: center;
+  color: $magenta;
+}
+
+.login-text {
+  font-size: 16px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-right: 30px;
+  padding-left: 30px;
+  text-align: center;
+}
+
+.login-form {
+  margin-top: 10px;
+  margin-bottom: 25px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  padding: 20px;
+  width: 300px;
+  position: relative;
+}
+
+
+.clearfix {
+  *zoom: 1;
+
+  &:before,
+  &:after {
+    content: ' ';
+    display: table;
+  }
+
+  &:after {
+    clear: both;
+  }
+
+}
+
+.login-input {
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  margin: 0;
+  -webkit-appearance: none;
+  &:focus {
+    outline: none;
+  }
+  &[type="submit"] {
+    width: 100%;
+    cursor: pointer;
+    background: #ee3654;
+    border-radius: 3px;
+    color: #fff;
+    float: right;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    padding: 12px 20px;
+    &:hover {
+      background: $dark-magenta;
+    }
+  }
+  &[type="email"] {
+    background: url(../img/mail-icon.png) no-repeat scroll 20px 15px;
+    background-color:$light-grey;
+    border: 1px solid #dcdcdc;
+    padding: 12px 10px;
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    padding-left:60px;
+  }
+
+  &[type="password"] {
+    background: url(../img/password-icon.png) no-repeat scroll 20px 15px;
+    background-color:$light-grey;
+    border: 1px solid #dcdcdc;
+    padding: 12px 10px;
+    width: 100%;
+    border-top: none;
+    border-radius: 0px 0px 3px 3px;
+    padding-left:60px;
+  }
+}
+
+.forgot-password {
+  color: $mid-grey;
+  text-decoration: none;
+  &:hover {
+    color: $dark-grey;
+  }
+}
+
+.contact-us-div {
+  text-align: center;
+  &:before {
+    content: "";
+    width: 112px;
+    margin-top: 10px;
+    position: absolute;
+    height: 0;
+    margin-left: -118px;
+    border-top: 1px solid $magenta;
+  }
+  &:after {
+    content: "";
+    width: 112px;
+    margin-top: 10px;
+    position: absolute;
+    margin-left: 4px;
+    height: 0;
+    border-top: 1px solid $magenta;
+  }
+}
+
+.contact-us-icon {
+  text-align: center;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  background: url(../img/hr-email-icon.png) no-repeat;
+  margin-left: auto;
+  display: inline-block;
+  margin-right: auto;
+  height:25px;
+  width:25px;
+}
+
+.contact-us-text {
+  color: $magenta ;
+}
+
+.contact-us-link {
+  color: $magenta;
+  text-decoration: underline;
+}

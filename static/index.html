@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html ng-app="MyApp">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>DE-AP</title>
+  <link href="favicon.png" rel="shortcut icon">
+  <link href="//fonts.googleapis.com/css?family=Roboto|Montserrat:400,700|Open+Sans:400,300,600" rel="stylesheet">
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="//cdnjs.cloudflare.com/ajax/libs/ionicons/1.5.2/css/ionicons.min.css" rel="stylesheet">
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="//cdn.jsdelivr.net/animatecss/3.2.0/animate.css" rel="stylesheet">
+  <link href="stylesheets/styles.css" rel="stylesheet">
+
+
+
+<!-- Rhizi:
+  <link href="stylesheets/jquery-ui.min.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/ui-lightness/jquery-ui.css" />
+
+<link href="rhizi/css/vendor/jquery-ui.theme.min.css" rel="stylesheet">
+
+ <link href="rhizi/css/vendor/jquery.multiselect.css" rel="stylesheet">
+ <link href="rhizi/css/feedback.css" rel="stylesheet" type="text/css">
+ <link href="rhizi/css/style.css" rel="stylesheet" type="text/css">
+ --> 
+</head>
+<body >
+
+<span id = 'spinner'></span>
+
+<div ng-controller="NavbarCtrl" class="navbar navbar-default navbar-static-top" ng-show = 'isAuthenticated()'>
+	
+  <div class="navbar-header">
+    	<img src="favicon.png" class = "brandIcon navbar-brand" ></img>
+		<a class="navbar-brand" href="/#/search">DE-AP</a>
+  </div>
+
+  <ul class="nav navbar-nav">
+<!--     <li><a href="/#/users">Users</a></li> -->
+<!--    <li ng-if="isAuthenticated()"><a href="/#/profile">Profile</a></li> -->
+  </ul>
+	<form class="navbar-form navbar-left deap-search-input" role="search"  name="testing1">
+      <div class="form-group ">
+        <input id = 'queryInput'	type = "text"  
+						placeholder="DEAP Query" 
+						ng-model	="query" 		
+						class="form-control">
+		<button id = 'searchButtonId' type="submit" ng-click = "searchButtonClicked($event)" class="btn btn-default">Go</button>
+				      
+      </div>
+    </form>
+  <ul ng-if="!isAuthenticated()" class="nav navbar-nav pull-right">
+    <li><a href="/#/login">Login</a></li>
+    <li><a href="/#/signup">Sign up</a></li>
+  </ul>
+
+  <ul ng-if="isAuthenticated()" class="nav navbar-nav pull-right">
+	<a class="navbar-brand" href="/#/profile" >{{ user.displayName  }}</a>
+    <li><a href="/#/logout">Logout</a></li>
+  </ul>
+</div>
+
+<div ui-view class="fadeZoom"></div>
+
+<!-- Third-party Libraries -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+<!-- Spin.js: --> 
+<script type="text/javascript" src="http://fgnass.github.io/spin.js/spin.min.js"></script>
+
+<script src="vendor/angular.js"></script>
+<script src="vendor/angular-messages.js"></script>
+<script src="vendor/angular-resource.js"></script>
+<script src="vendor/angular-animate.js"></script>
+<script src="vendor/angular-ui-router.js"></script>
+<script src="vendor/angular-strap.js"></script>
+<script src="vendor/angular-strap.tpl.js"></script>
+<script src="vendor/satellizer.js"></script>
+
+
+
+<!-- Application Code -->
+<script src="https://api.trello.com/1/client.js?key=c1bb14ae5cc544231959fc6e9af43218&dummy=.js"></script>
+
+<script src="app.js"></script>
+<script src="directives/passwordStrength.js"></script>
+<script src="directives/passwordMatch.js"></script>
+<script src="controllers/splash.js"></script>
+<script src="controllers/contributions.js"></script>
+<script src="controllers/searchResults.js"></script>
+<script src="controllers/home.js"></script>
+<script src="controllers/login.js"></script>
+<script src="controllers/signup.js"></script>
+<script src="controllers/logout.js"></script>
+<script src="controllers/profile.js"></script>
+<script src="controllers/navbar.js"></script>
+<script src="services/account.js"></script>
+<script src="services/aggregator.js"></script>
+
+</body>
+</html>

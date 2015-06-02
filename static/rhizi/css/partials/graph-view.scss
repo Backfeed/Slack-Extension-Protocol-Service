@@ -1,0 +1,207 @@
+.graph-view {
+  width:100%;
+  background-color: #f5f5fa; //$light-grey
+  position: relative;
+}
+
+.node {
+  stroke-width: 1px;
+  font-size: $h3-size;
+  z-index:100;
+}
+
+.ghostnode{
+
+}
+
+.circle {
+  z-index: 100;
+  pointer-events:all;
+  fill: $dark-grey;
+}
+
+.nodetext {
+  fill: $dark-grey;
+  font-size: $h3-size;
+  z-index:3;
+}
+
+// editor for node text
+.svg-input-fo-node {
+  fill: $dark-grey;
+  z-index:3;
+}
+
+.svg-input-fo-node input {
+  font-size: $h3-size;
+  background-color: transparent;
+}
+
+.linklabel{
+  stroke: $dark-grey;
+  font-size: $h4-size;
+  background-color: transparent;
+}
+
+// editor for link text
+.svg-input-fo-link {
+    stroke: $dark-grey;
+}
+
+.svg-input-fo-link input {
+  font-size: $h4-size;;
+  background-color: transparent;
+}
+
+.link {
+  fill: none;
+  stroke: $mid-grey;
+  stroke-width: 1px;
+  stroke-opacity: 0.5;
+  z-index:1;
+}
+
+.ghostlink {
+  opacity: 0.0;
+  fill: none;
+  stroke-width: 15px;
+  z-index:2; /* higher than link, lower than node */
+}
+
+.circle.chosen {
+  stroke: $cyan;
+  stroke-opacity: 0.5;
+}
+.circle.enter {
+  stroke: $cyan;
+  stroke-opacity: 0.5;
+}
+
+.circle.bubble {
+  fill: rgba(255,255,255,0.4);
+  pointer-events:none;
+}
+.circle.exit {
+  stroke: $cyan;
+  stroke-opacity: 0.5;
+}
+.circle.chainlink {
+  stroke: #AAA;
+}
+
+.circle.temp {
+  box-shadow: 0 0 40px #FFFF8F;
+}
+
+.circle.temp, .circle.chosen {
+  stroke-width: 3px;
+}
+
+.circle.temp.empty {
+  stroke-width: 1.5px;
+}
+
+/* Per node and edge type (type is a property of nodes and links) styling
+ * note that this should be automatically generated somehow for user settings.
+ */
+
+.circle.person {
+  fill: $blue;
+}
+
+.circle.club {
+  fill: $magenta;
+}
+
+.circle.skill {
+  fill: $yellow;
+}
+
+.circle.interest {
+  fill: $purple;
+}
+
+.circle.project {
+  fill: $green;
+}
+
+.circle.third-internship-proposal {
+  fill: $cyan;
+}
+
+.circle.internship {
+  fill: $orange;
+}
+
+.circle.empty {
+  fill: $mid-grey;
+}
+
+.circle.chainlink {
+  fill: $dark-grey;
+}
+
+
+/* Selected parts of the graph, right now by clicking, later with search. */
+
+.notselected {
+  opacity: 0.2;
+}
+
+.graph.link.temp_and {
+  stroke-dasharray: 3,3;
+}
+
+.highlightlink {
+  fill: none;
+  stroke: $cyan;
+  stroke-opacity: 0.5;
+  stroke-width: 2px;
+  z-index:1;
+}
+
+.link.enter, .link.exit, .link.selected {
+  fill: none;
+  stroke: $cyan;
+  stroke-opacity: 0.5;
+  stroke-width: 2px;
+  z-index:1;
+}
+
+#editbox input{
+  width:130px;
+}
+
+.overlay {
+  fill:none;
+  pointer-events: all;
+  z-index:0;
+
+}
+
+.editinfo{
+  position: fixed;
+  top:-40px;
+  z-index:5;
+}
+
+.editlinkinfo{
+  position: fixed;
+  top:-40px;
+  z-index:5;
+}
+
+#editlinkname{
+  width:inherit;
+  height:inherit;
+  font-size: $h3-size;
+
+}
+
+#editname{
+  width:inherit;
+  height:inherit;
+  font-size: $h3-size;
+
+}
+
