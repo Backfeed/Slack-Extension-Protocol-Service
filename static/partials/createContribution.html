@@ -1,0 +1,49 @@
+
+
+<div id='content-header'>
+  <div class='text'><h1>Contribution Page</h1></div>
+</div>
+<form  ng-controller="ContributionsCtrl" role="form">
+
+  <div class='title'>Contribution</div>
+  <div class='content' style="margin: 0px;width: 985px;" >
+<label> File</label>
+	  	 <input type="text" ng-model="ContributionModel.file" class="customText"/>
+		<label>owner</label>	
+	    <input  type="text" ng-model="ContributionModel.owner" /> 
+	    <label>min_reputation_to_close</label>	
+	    <input  type="text" ng-model="ContributionModel.min_reputation_to_close" />
+<section>
+<section class='creation'>
+
+<div class='separator'></div>
+  <div ng-repeat="contributer in ContributionModel.contributers">
+  	 <label>Contributer Id</label>
+     <input type="text" ng-model="contributer.contributer_id" />
+    <label>Contributer Contribution Percentage</label>
+     <input type="text" ng-model="contributer.contributer_percentage" />
+     <a ng:click='removeContributionItem($index)' >Remove</a>      
+   </div>     
+  </div>
+  <div class='separator'></div>
+  <a ng:click='addContributer()'>Add Contributer</a>
+  </section>
+  <section class='creation'>
+<div class='separator'></div>
+  <div ng-repeat="bid in ContributionModel.intialBid">  
+    <label>Bid Tokens</label>
+     <input type="text" ng-model="bid.tokens" />
+    <label>Bid Reputations</label>
+     <input type="text" ng-model="bid.reputation" />
+      </div>     
+  </div>
+</section>
+
+
+  
+
+
+<section class='creation'>
+  <button  ng:click='submit()'>Save Contribution</button>
+</section>
+</form>

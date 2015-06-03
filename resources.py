@@ -211,3 +211,10 @@ class CloseContributionResource(Resource):
         session.commit()        
        
         return contributionObject, 201
+
+class AllContributionResource(Resource):
+    @marshal_with(contribution_fields)
+    def get(self):
+        contributionObject = session.query(cls.Contribution).all()
+        print contributionObject
+        return contributionObject
