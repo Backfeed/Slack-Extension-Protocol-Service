@@ -12,18 +12,6 @@
   <link href="//cdn.jsdelivr.net/animatecss/3.2.0/animate.css" rel="stylesheet">
   <link href="stylesheets/styles.css" rel="stylesheet">
 
-
-
-<!-- Rhizi:
-  <link href="stylesheets/jquery-ui.min.css" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/ui-lightness/jquery-ui.css" />
-
-<link href="rhizi/css/vendor/jquery-ui.theme.min.css" rel="stylesheet">
-
- <link href="rhizi/css/vendor/jquery.multiselect.css" rel="stylesheet">
- <link href="rhizi/css/feedback.css" rel="stylesheet" type="text/css">
- <link href="rhizi/css/style.css" rel="stylesheet" type="text/css">
- --> 
 </head>
 <body >
 
@@ -33,26 +21,11 @@
 	
   <div class="navbar-header">
     	<img src="favicon.png" class = "brandIcon navbar-brand" ></img>
-		<a class="navbar-brand" href="/#/search">DE-AP</a>
+		<a class="navbar-brand">Backfeed</a>
   </div>
 
   <ul class="nav navbar-nav">
-<!--     <li><a href="/#/users">Users</a></li> -->
-<!--    <li ng-if="isAuthenticated()"><a href="/#/profile">Profile</a></li> -->
-  </ul>
-	<form class="navbar-form navbar-left deap-search-input" role="search"  name="testing1">
-      <div class="form-group ">
-        <input id = 'queryInput'	type = "text"  
-						placeholder="DEAP Query" 
-						ng-model	="query" 		
-						class="form-control">
-		<button id = 'searchButtonId' type="submit" ng-click = "searchButtonClicked($event)" class="btn btn-default">Go</button>
-				      
-      </div>
-    </form>
-  <ul ng-if="!isAuthenticated()" class="nav navbar-nav pull-right">
-    <li><a href="/#/login">Login</a></li>
-    <li><a href="/#/signup">Sign up</a></li>
+    <li><a href="/#/users">Contributions</a></li> 
   </ul>
 
   <ul ng-if="isAuthenticated()" class="nav navbar-nav pull-right">
@@ -79,17 +52,12 @@
 <script src="vendor/satellizer.js"></script>
 
 
-
 <!-- Application Code -->
-<script src="https://api.trello.com/1/client.js?key=c1bb14ae5cc544231959fc6e9af43218&dummy=.js"></script>
-
 <script src="app.js"></script>
 <script src="directives/passwordStrength.js"></script>
 <script src="directives/passwordMatch.js"></script>
 <script src="controllers/splash.js"></script>
 <script src="controllers/contributions.js"></script>
-<script src="controllers/searchResults.js"></script>
-<script src="controllers/home.js"></script>
 <script src="controllers/login.js"></script>
 <script src="controllers/signup.js"></script>
 <script src="controllers/logout.js"></script>

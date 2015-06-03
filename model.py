@@ -21,7 +21,7 @@ user_table = schema.Table('user', metadata,
         schema.Sequence('user_seq_id', optional=True), primary_key=True),
 
     schema.Column('name', types.Unicode(255)),
-    schema.Column('slackId', types.Unicode(255)),
+    schema.Column('slack_id', types.Unicode(255)),
     schema.Column('tokens', types.Integer),
     schema.Column('reputation',  types.Integer),
 )

@@ -1,4 +1,43 @@
 angular.module('MyApp')
+	.factory('Users', function($http,Const) {
+		 console.log('loading Users into system.');
+		 var users
+	
+		var setUsers       = function (usersIn) {
+				for (i in usersIn){
+					usersIn[i].type = Const.NODE_TYPE_PERSON;
+				}
+				users            = usersIn;
+		}
+		
+	
+		//var users        = $http.get('/api/users');
+		/*
+	 	$http.get('/api/deapusers').
+		  success(function(data, status, headers, config) {
+		    // this callback will be called asynchronously
+		    // when the response is available
+	 			
+	
+				setUsers(data.json_list);
+				console.log('users loaded:');
+				console.dir(users);		  
+			}).
+		  error(function(data, status, headers, config) {
+		    // called asynchronously if an error occurs
+		    // or server returns response with an error status.
+			console.log('Users:get deap Users:error:'+data);
+		  });
+		*/
+
+		 return {
+		   	setUsers: setUsers,
+		    getUsers: function() {
+		     	return users;
+		   }
+		 }
+	})
+
 	.factory('Account', function($http) {
 		
 		var userData;
@@ -24,13 +63,6 @@ angular.module('MyApp')
 	  };
 	})
 
-.factory("Search", function($resource) {
-  //return $resource("/api/query/:query");
-
-  return $resource("/api/query", {}, {
-    query: { method: "GET", isArray: false }
-  });
-})
 .factory('Query', function ($http,$state) {
   var extractedHTags = [];
   var query = '';

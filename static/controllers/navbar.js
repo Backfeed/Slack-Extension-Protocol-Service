@@ -1,5 +1,5 @@
 angular.module('MyApp')
-  .controller('NavbarCtrl', function($scope, $auth,Account,$alert,$location,Query,Aggregator) {
+  .controller('NavbarCtrl', function($scope, $auth,Account,$alert,$location) {
     $scope.isAuthenticated = function() {
       return $auth.isAuthenticated();
     };
@@ -23,24 +23,4 @@ angular.module('MyApp')
 	if( $auth.isAuthenticated()){
 		$scope.getProfile()
 	}
-
-	// Search:
-	$scope.query = '';
-	
-	$scope.searchButtonClicked = function (event){
-		console.log('angular: searchButtonClicked - navigating to searchPage.');
-		$location.path('search');
-		
-		
-		// push API:
-		
-		Aggregator.getData( function(input) {
-			console.log('pushing to rhizi:');
-			console.dir(input);
-			
-			window.reset();
-		});
-	
-	}
-
   });

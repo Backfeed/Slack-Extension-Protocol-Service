@@ -81,7 +81,7 @@ class UserResource(Resource):
     def post(self):
         parsed_args = userParser.parse_args()
 
-        jsonStr = {"slackId":parsed_args['slackId'],
+        jsonStr = {"slack_id":parsed_args['slackId'],
                     "name":parsed_args['name']}
         user = cls.User(jsonStr,session)
 
