@@ -1,4 +1,4 @@
-angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer'])
+angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices'])
   .config(function($stateProvider, $urlRouterProvider, $authProvider) {
     $stateProvider
 	  .state('splash', {
@@ -10,6 +10,16 @@ angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStra
         url: '/search',
         templateUrl: 'partials/search.html',
         controller: 'SearchResultsCtrl'
+      })
+      .state('contributionDetail', {
+        url: '/contribution/:contributionId',
+        templateUrl: 'partials/contributionDetail.html',
+        controller: 'ContributionsCtrl'
+      })
+      .state('createContribution', {
+        url: '/contribution',
+        templateUrl: 'partials/createContribution.html',
+        controller: 'ContributionsCtrl'
       })
 	  .state('contributions', {
 		controller: 'ContributionsCtrl',

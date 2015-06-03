@@ -1,49 +1,29 @@
-<div class="container">
-  <div class="panel panel-default">
-    <div class="panel-heading"></div>
-    <div class="panel-body">
-      
+<div class="table-responsive pre-scrollable" ng:controller="ContributionsCtrl">
+	<table class="table table-striped black-striped">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Name</th>
+				<th>Status</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng:repeat="item in contributions">
+				<td style="width:40%"><a ng-click="getContribution(item)" style="cursor:pointer">{{item.id}}</a></td>
+				<td style="width:40%"><div class="panel-text-dot" style="width: 600px;" data-placement="top" data-toggle="tooltip" tooltip="{{item.file}}">{{item.file}}</div></td>
+				<td style="width:20%"><div class="panel-text-dot" style="width: 600px;">{{item.status}}</div></td>
+			</tr>
+			<tr>
+				<td colspan="2">
+				<div class="span6">
+					<button type="button" class="btn btn-default" ng-click="createContribution()">Create Contribution</button>
+				</div>
+				</td>
+			</tr>
 
-		<div class="container-fluid">
-		  <div class="row">
-		    <div class="col-md-2">
-		      <!--Sidebar content-->
-			  <div class="row form-group">
-				      <div >
-				        <label for="search">Search</label>
-				        <input id="search" ng-model="query" >
-						<label for="sort"></label>
-				        <select id="sort" ng-model="orderProp" >
-				          <option value="targetName">Full Name</option>
-				          <option value="feedback">Reputation</option>
-				
-				        </select>
-				      </div>
-				
-			   </div>
-		    </div>
-		    <div class="col-md-10">
-		      <!--Body content-->
-
-		      <div ng-repeat="contr in contributions |  orderBy:orderProp :reverse">
-		       
-		        <div >
-				  <label>{{contr.realName}} </label>
-				  <button>Bid</button>
-		         
-		        </div>
-		      </div>
-
-		    </div>
-		  </div>
-
-
-
-
-
-
-
-    </div>
-  </div>
-
+		</tbody>
+	</table>
 </div>
+
+
