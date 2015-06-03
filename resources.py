@@ -166,10 +166,6 @@ class ContributionResource(Resource):
         contribution.min_reputation_to_close = parsed_args['min_reputation_to_close']
         contribution.file = parsed_args['file']
         contribution.owner = parsed_args['owner']
-        # TBD: remove later
-        session.add(contribution)
-        session.commit()        
-        return contribution, 201
 
         userObj = getUser(contribution.owner)        
         if not userObj:
