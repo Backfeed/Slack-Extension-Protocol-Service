@@ -21,3 +21,10 @@ bfAPIServices.factory('SaveContribution', ['$resource',
                                                save: {method:'POST', params:{}, isArray:false}
                                           });
      }]);
+
+  bfAPIServices.factory('CloseContribution', ['$resource',
+                                         function($resource){
+ 											return $resource('contribution/close', {}, {
+                                             save: {method:'POST', params:{}, isArray:false}
+                                        });
+   }]);
