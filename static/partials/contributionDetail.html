@@ -3,38 +3,37 @@
 <div id='content-header'>
   <div class='text'><h1>Contribution Details Page</h1></div>
 </div>
+
 <form  ng-controller="ContributionsCtrl" role="form">
 
   <div class='title'>Contribution</div>
   <div class='content' style="margin: 0px;width: 985px;" >
 <label> File</label>
-<label> {{testModel.file}}</label>
+<label> {{ContributionModelForView.file}}</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 		<label>owner</label>	
-		<label> {{ContributionModel.owner}}</label>
+		<label> {{ContributionModelForView.owner}}</label>&nbsp;&nbsp;&nbsp;&nbsp;
 	    <label>min_reputation_to_close</label>	
-	    <label>{{ContributionModel.min_reputation_to_close}}</label>
+	    <label>{{ContributionModelForView.min_reputation_to_close}}</label>
 <section>
 <section class='creation'>
 
 <div class='separator'></div>
-  <div ng-repeat="contributer in ContributionModel.contributers">
+  <div ng-repeat="contributer in ContributionModelForView.contributionContributers">
   	 <label>Contributer Id</label>
-     <input type="text" ng-model="contributer.contributer_id" />
+     <label>{{contributer.contributer_id}}</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <label>Contributer Contribution Percentage</label>
-     <input type="text" ng-model="contributer.contributer_percentage" />
-     <a ng:click='removeContributionItem($index)' >Remove</a>      
+     <label>{{contributer.contributer_percentage}}</label>
    </div>     
   </div>
   <div class='separator'></div>
-  <a ng:click='addContributer()'>Add Contributer</a>
   </section>
   <section class='creation'>
 <div class='separator'></div>
-  <div ng-repeat="bid in ContributionModel.intialBid">  
+  <div ng-repeat="bid in ContributionModelForView.bids">  
     <label>Bid Tokens</label>
-     <input type="text" ng-model="bid.tokens" />
+     <label>{{bid.tokens}}</label>&nbsp;&nbsp;&nbsp;&nbsp;
     <label>Bid Reputations</label>
-     <input type="text" ng-model="bid.reputation" />
+     <label>{{bid.reputation}}</label>
       </div>     
   </div>
 </section>
@@ -44,6 +43,9 @@
 
 
 <section class='creation'>
-  <button  ng:click='submit()'>Save Contribution</button>
+  <button  ng-show="ContributionModelForView.status == 'Open'" ng:click='closeContribution()'>Close Contribution</button>
+</section>
+<section class='creation'>
+  <button  ng-show="ContributionModelForView.status == 'Open'" ng:click='addBid()'>Add Bid</button>
 </section>
 </form>
