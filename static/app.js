@@ -11,6 +11,11 @@ angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStra
         url: '/contributions',
         templateUrl: 'partials/contributions.html'
       })
+	  .state('users', {
+		controller: 'UsersCtrl',
+        url: '/users',
+        templateUrl: 'partials/users.html'
+      })
       .state('login', {
         url: '/login',
         templateUrl: 'partials/login.html',

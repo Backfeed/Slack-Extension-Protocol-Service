@@ -1,13 +1,31 @@
 angular.module('MyApp')
-	.factory('Users', function($http,Const) {
+	.factory('Users', function($http) {
 		 console.log('loading Users into system.');
-		 var users
+		 var users = [{
+							realName:'shahar halutz',
+							email:'myemail',
+							rep:'90',
+							activated:true,
+							avatar:"https:\/\/secure.gravatar.com\/avatar\/03fd4d2ade5296050301cf22ef3c639c.jpg"
+						},
+						{
+							realName:'yosi ofi',
+							email:'myemail2',
+							rep:'30',
+							activated:false,
+							avatar:"https:\/\/secure.gravatar.com\/avatar\/03fd4d2ade5296050301cf22ef3c639c.jpg"
+						},
+						{
+							realName:'schelich levo',
+							email:'myemail3',
+							rep:'40',
+							activated:true,
+							avatar:"https:\/\/secure.gravatar.com\/avatar\/03fd4d2ade5296050301cf22ef3c639c.jpg"
+						}
+		]
 	
 		var setUsers       = function (usersIn) {
-				for (i in usersIn){
-					usersIn[i].type = Const.NODE_TYPE_PERSON;
-				}
-				users            = usersIn;
+				users = usersIn;
 		}
 		
 	

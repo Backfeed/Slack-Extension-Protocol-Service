@@ -1,10 +1,10 @@
 angular.module('MyApp')
-  .controller('ContributionsCtrl', function($scope,$auth,$location,Users) {
+  .controller('ContributionsCtrl', function($scope,$auth,$location) {
 	
 	// if not authenticated return to splash:
-	//if(!$auth.isAuthenticated()){
-	//	$location.path('splash'); 
-    //}
+	if(!$auth.isAuthenticated()){
+		$location.path('splash'); 
+    }
 
 	//$scope.slackUsers = Users.getUsers();
 

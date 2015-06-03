@@ -1,0 +1,43 @@
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading"></div>
+    <div class="panel-body">
+      
+
+		<div class="container-fluid">
+		  <div class="row">
+		    <div class="col-md-2">
+		      <!--Sidebar content-->
+			  <div class="row form-group">
+				      <div >
+				        <label for="search">Search</label>
+				        <input id="search" ng-model="query" >
+						<label for="sort"></label>
+				        <select id="sort" ng-model="orderProp" >
+				          <option value="targetName">Full Name</option>
+				          <option value="feedback">Reputation</option>
+				
+				        </select>
+				      </div>
+				
+			   </div>
+		    </div>
+		    <div class="col-md-10">
+		      <!--Body content-->
+
+		      <div ng-repeat="user in users |  orderBy:orderProp :reverse">
+		       
+		        <div >
+				  <label>{{user.realName}} </label>
+				  <button>Bid</button>
+		         
+		        </div>
+		      </div>
+
+		    </div>
+		  </div>
+
+    </div>
+  </div>
+
+</div>

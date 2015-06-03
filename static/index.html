@@ -25,9 +25,11 @@
   </div>
 
   <ul class="nav navbar-nav">
-    <li><a href="/#/users">Contributions</a></li> 
+    <li><a href="/#/contributions">Contributions</a></li> 
   </ul>
-
+  <ul class="nav navbar-nav">
+    <li><a href="/#/users">Users</a></li> 
+  </ul>
   <ul ng-if="isAuthenticated()" class="nav navbar-nav pull-right">
 	<a class="navbar-brand" href="/#/profile" >{{ user.displayName  }}</a>
     <li><a href="/#/logout">Logout</a></li>
@@ -57,14 +59,16 @@
 <script src="directives/passwordStrength.js"></script>
 <script src="directives/passwordMatch.js"></script>
 <script src="controllers/splash.js"></script>
+<script src="controllers/users.js"></script>
 <script src="controllers/contributions.js"></script>
+<script src="services/account.js"></script>
 <script src="controllers/login.js"></script>
 <script src="controllers/signup.js"></script>
 <script src="controllers/logout.js"></script>
 <script src="controllers/profile.js"></script>
 <script src="controllers/navbar.js"></script>
 <script src="services/account.js"></script>
-<script src="services/aggregator.js"></script>
+<!--<script src="services/aggregator.js"></script> -->
 
 </body>
 </html>
