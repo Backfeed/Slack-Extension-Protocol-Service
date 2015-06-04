@@ -130,7 +130,7 @@ def slack():
     # Step 3. (optional) Link accounts.
     if request.headers.get('x-access-token'):
         #user = User.query.filter_by(slack=profile['user_id']).first()
-        user = session.query(cls.User).filter(slc.User.slack_id == profile['user_id']).first()
+        user = session.query(cls.User).filter(cls.User.slack_id == profile['user_id']).first()
 
         if user:
             response = jsonify(message='There is already a Slack account that belongs to you')
