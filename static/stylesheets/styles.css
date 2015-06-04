@@ -73,7 +73,7 @@ width: 100%
 
 body {
   font-family: 'Open Sans', sans-serif;
-  background: #e4e7ec;
+  background: #FAEF9B;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -142,7 +142,7 @@ a {
 .panel {
   border-color: #cfd9D7;
   border-radius: 2px;
-  box-shadow: 0 8px 17px rgba(0, 0, 0, .2);
+ 
 }
 
 .panel-default > .panel-heading {

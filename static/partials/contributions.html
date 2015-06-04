@@ -1,29 +1,53 @@
-<div class="table-responsive pre-scrollable" ng:controller="ContributionsCtrl">
-	<table class="table table-striped black-striped">
-		<thead>
-			<tr>
-				<th>ID</th>
-				<th>Name</th>
-				<th>Status</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr ng:repeat="item in contributions">
-				<td style="width:40%"><a ng-click="getContribution(item)" style="cursor:pointer">{{item.id}}</a></td>
-				<td style="width:40%"><div class="panel-text-dot" style="width: 600px;" data-placement="top" data-toggle="tooltip" tooltip="{{item.file}}">{{item.file}}</div></td>
-				<td style="width:20%"><div class="panel-text-dot" style="width: 600px;">{{item.status}}</div></td>
-			</tr>
-			<tr>
-				<td colspan="2">
-				<div class="span6">
-					<button type="button" class="btn btn-default" ng-click="createContribution()">Create Contribution</button>
-				</div>
-				</td>
-			</tr>
 
-		</tbody>
-	</table>
+
+
+
+<div class="container profile">
+    <div class="row">
+		<div class="col-sm-3">
+		  <div class="panel panel-default">
+		    <div class="panel-body">
+				<div class="form-group">
+		          <label class="control-label">Sort By:</label>
+				   <select id="sort" ng-model="orderProp" >
+		          		<option value="targetName">Full Name</option>
+		          		<option value="feedback">Reputation</option>
+		        	</select>
+		        </div>
+		      <form method="post" ng-submit="updateProfile()">
+		        <div class="form-group">
+		          <label class="control-label">Search:</label>
+				   <input id="search"  type="text" ng-model="query" class="form-control" >
+		        </div>
+				<button class="btn btn-lg btn-warning" ng-click="createContribution()">Create Contribution</button>		    
+			  </form>
+		    </div>
+		  </div>
+		</div>		
+		<div class="col-sm-9">
+		  
+		      	<div ng-repeat="item in contributions |  orderBy:orderProp :reverse">
+			        <div class="panel" ng-click="getContribution(item)" style="cursor:pointer">
+						<div class="panel-body">
+							<div class="form-group">
+					          <label class="control-label">Name:</label>
+							   {{item.file}}
+					        </div>
+							<div class="form-group">
+					          <label class="control-label">Id:</label>
+							   {{item.id}}
+					        </div>
+							<div class="form-group">
+					          <label class="control-label">Status:</label>
+							   {{item.status}}
+					        </div>
+					        
+					    </div>	</div>
+			        </div>
+			      </div>
+		    
+		</div>
+	</div>
 </div>
 
 
