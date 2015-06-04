@@ -73,8 +73,8 @@ def slack():
 
 
 if __name__ == '__main__':
-    #application.run(host='0.0.0.0',debug=True)
-    application.run(debug=True)
+    application.run(host='0.0.0.0',debug=True)
+    #application.run(debug=True)
 
 
 # BUG: app loads from one session , world eng writes logs on another, app server needs to be restarted for changes from eng to take effect
