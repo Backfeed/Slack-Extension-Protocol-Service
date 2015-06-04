@@ -2,6 +2,7 @@
 
 
 
+
 <div class="container profile">
     <div class="row">
 		<div class="col-sm-3">
@@ -17,7 +18,7 @@
 		      <form method="post" ng-submit="updateProfile()">
 		        <div class="form-group">
 		          <label class="control-label">Search:</label>
-				   <input id="search"  type="text" ng-model="query" class="form-control" >
+				   <input id="search"  type="text" ng-model="searchKeyword" class="form-control" >
 		        </div>
 				<button class="btn btn-lg btn-warning" ng-click="createContribution()">Create Contribution</button>		    
 			  </form>
@@ -26,7 +27,7 @@
 		</div>		
 		<div class="col-sm-9">
 		  
-		      	<div ng-repeat="item in contributions |  orderBy:orderProp :reverse">
+		      	<div ng-repeat="item in contributions  | filter: searchKeyword">
 			        <div class="panel" ng-click="getContribution(item)" style="cursor:pointer">
 						<div class="panel-body">
 							<div class="form-group">

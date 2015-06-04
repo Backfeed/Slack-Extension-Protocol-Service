@@ -8,7 +8,7 @@ from flask.ext.restful import marshal_with
 import json
 from auth import login_required
 
-#from flask.ext.restful import Resource
+//from flask_restful import Resource
 # Add Authentication required to all resources:
 from flask.ext.restful import Resource as FlaskResource
 class Resource(FlaskResource):
@@ -22,7 +22,7 @@ closeContributionParser = reqparse.RequestParser()
 contributionParser.add_argument('contributers', type=cls.Contributer, action='append')
 contributionParser.add_argument('intialBid', type=cls.IntialBid,required=True)
 contributionParser.add_argument('owner', type=int,required=True)
-contributionParser.add_argument('min_reputation_to_close', type=int)
+contributionParser.add_argument('min_reputation_to_close', type=str)
 contributionParser.add_argument('file', type=str,required=True)
 
 userParser.add_argument('userId', type=str)
@@ -35,6 +35,7 @@ bidParser.add_argument('contribution_id', type=str,required=True)
 bidParser.add_argument('owner', type=int,required=True)
 
 closeContributionParser.add_argument('owner', type=int,required=True)
+closeContributionParser.add_argument('id', type=int,required=True)
 
 user_fields = {
     'id': fields.Integer,
@@ -46,11 +47,21 @@ bid_fields = {
     'contribution_id': fields.Integer,
 }
 
-contribution_fields = {
-    'id': fields.Integer,
-    'status':fields.String,
-    'file':fields.String,
-}
+bid_nested_fields = {}
+bid_nested_fields['tokens'] = fields.String
+bid_nested_fields['reputation'] = fields.String
+
+contributer_nested_fields = {}
+contributer_nested_fields['contributer_id'] = fields.String
+contributer_nested_fields['contributer_percentage'] = fields.String
+
+contribution_fields = {}
+contribution_fields['id'] = fields.Integer
+contribution_fields['status'] = fields.String
+contribution_fields['owner'] = fields.String
+contribution_fields['file'] = fields.String
+contribution_fields['bids'] = fields.Nested(bid_nested_fields)
+contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
 
 def getUser(id):
     user = session.query(cls.User).filter(cls.User.id == id).first()
@@ -166,13 +177,14 @@ class ContributionResource(Resource):
         contribution.min_reputation_to_close = parsed_args['min_reputation_to_close']
         contribution.file = parsed_args['file']
         contribution.owner = parsed_args['owner']
-
         userObj = getUser(contribution.owner)        
         if not userObj:
             abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.owner))        
         for contributer in parsed_args['contributers']:             
             contributionContributer = cls.ContributionContributer()
             contributionContributer.contributer_id = contributer.obj1['contributer_id']
+            if contributionContributer.contributer_id == '':
+                continue
             userObj = getUser(contributionContributer.contributer_id)        
             if not userObj:
                 abort(404, message="Contributer {} doesn't exist".format(contributionContributer.contributer_id))
@@ -194,17 +206,18 @@ class ContributionResource(Resource):
 
 class CloseContributionResource(Resource):
     @marshal_with(contribution_fields)   
-    def post(self,id):      
+    def post(self):      
         parsed_args = closeContributionParser.parse_args()   
         ownerId = parsed_args['owner'] 
+        contributionId = parsed_args['id'] 
         userObj = getUser(ownerId)  
         if not userObj:
             abort(404, message="User who is closing contribution {} doesn't exist".format(ownerId)) 
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
+        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()
         if not contributionObject:
-            abort(404, message="Contribution {} doesn't exist".format(id))
+            abort(404, message="Contribution {} doesn't exist".format(contributionId))
         if contributionObject.status != 'Open':
-            abort(404, message="Contribution {} is already closed".format(id))        
+            abort(404, message="Contribution {} is already closed".format(contributionId))        
         if userObj.id != contributionObject.owner:
             abort(404, message="Only contribution owner can close this contribution".format(ownerId)) 
         contributionObject.status='Closed'
@@ -212,7 +225,7 @@ class CloseContributionResource(Resource):
         session.commit()        
        
         return contributionObject, 201
-
+    
 class AllContributionResource(Resource):
     @marshal_with(contribution_fields)
     def get(self):
