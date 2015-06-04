@@ -8,7 +8,7 @@ from flask.ext.restful import marshal_with
 import json
 from auth import login_required
 
-//from flask_restful import Resource
+#from flask_restful import Resource
 # Add Authentication required to all resources:
 from flask.ext.restful import Resource as FlaskResource
 class Resource(FlaskResource):
