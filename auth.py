@@ -8,8 +8,7 @@ from urlparse import parse_qs, parse_qsl
 from urllib import urlencode
 from flask import  g, request, redirect, url_for, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from requests_oauthlib import OAuth1
+from werkzeug.security import generate_password_hash
 from jwt import DecodeError, ExpiredSignature
 import urllib2
 import math
@@ -68,7 +67,7 @@ def me():
 def create_token(user):
     payload = {
         'sub': user.id,
-        'iat': datetime.now(),
+        #'iat': datetime.now(),
         'exp': datetime.now() + timedelta(days=14)
     }
     token = jwt.encode(payload, TOKEN_SECRET)

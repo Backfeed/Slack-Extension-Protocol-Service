@@ -15,13 +15,7 @@ angular.module('MyApp')
 			min_reputation_to_close : '',
 			contributers : [{contributer_id:'',contributer_percentage:''}],
 			intialBid : [{tokens:'',reputation:''}]	
-	};
-  $scope.BidModel = {			
-		    tokens : '',
-			owner : '',
-			reputation : '',
-			contribution_id : ''
-	};
+	};  
   
   $scope.ContributionModelForView = {			
 			file : '',
@@ -51,29 +45,15 @@ angular.module('MyApp')
 	};
 	$scope.addBid = function(){
 		console.log("Create Bid");		
-		console.log($scope.ContributionModelForView);
-		$scope.BidModel.contribution_id = $scope.ContributionModelForView.id
-		$location.path("/bids");
+		console.log($scope.ContributionModelForView.id);
+		$location.path("/bids/"+$scope.ContributionModelForView.id);
 	};
 	$scope.contributions = Contributions.getAllContributions();
-	$scope.gridQueryOptions = { 
-	        data: 'myData',
-	        columnDefs: [
-	                     {field:'id', displayName:'ID',visible:false},
-	                     {field:'file', displayName:'File',cellTemplate:'<a style="cursor:pointer" ng-click="getQuery(row.entity)">{{row.getProperty("file")}} </span></div>'}, 
-	                     {field:'status', displayName:'Status',cellTemplate:'<div class="ngCellText"><a title="{{row.entity.status}}"  style="text-decoration:none;color:#000000">{{row.getProperty("status")}}</a></div>'}
-	                     ]
-	    };
 
 	if($scope.contributionId && $scope.contributionId != 0){
 		$scope.data1 = ContributionDetail.getDetail({contributionId:$scope.contributionId});	
 		$scope.data1.$promise.then(function (result) {
-				$scope.ContributionModelForView = result;
-				console.log("This is "+$scope.ContributionModelForView);
-				console.log("Status is "+$scope.ContributionModelForView.status);
-				console.log("Id is "+$scope.ContributionModelForView.status);
-				console.log("File is "+$scope.ContributionModelForView.file);
-				
+				$scope.ContributionModelForView = result;				
 			});	
 	}
 	$scope.addContributer = function() {
@@ -82,8 +62,6 @@ angular.module('MyApp')
 			contributer_percentage:''
 		}) ;
 	};
-	console.log('$scope.contributions:')
-	console.log($scope.contributions)
 	
 	//$scope.users = User.query();
   	$scope.orderProp = "targetName"; // set initial order criteria

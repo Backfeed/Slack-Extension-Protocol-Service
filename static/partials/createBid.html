@@ -1,0 +1,26 @@
+
+
+<div id='content-header'>
+  <div class='text'><h1>Bid Page</h1></div>
+</div>
+<form  ng-controller="BidsCtrl" role="form">
+
+  <div class='title'>Bid</div>
+  <div class='content' style="margin: 0px;width: 985px;" >
+<label> tokens</label>
+	  	 <input type="text" ng-model="BidModel.tokens" class="customText"/>
+		<label>owner</label>	
+	    <input  type="text" ng-model="BidModel.owner" /> 
+	    <label>reputation</label>	
+	    <input  type="text" ng-model="BidModel.reputation" />
+<section>
+
+
+
+  
+
+
+<section class='creation'>
+  <button  ng:click='submit()'>Save Bid</button>
+</section>
+</form>

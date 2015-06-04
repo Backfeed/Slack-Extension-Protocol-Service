@@ -44,7 +44,7 @@ api.add_resource(BidResource, '/bids', endpoint='bid')
 api.add_resource(ContributionResource, '/contribution', endpoint='contribution')
 api.add_resource(ContributionResource, '/contribution/<string:id>', endpoint='contributions')
 
-api.add_resource(CloseContributionResource, '/contribution/close/<string:id>', endpoint='closeContribution')
+api.add_resource(CloseContributionResource, '/contribution/close', endpoint='closeContribution')
 api.add_resource(AllContributionResource, '/contribution/all', endpoint='allContribution')
 
 

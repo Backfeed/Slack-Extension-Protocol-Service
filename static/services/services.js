@@ -28,3 +28,9 @@ bfAPIServices.factory('SaveContribution', ['$resource',
                                              save: {method:'POST', params:{}, isArray:false}
                                         });
    }]);
+  bfAPIServices.factory('SaveBidTOContribution', ['$resource',
+                                             function($resource){
+     											return $resource('bids', {}, {
+                                                 save: {method:'POST', params:{}, isArray:false}
+                                            });
+       }]);

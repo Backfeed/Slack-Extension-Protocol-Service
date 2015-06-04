@@ -1,4 +1,5 @@
 <div class="table-responsive pre-scrollable" ng:controller="ContributionsCtrl">
+	Search: <input ng-model="searchKeyword">
 	<table class="table table-striped black-striped">
 		<thead>
 			<tr>
@@ -9,7 +10,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<tr ng:repeat="item in contributions">
+			<tr ng:repeat="item in contributions | filter: searchKeyword "">
 				<td style="width:40%"><a ng-click="getContribution(item)" style="cursor:pointer">{{item.id}}</a></td>
 				<td style="width:40%"><div class="panel-text-dot" style="width: 600px;" data-placement="top" data-toggle="tooltip" tooltip="{{item.file}}">{{item.file}}</div></td>
 				<td style="width:20%"><div class="panel-text-dot" style="width: 600px;">{{item.status}}</div></td>
