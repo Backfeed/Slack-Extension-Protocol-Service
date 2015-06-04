@@ -7,7 +7,8 @@ from functools import wraps
 from urlparse import parse_qs, parse_qsl
 from urllib import urlencode
 from flask import  g, request, redirect, url_for, jsonify
-from flask.ext.sqlalchemy import SQLAlchemy
+#from flask.ext.sqlalchemy import SQLAlchemy
+#import sqlalchemy
 from werkzeug.security import generate_password_hash
 from jwt import DecodeError, ExpiredSignature
 import urllib2
