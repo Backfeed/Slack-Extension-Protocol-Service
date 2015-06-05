@@ -1,16 +1,16 @@
 from db import session
 import classes as cls
 
-from flask_restful import reqparse
-from flask_restful import abort
-from flask_restful import fields
-from flask_restful import marshal_with
+from flask.ext.restful import reqparse
+from flask.ext.restful import abort
+from flask.ext.restful import fields
+from flask.ext.restful import marshal_with
 import json
 from auth import login_required
 
-#from flask_restful import Resource
+#from flask.ext.restful import Resource
 # Add Authentication required to all resources:
-from flask_restful import Resource as FlaskResource
+from flask.ext.restful import Resource as FlaskResource
 class Resource(FlaskResource):
     method_decorators = [login_required]   # applies to all inherited resources
 
