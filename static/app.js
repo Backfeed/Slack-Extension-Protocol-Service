@@ -16,6 +16,11 @@ angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStra
         templateUrl: 'partials/createContribution.html',
         controller: 'ContributionsCtrl'
       })
+      .state('contributionStatus', {
+    	  url: '/contributionStatus/:contributionId',
+        templateUrl: 'partials/contributionStatus.html',
+        controller: 'ContributionsCtrl'
+      })
 	  .state('contributions', {
 		controller: 'ContributionsCtrl',
         url: '/contributions',

@@ -75,6 +75,11 @@ angular.module('MyApp')
 		console.log($scope.ContributionModelForView.id);
 		$location.path("/bids/"+$scope.ContributionModelForView.id);
 	};
+	$scope.showStatus = function(){
+		console.log("Show Status");		
+		console.log($scope.ContributionModelForView.id);
+		$location.path("/contributionStatus/"+$scope.ContributionModelForView.id);
+	};
 	if($auth.isAuthenticated()){
 		$scope.contributions = Contributions.getAllContributions();
 	}
