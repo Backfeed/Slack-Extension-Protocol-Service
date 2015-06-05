@@ -1,56 +1,70 @@
 
 <div class="container profile">
-    <div class="row">
+	<div class="row">
 		<div class="col-sm-10">
-		  <div class="panel panel-default">
-		    <div class="panel-heading">{{ContributionModelForView.file}}</div>
-		    <div class="panel-body">
+			<form class="form-horizontal" ng-controller="ContributionsCtrl"
+				role="form">
+				<div class="panel panel-default">
+					<div class="panel-heading">{{ContributionModelForView.title}}</div>
+					<div class="panel-body">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3 class="panel-title">My Bids</h3>
+							</div>
+							<table class="table">
 
-				<form  ng-controller="ContributionsCtrl" role="form">
+								<th>Bid Tokens</th>
+								<th>Bid Reputations</th>
 
-				  <div class='title'>Contribution</div>
-				  <div class='content' style="margin: 0px;width: 985px;" >
-				<label> File</label>
-				<label> {{ContributionModelForView.file}}</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-						<label>owner</label>	
-						<label> {{ContributionModelForView.owner}}</label>&nbsp;&nbsp;&nbsp;&nbsp;
-					    <label>min_reputation_to_close</label>	
-					    <label>{{ContributionModelForView.min_reputation_to_close}}</label>
-				<section>
-				<section class='creation'>
 
-				<div class='separator'></div>
-				  <div ng-repeat="contributer in ContributionModelForView.contributionContributers">
-				  	 <label>Contributer Id</label>
-				     <label>{{contributer.contributer_id}}</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				    <label>Contributer Contribution Percentage</label>
-				     <label>{{contributer.contributer_percentage}}</label>
-				   </div>     
-				  </div>
-				  <div class='separator'></div>
-				  </section>
-				  <section class='creation'>
-				<div class='separator'></div>
-				  <div ng-repeat="bid in ContributionModelForView.bids">  
-				    <label>Bid Tokens</label>
-				     <label>{{bid.tokens}}</label>&nbsp;&nbsp;&nbsp;&nbsp;
-				    <label>Bid Reputations</label>
-				     <label>{{bid.reputation}}</label>
-				      </div>     
-				  </div>
-				</section>
+								<tr ng-repeat="bid in ContributionModelForView.bids">
+									<div ng-if="bid.owner == userId">
+									<td>{{bid.tokens}}</td>
+									<td>{{bid.reputation}}</td>
+									</div>
+								</tr>
+							</table>
+							<div class="panel-body">
+								<div class="btn-toolbar text-center well">
+									<button class="btn btn-default"
+										ng-show="ContributionModelForView.status == 'Open'"
+										ng:click='addBid()'>Add Bid</button>
+									<button class="btn btn-default"
+										ng-show="ContributionModelForView.bids.length > 0"
+										ng:click='showStatus()'>Status</button>
+								</div>
 
-				<section class='creation'>
-				  <button  ng-show="ContributionModelForView.status == 'Open'" ng:click='closeContribution()'>Close Contribution</button>
-				</section>
-				<section class='creation'>
-				  <button  ng-show="ContributionModelForView.status == 'Open'" ng:click='addBid()'>Add Bid</button>
-				</section>
-				</form>
-		
-		    </div>
-		  </div>
-		</div>	
+							</div>
+						</div>
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3 class="panel-title">Content</h3>
+							</div>
+							<div class="panel-body">{{ContributionModelForView.file}}</div>
+						</div>
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3 class="panel-title">Collaborators</h3>
+							</div>
+							<table class="table">
+
+								<th>Collaborator Name</th>
+								<th>Collaborator Percentage</th>
+
+
+								<tr
+									ng-repeat="collaborator in ContributionModelForView.contributionContributers">
+									<td>{{collaborator.name}}</td>
+									<td>{{collaborator.contributer_percentage}}</td>
+								</tr>
+							</table>
+
+						</div>
+					</div>
+
+
+				</div>
+
+			</form>
+		</div>
 	</div>
-</div>		
-		

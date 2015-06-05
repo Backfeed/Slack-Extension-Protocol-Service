@@ -6,8 +6,9 @@ angular.module('MyApp')
 	
 	$scope.getProfile = function() {
       Account.getProfile()
-        .success(function(data) {
+        .success(function(data) {        	
           $scope.user = data;
+          Account.setUserData(data);
         })
         .error(function(error) {
           $alert({

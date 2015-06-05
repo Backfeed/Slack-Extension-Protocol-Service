@@ -7,8 +7,6 @@ from functools import wraps
 from urlparse import parse_qs, parse_qsl
 from urllib import urlencode
 from flask import  g, request, redirect, url_for, jsonify
-#from flask.ext.sqlalchemy import SQLAlchemy
-#import sqlalchemy
 from werkzeug.security import generate_password_hash
 from jwt import DecodeError, ExpiredSignature
 import urllib2
@@ -63,7 +61,7 @@ def me():
         print 'User Not Logged In.',404
         return 'User Not Logged In.',404	
     
-    return jsonify(	dict(id=user.slack_id,displayName=user.name))
+    return jsonify(dict(id=user.slack_id,displayName=user.name,userId=user.id))
 
 def create_token(user):
     payload = {

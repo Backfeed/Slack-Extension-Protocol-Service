@@ -1,7 +1,39 @@
 angular.module('MyApp')
-  .controller('ContributionsCtrl', function($scope,$auth,$location,$stateParams,Contributions,ContributionDetail,SaveContribution,CloseContribution) {
+  .controller('ContributionsCtrl', function($scope,$auth,$location,$stateParams,$alert,Contributions,ContributionDetail,SaveContribution,CloseContribution,Account) {
 	  $scope.contributionId = $stateParams.contributionId;
-	
+	  $scope.getProfile = function() {
+	      Account.getProfile()
+	        .success(function(data) {
+	        	$scope.userId = data.userId;
+				Account.setUserData(data);
+				
+	        })
+	        .error(function(error) {
+	        $alert({
+	            content: error.message,
+	            animation: 'fadeZoomFadeDown',
+	            type: 'material',
+	            duration: 3
+	          });
+	        });
+	    };
+	  $scope.ContributionModel = {	
+			    title : '',
+				file : '',
+				owner : '',			
+				min_reputation_to_close : '',
+				contributers : [{contributer_id:'',contributer_percentage:''}],
+				intialBid : [{tokens:'',reputation:''}]	
+		};  
+	  userData = Account.getUserData();
+	  console.log("userData is"+userData);
+	  if(userData == undefined){
+		  $scope.getProfile();
+	  }else{
+		  $scope.userId = userData.userId;
+		  $scope.ContributionModel.owner = userData.userId;
+	  }
+	  
 	// if not authenticated return to splash:
 	if(!$auth.isAuthenticated()){
 		$location.path('splash'); 
@@ -9,17 +41,12 @@ angular.module('MyApp')
 
 
 	//$scope.slackUsers = Users.getUsers();
-  $scope.ContributionModel = {			
-			file : '',
-			owner : '',
-			min_reputation_to_close : '',
-			contributers : [{contributer_id:'',contributer_percentage:''}],
-			intialBid : [{tokens:'',reputation:''}]	
-	};  
   
-  $scope.ContributionModelForView = {			
+  
+  $scope.ContributionModelForView = {	
+		  	title : '',
 			file : '',
-			owner : '',
+			owner : '',			
 			min_reputation_to_close : '',
 			contributionContributers : [{contributer_id:'',contributer_percentage:''}],
 			bids : [{tokens:'',reputation:''}]	
@@ -48,7 +75,10 @@ angular.module('MyApp')
 		console.log($scope.ContributionModelForView.id);
 		$location.path("/bids/"+$scope.ContributionModelForView.id);
 	};
-	$scope.contributions = Contributions.getAllContributions();
+	if($auth.isAuthenticated()){
+		$scope.contributions = Contributions.getAllContributions();
+	}
+	
 
 	if($scope.contributionId && $scope.contributionId != 0){
 		$scope.data1 = ContributionDetail.getDetail({contributionId:$scope.contributionId});	
@@ -64,14 +94,14 @@ angular.module('MyApp')
 	};
 	
 	//$scope.users = User.query();
-  	$scope.orderProp = "targetName"; // set initial order criteria
+  	$scope.orderProp = "file"; // set initial order criteria
 	$scope.submit = function(){
 		console.log("In Submit method");
 		console.log($scope.ContributionModel)
 		$scope.data = SaveContribution.save({},$scope.ContributionModel);
 		$scope.data.$promise.then(function (result) {
 			alert('Successfully saved');
-			$location.path("/contributions");
+			$location.path("/contribution/"+result.id);
 		});
 	};
 	

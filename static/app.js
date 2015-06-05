@@ -1,4 +1,4 @@
-angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices'])
+angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices','formly','formlyBootstrap'])
   .config(function($stateProvider, $urlRouterProvider, $authProvider) {
     $stateProvider
 	  .state('splash', {

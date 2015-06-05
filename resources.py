@@ -1,16 +1,16 @@
 from db import session
 import classes as cls
 
-from flask.ext.restful import reqparse
-from flask.ext.restful import abort
-from flask.ext.restful import fields
-from flask.ext.restful import marshal_with
+from flask_restful import reqparse
+from flask_restful import abort
+from flask_restful import fields
+from flask_restful import marshal_with
 import json
 from auth import login_required
 
 #from flask_restful import Resource
 # Add Authentication required to all resources:
-from flask.ext.restful import Resource as FlaskResource
+from flask_restful import Resource as FlaskResource
 class Resource(FlaskResource):
     method_decorators = [login_required]   # applies to all inherited resources
 
@@ -20,14 +20,17 @@ bidParser = reqparse.RequestParser()
 closeContributionParser = reqparse.RequestParser()
 
 contributionParser.add_argument('contributers', type=cls.Contributer, action='append')
-contributionParser.add_argument('intialBid', type=cls.IntialBid,required=True)
+contributionParser.add_argument('intialBid', type=cls.IntialBid)
 contributionParser.add_argument('owner', type=int,required=True)
 contributionParser.add_argument('min_reputation_to_close', type=str)
 contributionParser.add_argument('file', type=str,required=True)
+contributionParser.add_argument('title', type=str)
 
 userParser.add_argument('userId', type=str)
 userParser.add_argument('name', type=str,required=True)
-userParser.add_argument('slackId', type=str)
+userParser.add_argument('slack_id', type=str)
+userParser.add_argument('tokens', type=str)
+userParser.add_argument('reputation', type=str)
 
 bidParser.add_argument('tokens', type=str,required=True)
 bidParser.add_argument('reputation', type=str,required=True)    
@@ -40,26 +43,33 @@ closeContributionParser.add_argument('id', type=int,required=True)
 user_fields = {
     'id': fields.Integer,
     'name': fields.String,
+    'slack_id': fields.String,
+    'tokens': fields.String,
+    'reputation': fields.String
 }
 
 bid_fields = {
     'id': fields.Integer,
-    'contribution_id': fields.Integer,
+    'contribution_id': fields.Integer
 }
 
 bid_nested_fields = {}
 bid_nested_fields['tokens'] = fields.String
 bid_nested_fields['reputation'] = fields.String
+bid_nested_fields['owner'] = fields.Integer
 
 contributer_nested_fields = {}
 contributer_nested_fields['contributer_id'] = fields.String
 contributer_nested_fields['contributer_percentage'] = fields.String
+contributer_nested_fields['name'] = fields.String
 
 contribution_fields = {}
 contribution_fields['id'] = fields.Integer
+contribution_fields['time_created'] = fields.DateTime
 contribution_fields['status'] = fields.String
 contribution_fields['owner'] = fields.String
 contribution_fields['file'] = fields.String
+contribution_fields['title'] = fields.String
 contribution_fields['bids'] = fields.Nested(bid_nested_fields)
 contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
 
@@ -96,13 +106,22 @@ class UserResource(Resource):
     def post(self):
         parsed_args = userParser.parse_args()
 
-        jsonStr = {"slack_id":parsed_args['slackId'],
-                    "name":parsed_args['name']}
+        jsonStr = {"slack_id":parsed_args['slack_id'],
+                    "name":parsed_args['name'],
+                    "tokens":parsed_args['tokens'],
+                    "reputation":parsed_args['reputation']
+                    }
         user = cls.User(jsonStr,session)
 
         session.add(user)
         session.commit()
         return user, 201
+    
+class AllUserResource(Resource):
+    @marshal_with(user_fields)
+    def get(self):
+        userObjects = session.query(cls.User).all()
+        return userObjects
         
 class BidResource(Resource):
     @marshal_with(bid_fields)
@@ -159,6 +178,8 @@ class ContributionResource(Resource):
         print 'got Get for Contribution fbid:'+id
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(id))
+        for contributer in contributionObject.contributionContributers:
+            contributer.name= getUser(contributer.contributer_id).name
         return contributionObject
 
     def delete(self, id):
@@ -177,6 +198,7 @@ class ContributionResource(Resource):
         contribution.min_reputation_to_close = parsed_args['min_reputation_to_close']
         contribution.file = parsed_args['file']
         contribution.owner = parsed_args['owner']
+        contribution.title = parsed_args['title']
         userObj = getUser(contribution.owner)        
         if not userObj:
             abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.owner))        
@@ -190,14 +212,15 @@ class ContributionResource(Resource):
                 abort(404, message="Contributer {} doesn't exist".format(contributionContributer.contributer_id))
             contributionContributer.contribution_id=contribution.id
             contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
-            contribution.contributionContributers.append(contributionContributer)        
-        jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
+            contribution.contributionContributers.append(contributionContributer)  
+        if((parsed_args['intialBid'].obj1['tokens'] != '') & (parsed_args['intialBid'].obj1['reputation'] == '')):      
+                jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
                    "reputation":parsed_args['intialBid'].obj1['reputation'],
                    "owner":contribution.owner,
                    "contribution_id":contribution.id
                     }
-        intialBidObj = cls.Bid(jsonStr,session)        
-        contribution.bids.append(intialBidObj)
+                intialBidObj = cls.Bid(jsonStr,session)        
+                contribution.bids.append(intialBidObj)
         session.add(contribution)
         session.commit()        
        
@@ -230,5 +253,4 @@ class AllContributionResource(Resource):
     @marshal_with(contribution_fields)
     def get(self):
         contributionObject = session.query(cls.Contribution).all()
-        print contributionObject
         return contributionObject
