@@ -5,3 +5,4 @@ flask
 .cache/motd.legal-displayed
 .cloud-locale-test.skip
 .viminfo
+.bash_history
