@@ -6,3 +6,5 @@ flask
 .cloud-locale-test.skip
 .viminfo
 .bash_history
+*.db
+resource.pyc
