@@ -1,26 +1,6 @@
-
-
-<div id='content-header'>
-  <div class='text'><h1>Bid Page</h1></div>
-</div>
-<form  ng-controller="BidsCtrl" role="form">
-
-  <div class='title'>Bid</div>
-  <div class='content' style="margin: 0px;width: 985px;" >
-<label> tokens</label>
-	  	 <input type="text" ng-model="BidModel.tokens" class="customText"/>
-		<label>owner</label>	
-	    <input  type="text" ng-model="BidModel.owner" /> 
-	    <label>reputation</label>	
-	    <input  type="text" ng-model="BidModel.reputation" />
-<section>
-
-
-
-  
-
-
-<section class='creation'>
-  <button  ng:click='submit()'>Save Bid</button>
-</section>
+<form novalidate ng-controller="BidsCtrl as vm" ng-submit="vm.submit()">
+    <h1>Create Bid</h1>
+    <formly-form model="vm.bid" fields="vm.bidFields" form="vm.bidForm">
+        <button type="submit" class="btn btn-primary" ng-disabled="vm.bidForm.$invalid">Submit</button>
+    </formly-form>
 </form>

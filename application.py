@@ -12,6 +12,7 @@ from resources import BidResource
 from resources import ContributionResource
 from resources import CloseContributionResource
 from resources import AllContributionResource
+from resources import AllUserResource
 
 import auth
 
@@ -37,6 +38,7 @@ api = Api(application)
 
 api.add_resource(UserResource, '/users/<string:id>', endpoint='users')
 api.add_resource(UserResource, '/users', endpoint='user')
+api.add_resource(AllUserResource, '/users/all', endpoint='allUser')
 
 api.add_resource(BidResource, '/bids/<string:id>', endpoint='bids')
 api.add_resource(BidResource, '/bids', endpoint='bid')
