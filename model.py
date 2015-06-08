@@ -38,6 +38,8 @@ bid_table = schema.Table('bid', metadata,
         schema.ForeignKey('contribution.id')),
     schema.Column('tokens', types.Integer),
     schema.Column('reputation',  types.Integer),
+    schema.Column('current_rep_to_return', types.Integer),
+    schema.Column('contribution_value_after_bid',  types.Integer),
 )
 
 
