@@ -170,7 +170,7 @@ class BidResource(Resource):
         bid = cls.Bid(jsonStr,session)                       
 
         # process contribution:
-        bid = self.process_bid(bid)
+        bid = vdp.process_bid(bid)
         if( not bid ):
             abort(404, message="Failed to process bid".format(contributionid))
 
@@ -178,27 +178,6 @@ class BidResource(Resource):
         session.add(bid)
         session.commit()
         return bid, 201
-    
-    def process_bid(self,current_bid):
-        print 'processing bid:'+str(current_bid)
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == current_bid.contribution_id).first()
-        
-        # prepare (E,R)
-        E_R_tuple = [ (bid.tokens,bid.reputation) for bid in contributionObject.bids]
-        E_R_tuple.append((current_bid.tokens,current_bid.reputation))
-        (V,Vr) = vdp.functionX(E_R_tuple)
-
-        # update 'current_rep_to_return' on bids:
-        i = 0
-        for prev_bid in contributionObject.bids:	
-            prev_bid.current_rep_to_return = Vr[i]
-            session.add(prev_bid)
-            i = i+1
-
-        # update 'contribution_value_after_bid' on current bid:
-        current_bid.current_rep_to_return = Vr[i]
-        current_bid.contribution_value_after_bid = V
-        return current_bid
 
 class ContributionResource(Resource):
     @marshal_with(contribution_fields)
