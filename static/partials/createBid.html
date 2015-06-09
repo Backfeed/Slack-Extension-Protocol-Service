@@ -1,7 +1,6 @@
-<form class="form-horizontal" ng-controller="BidsCtrl"
-				role="form">
-
-				<slider  ng-model-low="2" ng-model-high="20"></slider>
-										
-		
-		  </form>
+<form novalidate ng-controller="BidsCtrl as vm" ng-submit="vm.submit()">
+    <h1>Create Bid</h1>
+    <formly-form model="vm.bid" fields="vm.bidFields" form="vm.bidForm">
+        <button type="submit" class="btn btn-primary" ng-disabled="vm.bidForm.$invalid">Submit</button>
+    </formly-form>
+</form>

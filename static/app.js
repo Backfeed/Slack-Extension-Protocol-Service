@@ -19,7 +19,7 @@ angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mg
       .state('contributionStatus', {
     	  url: '/contributionStatus/:contributionId',
         templateUrl: 'partials/contributionStatus.html',
-        controller: 'ContributionsCtrl'
+        controller: 'ContributionStatusCtrl'
       })
 	  .state('contributions', {
 		controller: 'ContributionsCtrl',

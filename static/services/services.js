@@ -83,3 +83,13 @@ bfAPIServices.factory('SaveUser', [ '$resource', function($resource) {
 		}
 	});
 } ]);
+
+bfAPIServices.factory('ContributionStatus', [ '$resource', function($resource) {
+	return $resource('contribution/status/:id/:userId', {}, {
+		getDetail : {
+			method : 'GET',
+			params : {},
+			isArray : false
+		}
+	});
+} ]);

@@ -13,6 +13,7 @@ from resources import ContributionResource
 from resources import CloseContributionResource
 from resources import AllContributionResource
 from resources import AllUserResource
+from resources import ContributionStatusResource
 
 import auth
 
@@ -46,8 +47,11 @@ api.add_resource(BidResource, '/bids', endpoint='bid')
 api.add_resource(ContributionResource, '/contribution', endpoint='contribution')
 api.add_resource(ContributionResource, '/contribution/<string:id>', endpoint='contributions')
 
+
 api.add_resource(CloseContributionResource, '/contribution/close', endpoint='closeContribution')
 api.add_resource(AllContributionResource, '/contribution/all', endpoint='allContribution')
+
+api.add_resource(ContributionStatusResource, '/contribution/status/<string:id>/<string:userId>', endpoint='contributionStatus')
 
 
 # Navigation:

@@ -11,10 +11,10 @@ from auth import login_required
 import vdp
 
 #from flask.ext.restful import Resource
-# Add Authentication required to all resources:
+#Add Authentication required to all resources:
 from flask.ext.restful import Resource as FlaskResource
 class Resource(FlaskResource):
-    method_decorators = [login_required]   # applies to all inherited resources
+   method_decorators = [login_required]   # applies to all inherited resources
 
 userParser = reqparse.RequestParser()
 contributionParser = reqparse.RequestParser()
@@ -74,6 +74,13 @@ contribution_fields['file'] = fields.String
 contribution_fields['title'] = fields.String
 contribution_fields['bids'] = fields.Nested(bid_nested_fields)
 contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
+
+contribution_status_fields ={}
+contribution_status_fields['currentValuation'] = fields.Integer
+contribution_status_fields['totalReputaion'] = fields.Integer
+contribution_status_fields['myValuation'] = fields.Integer
+contribution_status_fields['myReputaion'] = fields.Integer
+
 
 def getUser(id):
     user = session.query(cls.User).filter(cls.User.id == id).first()
@@ -301,3 +308,26 @@ class AllContributionResource(Resource):
     def get(self):
         contributionObject = session.query(cls.Contribution).all()
         return contributionObject
+    
+class ContributionStatusResource(Resource):
+    @marshal_with(contribution_status_fields)
+    def get(self,id,userId):
+        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
+        print 'got Get for Contribution fbid:'+id
+        if not contributionObject:
+            abort(404, message="Contribution {} doesn't exist".format(id))
+        currentValuation = 0
+        totalReputaion = 0
+        myValuation = 0
+        myReputaion = 0
+        for bid in contributionObject.bids:
+            totalReputaion = totalReputaion + bid.reputation
+            if(str(bid.owner) == str(userId)):
+                myReputaion = myReputaion + bid.reputation 
+                myValuation = myValuation + bid.tokens
+        jsonStr = {"currentValuation":currentValuation,
+                   "totalReputaion":totalReputaion,
+                   "myValuation":myValuation,
+                   "myReputaion":myReputaion
+                    }
+        return jsonStr
