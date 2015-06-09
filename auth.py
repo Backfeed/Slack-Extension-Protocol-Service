@@ -145,7 +145,7 @@ def slack():
             response.status_code = 400
             return response
 
-        u = User(slack_id=profile['user_id'], name=profile['user'])
+        u = User(slack_id=profile['user_id'], name=profile['user'],tokens = 100,reputation = 100)
         session.add(u)
         session.commit()
         token = create_token(u)
@@ -161,7 +161,7 @@ def slack():
 
     print 'slack profile:'+str(profile)
     #u = cls.User(slack_id=profile['user_id'], name=profile['user'])
-    jsonStr = {"slack_id":profile['user_id'],"name":profile['user']}
+    jsonStr = {"slack_id":profile['user_id'],"name":profile['user'],'tokens' : 100,'reputation' : 100}
     u = cls.User(jsonStr,session)
     session.add(u)
     session.commit()
