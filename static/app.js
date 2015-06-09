@@ -1,5 +1,5 @@
-angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices','formly','formlyBootstrap'])
-  .config(function($stateProvider, $urlRouterProvider, $authProvider) {
+angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices','formly','formlyBootstrap'])
+  .config(function($stateProvider, $urlRouterProvider, $authProvider,formlyConfigProvider) {
     $stateProvider
 	  .state('splash', {
 		controller: 'SplashCtrl',
@@ -85,5 +85,30 @@ angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStra
 	$authProvider.slack({
       clientId: '2969711723.3476875864'
     });
+    formlyConfigProvider.setType({
+        name: 'repeatSection',
+        templateUrl: 'repeatSection.html',
+        controller: function($scope) {
+          $scope.formOptions = {formState: $scope.formState};
+          $scope.addNew = addNew;
+          
+          $scope.copyFields = copyFields;
+          
+          function copyFields(fields) {
+            return angular.copy(fields);
+          }
+          
+          function addNew() {
+            $scope.model[$scope.options.key] = $scope.model[$scope.options.key] || [];
+            var repeatsection = $scope.model[$scope.options.key];
+            var lastSection = repeatsection[repeatsection.length - 1];
+            var newsection = {};
+            if (lastSection) {
+              newsection = angular.copy(lastSection);
+            }
 
+            repeatsection.push(newsection);
+          }
+        }
+      });
   });

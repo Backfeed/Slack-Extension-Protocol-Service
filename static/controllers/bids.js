@@ -1,8 +1,7 @@
 angular.module('MyApp')
   .controller('BidsCtrl', function($scope,$auth,$location,$stateParams,Users,$alert,SaveBidTOContribution,Account) {
-	  var vm = this;
-	  vm.contributionId = $stateParams.contributionId;
-	  vm.bidId = $stateParams.bidId;
+	  $scope.contributionId = $stateParams.contributionId;
+	  $scope.bidId = $stateParams.bidId;
 	  $scope.getProfile = function() {
 	      Account.getProfile()
 	        .success(function(data) {
@@ -18,10 +17,10 @@ angular.module('MyApp')
 	          });
 	        });
 	    };
-	    vm.bid = {			
+	    $scope.bid = {			
 			    tokens : '',
 				owner : '',
-				reputation : '',
+				reputation : '5',
 				contribution_id : ''
 		};
 	  
@@ -30,7 +29,7 @@ angular.module('MyApp')
 		 if(userData == undefined){
 			 $scope.getProfile();
 		 }else{
-			 vm.bid.owner = userData.userId;
+			 $scope.bid.owner = userData.userId;
 		 }
 	// if not authenticated return to splash:
 	if(!$auth.isAuthenticated()){
@@ -41,45 +40,23 @@ angular.module('MyApp')
   
    
 	
-   vm.bidFields = [
-                      {
-                          key: 'tokens',
-                          type: 'input',
-                          templateOptions: {
-                              type: 'text',
-                              label: 'Tokens',
-                              placeholder: 'Enter Tokens',
-                              required: true
-                          }
-                      },
-                      {
-                          key: 'reputation',
-                          type: 'input',
-                          templateOptions: {
-                              type: 'text',
-                              label: 'Reputation',
-                              placeholder: 'Enter Reputation',
-                              required: true
-                          }
-                      }
-                  ];
-                  
+                     
               
 
-	if(vm.contributionId && vm.contributionId != 0){
-		 vm.bid.contribution_id =vm.contributionId ;
+	if($scope.contributionId && $scope.contributionId != 0){
+		$scope.bid.contribution_id =$scope.contributionId ;
 	}
 	
 	
 	//$scope.users = User.query();
-	vm.orderProp = "targetName"; // set initial order criteria
-	vm.submit = function(){
+	$scope.orderProp = "targetName"; // set initial order criteria
+	$scope.submit = function(){
 		console.log("In Submit method");
-		console.log(vm.bid)
-		vm.data = SaveBidTOContribution.save({},vm.bid);
-		vm.data.$promise.then(function (result) {
+		console.log($scope.bid)
+		$scope.data = SaveBidTOContribution.save({},$scope.bid);
+		$scope.data.$promise.then(function (result) {
 			alert('Bid Successfully created');
-			$location.path("/contribution/"+vm.contributionId);
+			$location.path("/contribution/"+$scope.contributionId);
 		});
 		
 	};

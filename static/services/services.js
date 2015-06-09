@@ -49,14 +49,21 @@ bfAPIServices.factory('SaveBidTOContribution', [ '$resource',function($resource)
 	});
 } ]);
 bfAPIServices.factory('Users', [ '$resource', function($resource) {
-	return $resource('users/all', {}, {
+	var allUsersData;
+	return {getUsers1: $resource('users/all', {}, {
 		getUsers : {
 			method : 'GET',
 			params : {},
 			isArray : true
 		}
-	});
+	}),getAllUsersData: function() {return allUsersData},
+	 setAllUsersData: function(data) {
+		console.log('setUserData:');
+		console.dir(data);
+		allUsersData = data;
+    },};
 } ]);
+	
 bfAPIServices.factory('UserDetail', [ '$resource', function($resource) {
 	return $resource('users/:userId', {}, {
 		getDetail : {

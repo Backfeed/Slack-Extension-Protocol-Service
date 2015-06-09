@@ -242,6 +242,11 @@ class ContributionResource(Resource):
             contributionContributer.contribution_id=contribution.id
             contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
             contribution.contributionContributers.append(contributionContributer)  
+        if(len(contribution.contributionContributers) == 0):
+            contributionContributer = cls.ContributionContributer()
+            contributionContributer.contributer_id = contribution.owner
+            contributionContributer.contributer_percentage = '100'
+            contribution.contributionContributers.append(contributionContributer)  
         if((parsed_args['intialBid'].obj1['tokens'] != '') & (parsed_args['intialBid'].obj1['reputation'] != '')):      
                 jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
                    "reputation":parsed_args['intialBid'].obj1['reputation'],

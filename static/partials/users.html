@@ -6,14 +6,15 @@
 				<div class="form-group">
 		          <label class="control-label">Sort By:</label>
 				   <select id="sort" ng-model="orderProp" >
-		          		<option value="targetName">Full Name</option>
-		          		<option value="feedback">Reputation</option>
+		          		<option value="name">Full Name</option>
+		          		<option value="reputation">Reputation</option>
+		          		<option value="tokens">Tokens</option>
 		        	</select>
 		        </div>
 		      <form method="post" ng-submit="updateProfile()">
 		        <div class="form-group">
 		          <label class="control-label">Search:</label>
-				   <input id="search"  type="text" ng-model="query" class="form-control" >
+				   <input id="search"  type="text" ng-model="searchField" class="form-control" >
 		        </div>
 		      </form>
 		    </div>
@@ -21,10 +22,25 @@
 		</div>		
 		<div class="col-sm-9">
 		 
-		      	<div ng-repeat="user in users |  orderBy:orderProp :reverse">
-			        <div class="panel">
+		      	<div ng-repeat="user in users |  orderBy:orderProp :reverse | filter:searchField">
+			        <div class="panel" ng-click="getUser(user)" style="cursor:pointer">
 						<div class="panel-body">
-						    {{user.realName}}
+							<div class="form-group">
+					          <label class="control-label">Name:</label>
+							   {{user.name}}
+					        </div>
+					        <div class="form-group">
+					          <label class="control-label">Slack Id:</label>
+							   {{user.slack_id}}
+					        </div>
+					        <div class="form-group">
+					          <label class="control-label">Tokens:</label>
+							   {{user.tokens}}
+					        </div>
+					        <div class="form-group">
+					          <label class="control-label">Reputation:</label>
+							   {{user.reputation}}
+					        </div>
 						  </div>
 			        </div>
 			      </div>
