@@ -9,6 +9,7 @@ import json
 from auth import login_required
 
 import vdp
+from datetime import datetime
 
 #from flask.ext.restful import Resource
 #Add Authentication required to all resources:
@@ -172,8 +173,11 @@ class BidResource(Resource):
         jsonStr = {"tokens":parsed_args['tokens'],
                    "reputation":parsed_args['reputation'],
                    "owner":parsed_args['owner'],
-                   "contribution_id":parsed_args['contribution_id']
+                   "contribution_id":parsed_args['contribution_id'],
+                   "stake":10, # TBD: parse stake
+                   "time_created":datetime.now()
                     }
+
         bid = cls.Bid(jsonStr,session)                       
 
         # process contribution:
@@ -181,9 +185,6 @@ class BidResource(Resource):
         if( not bid ):
             abort(404, message="Failed to process bid".format(contributionid))
 
-        # success: add bid and commit DB session:
-        session.add(bid)
-        session.commit()
         return bid, 201
 
 class ContributionResource(Resource):
