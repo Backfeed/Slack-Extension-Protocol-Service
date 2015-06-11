@@ -28,12 +28,12 @@
 		</div>		
 		<div class="col-sm-9">
 		  
-		      	<div ng-repeat="item in contributions  | orderBy:orderProp | filter:searchKeyword">
+		      	<div ng-repeat="item in contributions  | orderBy:orderProp: reverse | filter:searchKeyword">
 			        <div class="panel" ng-click="getContribution(item)" style="cursor:pointer">
 						<div class="panel-body">
 							<div class="form-group">
 					          <label class="control-label">Name:</label>
-							   {{item.file}}
+							   {{item.title}}
 					        </div>
 							<div class="form-group">
 					          <label class="control-label">Id:</label>

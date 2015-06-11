@@ -136,7 +136,7 @@ angular.module('MyApp').controller(
 					});
 				}
 				//$scope.users = User.query();
-				$scope.orderProp = "file"; // set initial order criteria
+				$scope.orderProp = "time_created"; // set initial order criteria
 
 				$scope.closeContribution = function() {
 					console.log("In closeContribution method");
