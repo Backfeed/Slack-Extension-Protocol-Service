@@ -167,7 +167,7 @@ def process_bid(current_bid):
 	current_eval = calcValue(bids)
 
 	# process current eval:
-	eval_delta = current_eval - highest_eval
+	eval_delta = int(current_eval) - int(highest_eval)
 	if (eval_delta > 0):
 		issueTokens(eval_delta, contributionObject.contributionContributers)
 
