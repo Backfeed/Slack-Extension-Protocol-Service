@@ -208,7 +208,9 @@ angular.module('MyApp')
 			Trello.deauthorize();
     };
 	
-
-    $scope.getProfile();
+    if(Account.getUserData() == undefined){
+    	$scope.getProfile();
+    }
+    
 
   });

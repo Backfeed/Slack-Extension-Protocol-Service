@@ -93,3 +93,23 @@ bfAPIServices.factory('ContributionStatus', [ '$resource', function($resource) {
 		}
 	});
 } ]);
+
+bfAPIServices.factory('SaveOrg', [ '$resource', function($resource) {
+	return $resource('organization', {}, {
+		save : {
+			method : 'POST',
+			params : {},
+			isArray : false
+		}
+	});
+} ]);
+
+bfAPIServices.factory('SaveUserOrg', [ '$resource', function($resource) {
+	return $resource('userOrganization', {}, {
+		save : {
+			method : 'POST',
+			params : {},
+			isArray : false
+		}
+	});
+} ]);

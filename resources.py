@@ -18,6 +18,8 @@ class Resource(FlaskResource):
    method_decorators = [login_required]   # applies to all inherited resources
 
 userParser = reqparse.RequestParser()
+organizationParser = reqparse.RequestParser()
+userOrganizationParser = reqparse.RequestParser()
 contributionParser = reqparse.RequestParser()
 bidParser = reqparse.RequestParser()
 closeContributionParser = reqparse.RequestParser()
@@ -35,6 +37,16 @@ userParser.add_argument('slack_id', type=str)
 userParser.add_argument('tokens', type=str)
 userParser.add_argument('reputation', type=str)
 
+organizationParser.add_argument('token_name', type=str)
+organizationParser.add_argument('slack_teamid', type=str,required=True)
+organizationParser.add_argument('intial_tokens', type=str)
+organizationParser.add_argument('name', type=str)
+
+userOrganizationParser.add_argument('user_id', type=str,required=True)
+userOrganizationParser.add_argument('org_id', type=str,required=True)
+userOrganizationParser.add_argument('org_tokens', type=str)
+userOrganizationParser.add_argument('org_reputation', type=str)
+
 bidParser.add_argument('tokens', type=str,required=True)
 bidParser.add_argument('reputation', type=str,required=True)    
 bidParser.add_argument('contribution_id', type=str,required=True)
@@ -49,6 +61,22 @@ user_fields = {
     'slack_id': fields.String,
     'tokens': fields.String,
     'reputation': fields.String
+}
+
+organization_fields = {
+    'id': fields.Integer,
+    'token_name': fields.String,
+    'slack_teamid': fields.String,
+    'intial_tokens': fields.String,
+    'name': fields.String
+}
+
+userOrganization_fields = {
+    'id': fields.Integer,
+    'user_id': fields.String,
+    'org_id': fields.String,
+    'org_tokens': fields.String,
+    'org_reputation': fields.String
 }
 
 bid_fields = {
@@ -311,3 +339,38 @@ class ContributionStatusResource(Resource):
                    "myReputaion":myReputaion
                     }
         return jsonStr
+    
+    
+class OrganizationResource(Resource):
+    
+    @marshal_with(organization_fields)
+    def post(self):
+        parsed_args = organizationParser.parse_args()
+
+        jsonStr = {"token_name":parsed_args['token_name'],
+                    "slack_teamid":parsed_args['slack_teamid'],
+                    "intial_tokens":parsed_args['intial_tokens'],
+                    "name":parsed_args['name']
+                    }
+        organization = cls.Organization(jsonStr,session)
+
+        session.add(organization)
+        session.commit()
+        return organization, 201
+    
+class UserOrganizationResource(Resource):
+    
+    @marshal_with(userOrganization_fields)
+    def post(self):
+        parsed_args = userOrganizationParser.parse_args()
+
+        jsonStr = {"user_id":parsed_args['user_id'],
+                    "org_id":parsed_args['org_id'],
+                    "org_tokens":parsed_args['org_tokens'],
+                    "org_reputation":parsed_args['org_reputation']
+                    }
+        userOrganization = cls.UserOrganization(jsonStr,session)
+
+        session.add(userOrganization)
+        session.commit()
+        return userOrganization, 201

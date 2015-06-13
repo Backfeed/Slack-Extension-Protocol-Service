@@ -14,6 +14,8 @@ from resources import CloseContributionResource
 from resources import AllContributionResource
 from resources import AllUserResource
 from resources import ContributionStatusResource
+from resources import OrganizationResource
+from resources import UserOrganizationResource
 
 import auth
 
@@ -53,6 +55,10 @@ api.add_resource(AllContributionResource, '/contribution/all', endpoint='allCont
 
 api.add_resource(ContributionStatusResource, '/contribution/status/<string:id>/<string:userId>', endpoint='contributionStatus')
 
+api.add_resource(OrganizationResource, '/organization', endpoint='organization')
+
+api.add_resource(UserOrganizationResource, '/userOrganization', endpoint='userOrganization')
+
 
 # Navigation:
 @application.route('/')
@@ -79,8 +85,8 @@ def slack():
 
 
 if __name__ == '__main__':
-     application.run(host='0.0.0.0',debug=True)
-    #application.run(debug=True)
+      application.run(host='0.0.0.0',debug=True)
+      #application.run(debug=True)
 
 
 # BUG: app loads from one session , world eng writes logs on another, app server needs to be restarted for changes from eng to take effect

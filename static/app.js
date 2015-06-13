@@ -16,6 +16,11 @@ angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mg
         templateUrl: 'partials/createContribution.html',
         controller: 'ContributionsCtrl'
       })
+      .state('createOrg', {
+        url: '/organization',
+        templateUrl: 'partials/createOrganization.html',
+        controller: 'OrganizationCtrl'
+      })
       .state('contributionStatus', {
     	  url: '/contributionStatus/:contributionId',
         templateUrl: 'partials/contributionStatus.html',
