@@ -30,6 +30,7 @@ def login_required(f):
             return response
 
         try:
+            print "Inside login_required"
             payload = parse_token(request)
         except DecodeError:
             response = jsonify(message='Token is invalid')
@@ -41,7 +42,11 @@ def login_required(f):
             return response
 
         g.user_id = payload['sub']
-
+        g.slackTeamId = payload['slackTeamId']
+        g.slackTeamName = payload['slackTeamName']
+        print "g.slackTeamId"+str(g.slackTeamId )
+        print "g.slackTeamName"+str(g.slackTeamName )
+        print "g.user_id"+str(g.user_id )
         return f(*args, **kwargs)
 
     return decorated_function
@@ -50,6 +55,10 @@ def login_required(f):
 
 # API - ME :
 def me():
+    print "Inside me"
+    print "g.slackTeamId"+str(g.slackTeamId )
+    print "g.slackTeamName"+str(g.slackTeamName )
+    print "g.user_id"+str(g.user_id )
     if(not g.user_id):
         print 'User Not Logged In.',404
         return 'User Not Logged In.',404
@@ -63,9 +72,12 @@ def me():
     
     return jsonify(dict(id=user.slack_id,displayName=user.name,userId=user.id))
 
-def create_token(user):
+def create_token(user,slackTeamId,slackTeamName):
+    print "Inside create token"
     payload = {
         'sub': user.id,
+        'slackTeamId' : slackTeamId,
+        'slackTeamName' : slackTeamName,
         #'iat': datetime.now(),
         'exp': datetime.now() + timedelta(days=14)
     }
@@ -74,12 +86,14 @@ def create_token(user):
 
 
 def parse_token(req):
+    print "Inside parse token"
     authHeader = req.headers.get('x-access-token')
     print 'parse_token: authHeader:'+str(authHeader)
     token = authHeader.split()[1]
     return jwt.decode(token, TOKEN_SECRET)
 
 def login():
+    print "Inside login"
     user = User.query.filter_by(email=request.json['email']).first()
     if not user or not user.check_password(request.json['password']):
         response = jsonify(message='Wrong Email or Password')
@@ -90,6 +104,7 @@ def login():
 
 
 def signup():
+    print "Inside signup"
     user = User(email=request.json['email'], password=request.json['password'])
     db.session.add(user)
     db.session.commit()
@@ -99,6 +114,7 @@ def signup():
 
 # Services Auth Routes:
 def slack():
+    print "Inside slack"
     access_token_url = 'https://slack.com/api/oauth.access'
     users_api_url = 'https://slack.com/api/auth.test'
 
@@ -148,7 +164,7 @@ def slack():
         u = User(slack_id=profile['user_id'], name=profile['user'],tokens = 100,reputation = 100)
         session.add(u)
         session.commit()
-        token = create_token(u)
+        token = create_token(u,profile['team_id'],profile['team'])
         return jsonify(token=token)
 
     # Step 4. Create a new account or return an existing one.
@@ -156,7 +172,7 @@ def slack():
     user = session.query(cls.User).filter(cls.User.slack_id == profile['user_id']).first()
 
     if user:
-        token = create_token(user)
+        token = create_token(user,profile['team_id'],profile['team'])
         return jsonify(token=token)
 
     print 'slack profile:'+str(profile)
@@ -165,5 +181,5 @@ def slack():
     u = cls.User(jsonStr,session)
     session.add(u)
     session.commit()
-    token = create_token(u)
+    token = create_token(u,profile['team_id'],profile['team'])
     return jsonify(token=token)

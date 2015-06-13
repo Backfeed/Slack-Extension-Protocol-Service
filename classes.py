@@ -64,6 +64,12 @@ class Bid(BaseObject):
 class Contribution(object):
 	pass
 
+class Organization(object):
+	pass
+
+class UserOrganization(object):
+	pass
+
 class ContributionContributer(object):
 	pass
 

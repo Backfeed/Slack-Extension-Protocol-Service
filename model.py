@@ -54,6 +54,8 @@ contribution_table = schema.Table('contribution', metadata,
         schema.Sequence('contribution_seq_id', optional=True), primary_key=True),
     schema.Column('owner', types.Integer,
         schema.ForeignKey('user.id')),
+    schema.Column('org_id', types.Integer,
+        schema.ForeignKey('org.id')),
     schema.Column('min_reputation_to_close',  types.Integer,nullable=True),
     schema.Column('time_created', types.DateTime(), default=now),
     schema.Column('file', types.Text()),
@@ -74,13 +76,42 @@ contribution_contributer_table = schema.Table('contribution_contributer', metada
     schema.Column('contributer_percentage', types.INTEGER),   
 )
 
+"""
+Organization - schema definition:
+"""
+organization_table = schema.Table('org', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('org_seq_id', optional=True), primary_key=True),
+
+    schema.Column('token_name', types.Unicode(255)),
+    schema.Column('slack_teamid', types.Unicode(255)),
+    schema.Column('intial_tokens', types.Integer),
+)
+
+"""
+User Organizations - schema definition:
+"""
+users_organizations_table = schema.Table('users_organizations', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('users_organizations_seq_id', optional=True), primary_key=True),
+    schema.Column('user_id', types.Integer,
+        schema.ForeignKey('user.id')),
+    schema.Column('org_id', types.Integer,
+        schema.ForeignKey('org.id')),
+    schema.Column('org_tokens', types.Integer),
+    schema.Column('org_reputation',  types.Integer),   
+)
+
 
 """
 Relationships - definitions
 """
 orm.mapper(cls.User, user_table, properties={
-
+    'userOrganizations':orm.relation(cls.UserOrganization, backref='user'),
 })
+
+orm.mapper(cls.UserOrganization, users_organizations_table, properties={
+                                                                        })
 
 orm.mapper(cls.Contribution, contribution_table, properties={
     'contribution_owner':orm.relation(cls.User, backref='contribution'),
@@ -94,7 +125,12 @@ orm.mapper(cls.ContributionContributer, contribution_contributer_table, properti
 
 
 orm.mapper(cls.Bid, bid_table, properties={
-    'bid_owner':orm.relation(cls.User, backref='bid'),	
+    'bid_owner':orm.relation(cls.User, backref='bid'),    
+})
+
+orm.mapper(cls.Organization, organization_table, properties={
+    'contributions':orm.relation(cls.Contribution, backref='organization'),  
+    'userOrganizations':orm.relation(cls.UserOrganization, backref='organization'),                                                  
 })
 
 
