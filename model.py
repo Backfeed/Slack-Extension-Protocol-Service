@@ -21,9 +21,7 @@ user_table = schema.Table('user', metadata,
         schema.Sequence('user_seq_id', optional=True), primary_key=True),
 
     schema.Column('name', types.Unicode(255)),
-    schema.Column('slack_id', types.Unicode(255)),
-    schema.Column('tokens', types.Integer),
-    schema.Column('reputation',  types.Integer),
+    schema.Column('slack_id', types.Unicode(255)),   
 )
 
 """
@@ -54,8 +52,8 @@ contribution_table = schema.Table('contribution', metadata,
         schema.Sequence('contribution_seq_id', optional=True), primary_key=True),
     schema.Column('owner', types.Integer,
         schema.ForeignKey('user.id')),
-    schema.Column('org_id', types.Integer,
-        schema.ForeignKey('org.id')),
+    schema.Column('users_organizations_id', types.Integer,
+        schema.ForeignKey('users_organizations.id')),
     schema.Column('min_reputation_to_close',  types.Integer,nullable=True),
     schema.Column('time_created', types.DateTime(), default=now),
     schema.Column('file', types.Text()),
@@ -79,9 +77,9 @@ contribution_contributer_table = schema.Table('contribution_contributer', metada
 """
 Organization - schema definition:
 """
-organization_table = schema.Table('org', metadata,
+organization_table = schema.Table('organization', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('org_seq_id', optional=True), primary_key=True),
+        schema.Sequence('organization_seq_id', optional=True), primary_key=True),
 
     schema.Column('token_name', types.Unicode(255)),
     schema.Column('slack_teamid', types.Unicode(255)),
@@ -97,8 +95,8 @@ users_organizations_table = schema.Table('users_organizations', metadata,
         schema.Sequence('users_organizations_seq_id', optional=True), primary_key=True),
     schema.Column('user_id', types.Integer,
         schema.ForeignKey('user.id')),
-    schema.Column('org_id', types.Integer,
-        schema.ForeignKey('org.id')),
+    schema.Column('organization_id', types.Integer,
+        schema.ForeignKey('organization.id')),
     schema.Column('org_tokens', types.Integer),
     schema.Column('org_reputation',  types.Integer),   
 )
@@ -112,12 +110,14 @@ orm.mapper(cls.User, user_table, properties={
 })
 
 orm.mapper(cls.UserOrganization, users_organizations_table, properties={
+          'contributions':orm.relation(cls.Contribution),                                                              
                                                                         })
 
 orm.mapper(cls.Contribution, contribution_table, properties={
     'contribution_owner':orm.relation(cls.User, backref='contribution'),
     'bids':orm.relation(cls.Bid, backref='contribution'),  
     'contributionContributers':orm.relation(cls.ContributionContributer, backref='contribution'),                                                  
+    'userOrganization':orm.relation(cls.UserOrganization),
 })
 
 orm.mapper(cls.ContributionContributer, contribution_contributer_table, properties={
@@ -130,7 +130,6 @@ orm.mapper(cls.Bid, bid_table, properties={
 })
 
 orm.mapper(cls.Organization, organization_table, properties={
-    'contributions':orm.relation(cls.Contribution, backref='organization'),  
     'userOrganizations':orm.relation(cls.UserOrganization, backref='organization'),                                                  
 })
 
