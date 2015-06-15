@@ -194,12 +194,6 @@ angular.module('MyApp').controller(
 							label : 'File'
 						}
 					}, {
-						type : 'input',
-						key : 'min_reputation_to_close',
-						templateOptions : {
-							label : 'Min Reputation To Close'
-						}
-					}, {
 						type : 'repeatSection',
 						key : 'contributers',
 						templateOptions : {
@@ -227,31 +221,6 @@ angular.module('MyApp').controller(
 								}
 
 								]
-							} ]
-						}
-					}, {
-						type : 'repeatSection',
-						key : 'intialBid',
-						templateOptions : {
-							btnText : '',
-							fields : [ {
-								className : 'row',
-								fieldGroup : [ {
-									className : 'col-xs-4',
-									type : 'input',
-									key : 'tokens',
-									templateOptions : {
-										label : 'Tokens Id:'
-									}
-								}, {
-									type : 'input',
-									key : 'reputation',
-									className : 'col-xs-4',
-									templateOptions : {
-										label : 'Reputation:',
-									}
-
-								} ]
 							} ]
 						}
 					}
