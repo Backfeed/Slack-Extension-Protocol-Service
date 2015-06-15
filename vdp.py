@@ -9,15 +9,16 @@ from operator import attrgetter
 state = {}
 
 
-def init():
+def init(org_id):
 	usersDict = {}
 	total_system_reputation = 0
 	
 	# get users:
-	userObjects = session.query(cls.User).all()
-	for user in userObjects:
-		usersDict[user.id] = user
-		total_system_reputation = total_system_reputation + user.reputation
+	userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == org_id).all()
+
+	for userOrg in userOrgObjects:
+		usersDict[userOrg.user_id] = userOrg
+		total_system_reputation = total_system_reputation + userOrg.org_reputation
 	
 	state['total_system_reputation'] = total_system_reputation
 	state['usersDict'] = usersDict
@@ -33,8 +34,8 @@ def issueTokens(tokes_to_distribute,contributers):
 	for contributer in contributers:
 		user = state['usersDict'][contributer.contributer_id]		
 		tokens_to_add = math.ceil( ( tokes_to_distribute * contributer.contributer_percentage ) / 100 ) 
-		user.tokens += tokens_to_add
-		user.reputation += tokens_to_add
+		user.org_tokens += tokens_to_add
+		user.org_reputation += tokens_to_add
 		session.add(user)
 		
 def calcValue(bids):
@@ -82,9 +83,9 @@ def add_to_bids(bids, current_bid):
 			Wi += bid.reputation
 	#check if something has to be trimmed
 	print "*******" + str(Wi);
-	if current_bidder.reputation - Wi < rep:
-		if current_bidder.reputation > Wi:
-			current_bid.reputation = current_bidder.reputation - Wi
+	if current_bidder.org_reputation - Wi < rep:
+		if current_bidder.org_reputation > Wi:
+			current_bid.reputation = current_bidder.org_reputation - Wi
 		else:
 			return None;
 
@@ -94,7 +95,7 @@ def add_to_bids(bids, current_bid):
 		print "!@#!@#!@#!@#!@#!@#!@#!@#!#!@#!@#!@#"
 		current_bid.stake = current_bid.reputation
 
-	print "User reputation: "+ str(current_bidder.reputation) + "& Wi = " + str(Wi) + "Appending:" + str(current_bid.reputation)
+	print "User reputation: "+ str(current_bidder.org_reputation) + "& Wi = " + str(Wi) + "Appending:" + str(current_bid.reputation)
 	bids.append(current_bid);
 	
 	return bids;
@@ -111,7 +112,7 @@ def distribute_rep(bids, current_bid):
 		stake = current_bid.reputation
 
 	#kill the stake of the current_bidder
-	current_bidder.reputation -= stake
+	current_bidder.org_reputation -= stake
 	session.add(current_bidder)
 
 	# and redistribute it around to the others
@@ -131,10 +132,10 @@ def update_rep(bids, current_bid):
 	#reallocate reputation
 	for bid in bids:
 		user = users[bid.owner]
-		print "OLD REP === " + str(user.reputation)
+		print "OLD REP === " + str(user.org_reputation)
 		print " ----  current_bid.stake = " + str(current_bid.stake)
-		user.reputation += math.ceil(current_bid.stake * ( bid.reputation * decay(bid.tokens, current_bid.tokens)  ) / summ) 
-		print "NEW REP === " + str(user.reputation)
+		user.org_reputation += math.ceil(current_bid.stake * ( bid.reputation * decay(bid.tokens, current_bid.tokens)  ) / summ) 
+		print "NEW REP === " + str(user.org_reputation)
 		session.add(user)
 
 
@@ -148,10 +149,10 @@ def decay(vi, vn):
 def process_bid(current_bid):
 	
 	print 'processing bid:'+str(current_bid)
-	
-	init()
-
 	contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == current_bid.contribution_id).first()
+	user_org = contributionObject.userOrganization
+	init(user_org.organization_id)
+
 	highest_eval = 0 
 	if(contributionObject.bids and len(contributionObject.bids)):
 		highest_eval = getHighestEval(contributionObject.bids)
