@@ -7,6 +7,8 @@ from flask.ext.restful import fields
 from flask.ext.restful import marshal_with
 import json
 from auth import login_required
+import requests
+from flask import g
 
 import vdp
 from datetime import datetime
@@ -27,6 +29,7 @@ closeContributionParser = reqparse.RequestParser()
 contributionParser.add_argument('contributers', type=cls.Contributer, action='append')
 contributionParser.add_argument('intialBid', type=cls.IntialBid)
 contributionParser.add_argument('owner', type=int,required=True)
+contributionParser.add_argument('users_organizations_id', type=int,required=True)
 contributionParser.add_argument('min_reputation_to_close', type=str)
 contributionParser.add_argument('file', type=str,required=True)
 contributionParser.add_argument('title', type=str)
@@ -34,18 +37,12 @@ contributionParser.add_argument('title', type=str)
 userParser.add_argument('userId', type=str)
 userParser.add_argument('name', type=str,required=True)
 userParser.add_argument('slack_id', type=str)
-userParser.add_argument('tokens', type=str)
-userParser.add_argument('reputation', type=str)
 
 organizationParser.add_argument('token_name', type=str)
 organizationParser.add_argument('slack_teamid', type=str,required=True)
 organizationParser.add_argument('intial_tokens', type=str)
 organizationParser.add_argument('name', type=str)
 
-userOrganizationParser.add_argument('user_id', type=str,required=True)
-userOrganizationParser.add_argument('org_id', type=str,required=True)
-userOrganizationParser.add_argument('org_tokens', type=str)
-userOrganizationParser.add_argument('org_reputation', type=str)
 
 bidParser.add_argument('tokens', type=str,required=True)
 bidParser.add_argument('reputation', type=str,required=True)    
@@ -58,23 +55,13 @@ closeContributionParser.add_argument('id', type=int,required=True)
 user_fields = {
     'id': fields.Integer,
     'name': fields.String,
-    'slack_id': fields.String,
-    'tokens': fields.String,
-    'reputation': fields.String
-}
-
-organization_fields = {
-    'id': fields.Integer,
-    'token_name': fields.String,
-    'slack_teamid': fields.String,
-    'intial_tokens': fields.String,
-    'name': fields.String
+    'slack_id': fields.String,    
 }
 
 userOrganization_fields = {
     'id': fields.Integer,
     'user_id': fields.String,
-    'org_id': fields.String,
+    'organization_id': fields.String,
     'org_tokens': fields.String,
     'org_reputation': fields.String
 }
@@ -97,6 +84,7 @@ contributer_nested_fields['name'] = fields.String
 contribution_fields = {}
 contribution_fields['id'] = fields.Integer
 contribution_fields['time_created'] = fields.DateTime
+contribution_fields['users_organizations_id'] = fields.Integer
 contribution_fields['status'] = fields.String
 contribution_fields['owner'] = fields.String
 contribution_fields['file'] = fields.String
@@ -145,9 +133,7 @@ class UserResource(Resource):
         parsed_args = userParser.parse_args()
 
         jsonStr = {"slack_id":parsed_args['slack_id'],
-                    "name":parsed_args['name'],
-                    "tokens":parsed_args['tokens'],
-                    "reputation":parsed_args['reputation']
+                    "name":parsed_args['name']
                     }
         user = cls.User(jsonStr,session)
 
@@ -157,9 +143,12 @@ class UserResource(Resource):
     
 class AllUserResource(Resource):
     @marshal_with(user_fields)
-    def get(self):
-        userObjects = session.query(cls.User).all()
-        return userObjects
+    def get(self,organizationId):
+        users =[]    
+        userOrganizationObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == organizationId).all()
+        for userOrganization in userOrganizationObjects :
+            users.append(userOrganization.user )           
+        return users
         
 class BidResource(Resource):
     @marshal_with(bid_fields)
@@ -207,7 +196,8 @@ class BidResource(Resource):
                     }
 
         bid = cls.Bid(jsonStr,session)                       
-
+        #session.add(bid);
+        #session.commit();
         # process contribution:
         bid = vdp.process_bid(bid)
         if( not bid ):
@@ -243,6 +233,7 @@ class ContributionResource(Resource):
         contribution.file = parsed_args['file']
         contribution.owner = parsed_args['owner']
         contribution.title = parsed_args['title']
+        contribution.users_organizations_id = parsed_args['users_organizations_id']
         userObj = getUser(contribution.owner)        
         if not userObj:
             abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.owner))        
@@ -313,8 +304,10 @@ class CloseContributionResource(Resource):
 
 class AllContributionResource(Resource):
     @marshal_with(contribution_fields)
-    def get(self):
-        contributionObject = session.query(cls.Contribution).all()
+    def get(self,organizationId):
+        if organizationId == 'notintialized':
+            organizationId = g.orgId
+        contributionObject = session.query(cls.Contribution).filter(cls.UserOrganization.organization_id == organizationId).all()
         return contributionObject
     
 class ContributionStatusResource(Resource):
@@ -343,7 +336,7 @@ class ContributionStatusResource(Resource):
     
 class OrganizationResource(Resource):
     
-    @marshal_with(organization_fields)
+    @marshal_with(userOrganization_fields)
     def post(self):
         parsed_args = organizationParser.parse_args()
 
@@ -355,22 +348,33 @@ class OrganizationResource(Resource):
         organization = cls.Organization(jsonStr,session)
 
         session.add(organization)
+        session.flush()
+        createUserAndUserOrganizations(organization.id)
         session.commit()
-        return organization, 201
+        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).first()
+        return userOrgObj, 201
     
-class UserOrganizationResource(Resource):
-    
-    @marshal_with(userOrganization_fields)
-    def post(self):
-        parsed_args = userOrganizationParser.parse_args()
-
-        jsonStr = {"user_id":parsed_args['user_id'],
-                    "org_id":parsed_args['org_id'],
-                    "org_tokens":parsed_args['org_tokens'],
-                    "org_reputation":parsed_args['org_reputation']
+def createUserAndUserOrganizations(organizaionId):
+    team_users_api_url = 'https://slack.com/api/users.list'
+    headers = {'User-Agent': 'DEAP'}
+    r = requests.get(team_users_api_url, params={'token':g.access_token}, headers=headers)
+    # parse response:
+    users = json.loads(r.text)['members']
+    print 'slack users:'+str(users)
+    for user in users :
+        userId =g.user_id
+        if(user['id'] != g.slackUserId):
+            jsonStr = {"slack_id":user['id'],"name":user['name']}
+            u = cls.User(jsonStr,session)
+            session.add(u) 
+            session.flush() 
+            userId = u.id
+                       
+        jsonStr = {"user_id":userId,
+                    "organization_id":organizaionId,
+                    "org_tokens":100,
+                    "org_reputation":100
                     }
         userOrganization = cls.UserOrganization(jsonStr,session)
-
-        session.add(userOrganization)
-        session.commit()
-        return userOrganization, 201
+        session.add(userOrganization)    
+    

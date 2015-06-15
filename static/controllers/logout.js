@@ -1,5 +1,7 @@
 angular.module('MyApp')
-  .controller('LogoutCtrl', function($auth, $alert,$location) {
+  .controller('LogoutCtrl', function($auth, $alert,$location,Account,Users) {
+	Account.setUserData(undefined); 
+	Users.setAllOrgUsersData(undefined);
     if (!$auth.isAuthenticated()) {
         return;
     }

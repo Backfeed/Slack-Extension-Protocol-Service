@@ -15,7 +15,6 @@ from resources import AllContributionResource
 from resources import AllUserResource
 from resources import ContributionStatusResource
 from resources import OrganizationResource
-from resources import UserOrganizationResource
 
 import auth
 
@@ -41,7 +40,7 @@ api = Api(application)
 
 api.add_resource(UserResource, '/users/<string:id>', endpoint='users')
 api.add_resource(UserResource, '/users', endpoint='user')
-api.add_resource(AllUserResource, '/users/all', endpoint='allUser')
+api.add_resource(AllUserResource, '/users/all/<string:organizationId>', endpoint='allUser')
 
 api.add_resource(BidResource, '/bids/<string:id>', endpoint='bids')
 api.add_resource(BidResource, '/bids', endpoint='bid')
@@ -51,13 +50,12 @@ api.add_resource(ContributionResource, '/contribution/<string:id>', endpoint='co
 
 
 api.add_resource(CloseContributionResource, '/contribution/close', endpoint='closeContribution')
-api.add_resource(AllContributionResource, '/contribution/all', endpoint='allContribution')
 
+api.add_resource(AllContributionResource, '/contribution/all/<string:organizationId>', endpoint='allContribution')
 api.add_resource(ContributionStatusResource, '/contribution/status/<string:id>/<string:userId>', endpoint='contributionStatus')
 
 api.add_resource(OrganizationResource, '/organization', endpoint='organization')
 
-api.add_resource(UserOrganizationResource, '/userOrganization', endpoint='userOrganization')
 
 
 # Navigation:

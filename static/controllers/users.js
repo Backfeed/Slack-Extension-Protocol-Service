@@ -1,5 +1,5 @@
 angular.module('MyApp')
-  .controller('UsersCtrl', function($scope,$auth,$location,$stateParams,Users,UserDetail,SaveUser) {
+  .controller('UsersCtrl', function($scope,$auth,$location,$stateParams,Users,UserDetail,SaveUser,Account) {
 	$scope.userId = $stateParams.userId;
 	
 	// if not authenticated return to splash:
@@ -9,12 +9,14 @@ angular.module('MyApp')
 	
 	$scope.UserModel = {			
 			name : '',
-			slack_id : '',			
-			tokens : '',
-			reputation : ''
+			slack_id : ''
 	};  
-	$scope.users = Users.getUsers1.getUsers();
 	
+	userData = Account.getUserData();
+	
+	$scope.users = Users.getOrg.getUsers({
+		organizationId : userData.orgId
+	});
 	
 	console.log('$scope.users:'+$scope.users)
 	console.log($scope.users)

@@ -4,51 +4,38 @@ angular.module('MyApp').controller(
 				ContributionDetail, SaveContribution, CloseContribution,
 				Account, Users) {
 			var vm = this;
+			var orgExists;
+			$scope.organizationId = 'notintialized';
 			vm.model = {
-					title : '',
-					file : '',
-					owner : '',
-					min_reputation_to_close : '',
-					contributers : [ {
-						contributer_id : '',
-						contributer_percentage : ''
-					} ],
-					intialBid : [ {
-						tokens : '',
-						reputation : ''
-					} ]
+				title : '',
+				file : '',
+				owner : '',
+				min_reputation_to_close : '',
+				users_organizations_id : '',
+				contributers : [ {
+					contributer_id : '',
+					contributer_percentage : ''
+				} ],
+				intialBid : [ {
+					tokens : '',
+					reputation : ''
+				} ]
 
-				}
+			}
 			// if not authenticated return to splash:
 			if (!$auth.isAuthenticated()) {
 				$location.path('splash');
 			} else {
-				
-				vm.getUsers = function() {
-					$scope.data = Users.getUsers1.getUsers();
-					$scope.data.$promise.then(function(result) {
-						Users.setAllUsersData(result)
-						console.log("this is result"+result[0].id);
-						vm.users = result;
-						init();
-						//$location.path("/contribution/" + result.id);
-					});
-				};
-				allUsersData = Users.getAllUsersData();
-				console.log("allUsersData is" + allUsersData);
-				if (allUsersData == undefined) {
-					vm.getUsers();
-				} else {
-					
-					vm.users = allUsersData;
-					init();
-				}
-				
-				
-				vm.contributionId = $stateParams.contributionId;
 				vm.getProfile = function() {
 					Account.getProfile().success(function(data) {
 						$scope.userId = data.userId;
+						vm.userId = data.userId;
+						orgExists = data.orgexists;
+						if (orgExists == 'true') {
+							$scope.users_organizations_id = data.userOrgId;
+							vm.model.users_organizations_id = data.userOrgId;
+							$scope.organizationId = data.orgId;
+						}
 						Account.setUserData(data);
 
 					}).error(function(error) {
@@ -60,21 +47,66 @@ angular.module('MyApp').controller(
 						});
 					});
 				};
-				vm.contributionId = $stateParams.contributionId;
+
+				$scope.ifOrgExists = function() {
+					if (Account.getUserData() != undefined) {
+						$scope.user = Account.getUserData();						
+						if (Account.getUserData().orgexists == 'false') {
+							orgExists = "false";
+							return false;
+						} else {
+							orgExists = "true";
+							return true;
+						}
+					} 
+
+				};
+
 				userData = Account.getUserData();
-				console.log("userData is" + userData);
 				if (userData == undefined) {
 					vm.getProfile();
 				} else {
 					vm.userId = userData.userId;
+					orgExists = userData.orgexists;
+					if (orgExists == 'true') {
+						$scope.users_organizations_id = userData.userOrgId;
+						$scope.organizationId = userData.orgId;
+						vm.model.users_organizations_id = userData.userOrgId;
+					}
 					vm.model.owner = userData.userId;
 				}
+
+				vm.getOrgUsers = function() {
+					$scope.data = Users.getOrg.getUsers({
+						organizationId : $scope.organizationId
+					});
+					$scope.data.$promise.then(function(result) {
+						Users.setAllOrgUsersData(result)						
+						vm.users = result;
+						init();
+						//$location.path("/contribution/" + result.id);
+					});
+				};
+
+				allOrgUsersData = Users.getAllOrgUsersData();
+				if (orgExists == 'true') {
+					if (allOrgUsersData == undefined) {
+						vm.getOrgUsers();
+					} else {
+
+						vm.users = allOrgUsersData;
+						init();
+					}
+				}
+
+				vm.contributionId = $stateParams.contributionId;
 
 				vm.ContributionModelForView = {
 					title : '',
 					file : '',
 					owner : '',
 					min_reputation_to_close : '',
+					users_organizations_id : '',
 					contributionContributers : [ {
 						contributer_id : '',
 						contributer_percentage : ''
@@ -123,9 +155,7 @@ angular.module('MyApp').controller(
 					$location.path("/contributionStatus/"
 							+ $scope.ContributionModelForView.id);
 				};
-				if ($auth.isAuthenticated()) {
-					$scope.contributions = Contributions.getAllContributions();
-				}
+				
 
 				if (vm.contributionId && vm.contributionId != 0) {
 					$scope.data1 = ContributionDetail.getDetail({
@@ -149,9 +179,8 @@ angular.module('MyApp').controller(
 					});
 
 				};
-				function init() {
-					console.log("After Init"+vm.users)
-					
+				function init() {					
+
 					vm.fields = [ {
 						type : 'input',
 						key : 'title',
@@ -181,11 +210,11 @@ angular.module('MyApp').controller(
 								fieldGroup : [ {
 									key : 'contributer_id',
 									className : 'col-xs-4',
-									type : 'select',									
+									type : 'select',
 									templateOptions : {
 										label : 'Contributer',
 										labelProp : 'name',
-										valueProp :'id',
+										valueProp : 'id',
 										options : vm.users
 									}
 								}, {
@@ -229,6 +258,12 @@ angular.module('MyApp').controller(
 
 					];
 
+				}
+
+				if ($auth.isAuthenticated()) {
+					$scope.contributions = Contributions.getAllContributions({
+						organizationId : $scope.organizationId
+					});
 				}
 
 			}

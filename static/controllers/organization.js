@@ -1,5 +1,5 @@
 angular.module('MyApp')
-  .controller('OrganizationCtrl', function($scope,$auth,$location,$stateParams,SaveOrg,SaveUserOrg,Account) {
+  .controller('OrganizationCtrl', function($scope,$auth,$location,$stateParams,SaveOrg,Account) {
 	  var vm = this;
 	  vm.orgModel = {
 				token_name : '',
@@ -71,20 +71,15 @@ angular.module('MyApp')
 		console.log(vm.orgModel)
 		vm.data = SaveOrg.save({},vm.orgModel);
 		vm.data.$promise.then(function (result) {
-			 vm.userOrgModel = {
-					 	'user_id' : vm.userId,
-						'org_id' : result.id,
-						'org_tokens' : '100',
-						'org_reputation' : '100'
-
-					}
-			vm.userOrgdata = SaveUserOrg.save({},vm.userOrgModel);
-			 vm.userOrgdata.$promise.then(function (result) {
-				    userData.orgexists = "true";
-				 	Account.setUserData(userData);
-					alert('Org  Successfully created');
-					$location.path("/contributions");
-				});
+			
+			userData.orgId = result.organization_id;
+			userData.userOrgId = result.id;
+		    userData.orgexists = "true";
+			console.log('Inserted org id : '+result.organization_id)
+			console.log('Inserted userorg id : '+result.id)
+		 	Account.setUserData(userData);
+			alert('Successfully created organization');
+			$location.path("/contributions"); 
 			
 		});
 		

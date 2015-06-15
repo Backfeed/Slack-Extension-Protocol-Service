@@ -32,8 +32,8 @@
     <li><a href="/#/users">Users</a></li> 
   </ul>
   <button class="btn btn-lg btn-warning" ng-click="createOrg()" ng-hide = 'ifOrgExists()'>Create Org</button>
-  
   <ul ng-if="isAuthenticated()" class="nav navbar-nav pull-right">
+  <a class="navbar-brand" ng-show = 'ifOrgExists()'>{{ user.slackTeamName  }}</a>
 	<a class="navbar-brand" href="/#/profile" >{{ user.displayName  }}</a>
     <li><a href="/#/logout">Logout</a></li>
   </ul>

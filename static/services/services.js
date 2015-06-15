@@ -2,7 +2,7 @@
 var bfAPIServices = angular.module('BFAPIServices', [ 'ngResource' ]);
 
 bfAPIServices.factory('Contributions', [ '$resource', function($resource) {
-	return $resource('contribution/all', {}, {
+	return $resource('contribution/all/:organizationId', {}, {
 		getAllContributions : {
 			method : 'GET',
 			params : {},
@@ -49,18 +49,16 @@ bfAPIServices.factory('SaveBidTOContribution', [ '$resource',function($resource)
 	});
 } ]);
 bfAPIServices.factory('Users', [ '$resource', function($resource) {
-	var allUsersData;
-	return {getUsers1: $resource('users/all', {}, {
-		getUsers : {
-			method : 'GET',
-			params : {},
-			isArray : true
+	var allOrgUsersData;		 
+			return {getOrg :$resource('users/all/:organizationId', {}, {
+			getUsers: {
+				method : 'GET',
+				params : {},
+				isArray : true
 		}
-	}),getAllUsersData: function() {return allUsersData},
-	 setAllUsersData: function(data) {
-		console.log('setUserData:');
-		console.dir(data);
-		allUsersData = data;
+	}),getAllOrgUsersData: function() {return allOrgUsersData},
+	 setAllOrgUsersData: function(data) {		
+		allOrgUsersData = data;
     },};
 } ]);
 	
@@ -96,16 +94,6 @@ bfAPIServices.factory('ContributionStatus', [ '$resource', function($resource) {
 
 bfAPIServices.factory('SaveOrg', [ '$resource', function($resource) {
 	return $resource('organization', {}, {
-		save : {
-			method : 'POST',
-			params : {},
-			isArray : false
-		}
-	});
-} ]);
-
-bfAPIServices.factory('SaveUserOrg', [ '$resource', function($resource) {
-	return $resource('userOrganization', {}, {
 		save : {
 			method : 'POST',
 			params : {},
