@@ -43,7 +43,7 @@ organizationParser.add_argument('slack_teamid', type=str,required=True)
 organizationParser.add_argument('intial_tokens', type=str)
 organizationParser.add_argument('name', type=str)
 
-
+bidParser.add_argument('stake', type=str,required=True)
 bidParser.add_argument('tokens', type=str,required=True)
 bidParser.add_argument('reputation', type=str,required=True)    
 bidParser.add_argument('contribution_id', type=str,required=True)
@@ -72,6 +72,7 @@ bid_fields = {
 }
 
 bid_nested_fields = {}
+bid_nested_fields['stake'] = fields.String
 bid_nested_fields['tokens'] = fields.String
 bid_nested_fields['reputation'] = fields.String
 bid_nested_fields['owner'] = fields.Integer
@@ -191,14 +192,11 @@ class BidResource(Resource):
                    "reputation":parsed_args['reputation'],
                    "owner":parsed_args['owner'],
                    "contribution_id":parsed_args['contribution_id'],
-                   "stake":10, # TBD: parse stake
+                   "stake":parsed_args['stake'], 
                    "time_created":datetime.now()
                     }
 
         bid = cls.Bid(jsonStr,session)                       
-        #session.add(bid);
-        #session.commit();
-        # process contribution:
         bid = vdp.process_bid(bid)
         if( not bid ):
             abort(404, message="Failed to process bid".format(contributionid))

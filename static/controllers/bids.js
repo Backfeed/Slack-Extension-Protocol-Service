@@ -61,7 +61,17 @@ angular.module('MyApp')
                               placeholder: 'Enter Reputation',
                               required: true
                           }
-                      }
+                      }	,
+	                 {
+                          key: 'stake',
+                          type: 'input',
+                          templateOptions: {
+                              type: 'text',
+                              label: 'Stake',
+                              placeholder: 'Enter Stake',
+                              required: true
+                          }
+	                 }
                   ];
                   
               
