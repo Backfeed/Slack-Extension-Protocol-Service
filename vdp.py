@@ -91,7 +91,7 @@ def add_to_bids(bids, current_bid):
 
 	print "current_bid.stake = " + str(current_bid.stake) + "and current_bid.rep = " + str(current_bid.reputation)
 
-	if current_bid.stake > current_bid.reputation:
+	if int(current_bid.stake) > int(current_bid.reputation):
 		print "!@#!@#!@#!@#!@#!@#!@#!@#!#!@#!@#!@#"
 		current_bid.stake = current_bid.reputation
 
@@ -107,12 +107,12 @@ def distribute_rep(bids, current_bid):
 	users = state['usersDict']
 	current_bidder = users[current_bid.owner]
 
-	stake = current_bid.stake
-	if(not stake):
-		stake = current_bid.reputation
+	if(not current_bid.stake):
+		print 'stake is null --> stake is set to entire bid reputation:'+str(current_bid.reputation)
+		current_bid.stake = current_bid.reputation
 
 	#kill the stake of the current_bidder
-	current_bidder.org_reputation -= stake
+	current_bidder.org_reputation -= int(current_bid.stake)
 	session.add(current_bidder)
 
 	# and redistribute it around to the others
@@ -134,7 +134,7 @@ def update_rep(bids, current_bid):
 		user = users[bid.owner]
 		print "OLD REP === " + str(user.org_reputation)
 		print " ----  current_bid.stake = " + str(current_bid.stake)
-		user.org_reputation += math.ceil(current_bid.stake * ( bid.reputation * decay(bid.tokens, current_bid.tokens)  ) / summ) 
+		user.org_reputation += math.ceil(float(current_bid.stake) * ( float(bid.reputation) * decay(bid.tokens, current_bid.tokens)  ) / summ) 
 		print "NEW REP === " + str(user.org_reputation)
 		session.add(user)
 
