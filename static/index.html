@@ -21,8 +21,11 @@
 <div ng-controller="NavbarCtrl" class="navbar navbar-default navbar-static-top" ng-show = 'isAuthenticated()'>
 	
   <div class="navbar-header">
+	  <a class="navbar-brand" ng-show = 'ifOrgExists()'>{{ user.slackTeamName  }}</a>
+		<!--
     	<img src="favicon.png" class = "brandIcon navbar-brand" ></img>
 		<a class="navbar-brand">Backfeed</a>
+		-->
   </div>
 
   <ul class="nav navbar-nav" ng-show = 'ifOrgExists()'>
@@ -33,7 +36,7 @@
   </ul>
   <button class="btn btn-lg btn-warning" ng-click="createOrg()" ng-hide = 'ifOrgExists()'>Create Org</button>
   <ul ng-if="isAuthenticated()" class="nav navbar-nav pull-right">
-  <a class="navbar-brand" ng-show = 'ifOrgExists()'>{{ user.slackTeamName  }}</a>
+	<!--  <a class="navbar-brand" ng-show = 'ifOrgExists()'>{{ user.slackTeamName  }}</a> -->
 	<a class="navbar-brand" href="/#/profile" >{{ user.displayName  }}</a>
     <li><a href="/#/logout">Logout</a></li>
   </ul>
