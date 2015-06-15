@@ -15,12 +15,15 @@
 
 								<th>Bid Tokens</th>
 								<th>Bid Reputations</th>
+								<th>Bid Stake</th>
 
 
 								<tr ng-repeat="bid in ContributionModelForView.bids">
 									<div ng-if="bid.owner == userId">
 									<td>{{bid.tokens}}</td>
 									<td>{{bid.reputation}}</td>
+									<td>{{bid.stake}}</td>
+									
 									</div>
 								</tr>
 							</table>
