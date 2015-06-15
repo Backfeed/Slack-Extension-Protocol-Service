@@ -43,7 +43,7 @@ def calcValue(bids):
 	# get reputation on zero (un-invested reputation)
 	total_invested_rep = 0
 	for bid in bids:
-		total_invested_rep = total_invested_rep + bid.reputation
+		total_invested_rep = total_invested_rep + int(bid.reputation)
 	
 	uninvested_rep =  state['total_system_reputation'] - total_invested_rep
 	
@@ -59,13 +59,13 @@ def calcValue(bids):
 	
 	acumulated_rep = uninvested_rep	
 	for bid in bids:
-		acumulated_rep = acumulated_rep + bid.reputation
+		acumulated_rep = acumulated_rep + int(bid.reputation)
 		
 		# check if we passed 50% of total rep in system if so we hit the median:
 		if( acumulated_rep > math.ceil(state['total_system_reputation']/2) ):
 			
 			# we hit the median so update current bid with current evaluation:
-			current_evaluation = bid.tokens
+			current_evaluation = int(bid.tokens)
 			return current_evaluation
 
 	return 0
@@ -75,17 +75,17 @@ def add_to_bids(bids, current_bid):
 	Wi = 0;
 	users = state['usersDict']
 	current_bidder = users[current_bid.owner]
-	rep = current_bid.reputation;
+	rep = int(current_bid.reputation)
 
 	#check how much reputation has been engaged by current_bidder,
 	for bid in bids:
 		if bid.owner == current_bidder.id:  
-			Wi += bid.reputation
+			Wi += int(bid.reputation)
 	#check if something has to be trimmed
 	print "*******" + str(Wi);
-	if current_bidder.org_reputation - Wi < rep:
-		if current_bidder.org_reputation > Wi:
-			current_bid.reputation = current_bidder.org_reputation - Wi
+	if int(current_bidder.org_reputation) - Wi < rep:
+		if int(current_bidder.org_reputation) > Wi:
+			current_bid.reputation = int(current_bidder.org_reputation) - Wi
 		else:
 			return None;
 
@@ -126,7 +126,7 @@ def update_rep(bids, current_bid):
 
 	#calculate total sum of Weight * Decay
 	for bid in bids:
-		summ += bid.reputation * decay(bid.tokens, current_bid.tokens)
+		summ += float(bid.reputation) * decay(bid.tokens, current_bid.tokens)
 	print "summmm = " + str(summ)
 
 	#reallocate reputation
