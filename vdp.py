@@ -79,7 +79,7 @@ def add_to_bids(bids, current_bid):
 
 	#check how much reputation has been engaged by current_bidder,
 	for bid in bids:
-		if bid.owner == current_bidder.id:  
+		if bid.owner == current_bidder.user_id:  
 			Wi += int(bid.reputation)
 	#check if something has to be trimmed
 	print "*******" + str(Wi);
@@ -161,7 +161,7 @@ def process_bid(current_bid):
 	#bids = contributionObject.bids
 	bids = add_to_bids(contributionObject.bids, current_bid)
 	if(not bids):
-		return False
+		return None
 
 	distribute_rep(bids, current_bid)
 
