@@ -90,7 +90,10 @@ angular.module('MyApp')
 		vm.data.$promise.then(function (result) {
 			alert('Bid Successfully created');
 			$location.path("/contribution/"+vm.contributionId);
-		});
+		},	function (result) {
+				alert('Bid failed since entire weight has already been spent for this contribution. ');
+				$location.path("/contribution/"+vm.contributionId);
+			});
 		
 	};
 	
