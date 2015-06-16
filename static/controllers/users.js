@@ -44,7 +44,7 @@ angular.module('MyApp')
 	
 	if($scope.userId && $scope.userId != 0){
 		console.log('comes here');
-		$scope.data1 = UserDetail.getDetail({userId:$scope.userId});	
+		$scope.data1 = UserDetail.getDetail({userId:$scope.userId,organizationId:userData.orgId});	
 		$scope.data1.$promise.then(function (result) {
 				$scope.UserModel = result;				
 			});	

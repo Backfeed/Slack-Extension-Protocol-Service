@@ -38,7 +38,7 @@ cors = CORS(application)
 # API:
 api = Api(application)
 
-api.add_resource(UserResource, '/users/<string:id>', endpoint='users')
+api.add_resource(UserResource, '/users/<string:id>/<string:orgId>', endpoint='users')
 api.add_resource(UserResource, '/users', endpoint='user')
 api.add_resource(AllUserResource, '/users/all/<string:organizationId>', endpoint='allUser')
 

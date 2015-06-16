@@ -1,5 +1,5 @@
 angular.module('MyApp')
-  .controller('OrganizationCtrl', function($scope,$auth,$location,$stateParams,SaveOrg,Account) {
+  .controller('OrganizationCtrl', function($scope,$auth,$alert,$location,$stateParams,SaveOrg,Account) {
 	  var vm = this;
 	  vm.orgModel = {
 				token_name : '',

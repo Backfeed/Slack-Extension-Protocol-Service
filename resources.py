@@ -112,9 +112,9 @@ def getUser(id):
    
 class UserResource(Resource):
     @marshal_with(user_org_fields)
-    def get(self, id):
+    def get(self, id,orgId):
         char = getUser(id)
-        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == g.userOrgId).first()
+        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).filter(cls.UserOrganization.user_id == id).first()
         print 'got Get for User fbid:'+id
         if not char:
             abort(404, message="User {} doesn't exist".format(id))

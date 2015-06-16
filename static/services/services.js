@@ -63,7 +63,7 @@ bfAPIServices.factory('Users', [ '$resource', function($resource) {
 } ]);
 	
 bfAPIServices.factory('UserDetail', [ '$resource', function($resource) {
-	return $resource('users/:userId', {}, {
+	return $resource('users/:userId/:organizationId', {}, {
 		getDetail : {
 			method : 'GET',
 			params : {},
