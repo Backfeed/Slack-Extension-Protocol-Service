@@ -356,7 +356,7 @@ class OrganizationResource(Resource):
         session.flush()
         createUserAndUserOrganizations(organization.id)
         session.commit()
-        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).first()
+        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).filter(cls.UserOrganization.organization_id == organization.id).first()
         return userOrgObj, 201
     
 def createUserAndUserOrganizations(organizaionId):
