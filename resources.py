@@ -57,6 +57,13 @@ user_fields = {
     'name': fields.String,    
 }
 
+user_org_fields = {
+    'id': fields.Integer,
+    'name': fields.String, 
+    'tokens': fields.String,  
+    'reputation': fields.String, 
+}
+
 userOrganization_fields = {
     'id': fields.Integer,
     'user_id': fields.String,
@@ -100,17 +107,18 @@ contribution_status_fields['myReputaion'] = fields.Integer
 
 
 def getUser(id):
-    user = session.query(cls.User).filter(cls.User.id == id).first()
+    user = session.query(cls.User).filter(cls.User.id == id).first()    
     return user
    
 class UserResource(Resource):
-    @marshal_with(user_fields)
+    @marshal_with(user_org_fields)
     def get(self, id):
         char = getUser(id)
+        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == g.userOrgId).first()
         print 'got Get for User fbid:'+id
         if not char:
             abort(404, message="User {} doesn't exist".format(id))
-        return char   
+        return {"id": char.id,"name":char.name,"tokens": userOrgObj.org_tokens,"reputation": userOrgObj.org_reputation} 
     
     def delete(self, id):
         char = getUser(id)
@@ -142,12 +150,12 @@ class UserResource(Resource):
         return user, 201
     
 class AllUserResource(Resource):
-    @marshal_with(user_fields)
+    @marshal_with(user_org_fields)
     def get(self,organizationId):
         users =[]    
         userOrganizationObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == organizationId).all()
         for userOrganization in userOrganizationObjects :
-            users.append(userOrganization.user )           
+            users.append({'id':userOrganization.user.id,'name':userOrganization.user.name,"tokens": userOrganization.org_tokens,"reputation": userOrganization.org_reputation})           
         return users
         
 class BidResource(Resource):
@@ -304,7 +312,7 @@ class AllContributionResource(Resource):
     def get(self,organizationId):
         if organizationId == 'notintialized':
             organizationId = g.orgId
-                contributionObject = session.query(cls.Contribution).filter(cls.UserOrganization.organization_id == organizationId).filter(cls.Contribution.users_organizations_id ==cls.UserOrganization.id).all()
+        contributionObject = session.query(cls.Contribution).filter(cls.UserOrganization.organization_id == organizationId).filter(cls.Contribution.users_organizations_id ==cls.UserOrganization.id).all()
         return contributionObject
     
 class ContributionStatusResource(Resource):

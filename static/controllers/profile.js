@@ -210,6 +210,8 @@ angular.module('MyApp')
 	
     if(Account.getUserData() == undefined){
     	$scope.getProfile();
+    }else{
+    	$scope.user = Account.getUserData();
     }
     
 

@@ -64,11 +64,11 @@ def me():
 	
     #user = User.query.filter_by(id=g.user_id).first()
     user = session.query(cls.User).filter(cls.User.id == g.user_id).first()
-    
+    userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == g.userOrgId).first()
     if(not user):
         print 'User Not Logged In.',404
         return 'User Not Logged In.',404	  
-    return jsonify(dict(displayName=user.name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,orgexists=g.orgexists,orgId=g.orgId,userOrgId=g.userOrgId,access_token=g.access_token,slackUserId=g.slackUserId))
+    return jsonify(dict(tokens=userOrgObj.org_tokens,reputation=userOrgObj.org_reputation,displayName=user.name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,orgexists=g.orgexists,orgId=g.orgId,userOrgId=g.userOrgId,access_token=g.access_token,slackUserId=g.slackUserId))
 
 def create_token(user,slackTeamId,slackTeamName,orgexists,orgId,userOrgId,access_token,slackUserId):    
     payload = {
