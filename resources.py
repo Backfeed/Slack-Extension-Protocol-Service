@@ -305,7 +305,7 @@ class AllContributionResource(Resource):
     def get(self,organizationId):
         if organizationId == 'notintialized':
             organizationId = g.orgId
-        contributionObject = session.query(cls.Contribution).filter(cls.UserOrganization.organization_id == organizationId).all()
+                contributionObject = session.query(cls.Contribution).filter(cls.UserOrganization.organization_id == organizationId).filter(cls.Contribution.users_organizations_id ==cls.UserOrganization.id).all()
         return contributionObject
     
 class ContributionStatusResource(Resource):
