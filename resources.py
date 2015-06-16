@@ -54,8 +54,7 @@ closeContributionParser.add_argument('id', type=int,required=True)
 
 user_fields = {
     'id': fields.Integer,
-    'name': fields.String,
-    'slack_id': fields.String,    
+    'name': fields.String,    
 }
 
 userOrganization_fields = {
@@ -133,7 +132,7 @@ class UserResource(Resource):
     def post(self):
         parsed_args = userParser.parse_args()
 
-        jsonStr = {"slack_id":parsed_args['slack_id'],
+        jsonStr = {
                     "name":parsed_args['name']
                     }
         user = cls.User(jsonStr,session)
@@ -356,13 +355,21 @@ def createUserAndUserOrganizations(organizaionId):
     team_users_api_url = 'https://slack.com/api/users.list'
     headers = {'User-Agent': 'DEAP'}
     r = requests.get(team_users_api_url, params={'token':g.access_token}, headers=headers)
+    usersInSystem = session.query(cls.User).all()
+    usersDic = {}
+    for u in usersInSystem:
+        usersDic[u.name] = u.id
     # parse response:
     users = json.loads(r.text)['members']
     print 'slack users:'+str(users)
     for user in users :
-        userId =g.user_id
-        if(user['id'] != g.slackUserId):
-            jsonStr = {"slack_id":user['id'],"name":user['name']}
+        userId = ''
+        try:
+            userId = usersDic[user['name']]
+        except KeyError:
+            userId = ''
+        if userId == '':
+            jsonStr = {"name":user['name']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 
@@ -375,4 +382,6 @@ def createUserAndUserOrganizations(organizaionId):
                     }
         userOrganization = cls.UserOrganization(jsonStr,session)
         session.add(userOrganization)    
+    
+  
     

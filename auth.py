@@ -68,7 +68,7 @@ def me():
     if(not user):
         print 'User Not Logged In.',404
         return 'User Not Logged In.',404	  
-    return jsonify(dict(id=user.slack_id,displayName=user.name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,orgexists=g.orgexists,orgId=g.orgId,userOrgId=g.userOrgId,access_token=g.access_token,slackUserId=g.slackUserId))
+    return jsonify(dict(displayName=user.name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,orgexists=g.orgexists,orgId=g.orgId,userOrgId=g.userOrgId,access_token=g.access_token,slackUserId=g.slackUserId))
 
 def create_token(user,slackTeamId,slackTeamName,orgexists,orgId,userOrgId,access_token,slackUserId):    
     payload = {
@@ -141,7 +141,7 @@ def slack():
     # Step 3. (optional) Link accounts.
     if request.headers.get('x-access-token'):        
         #user = User.query.filter_by(slack=profile['user_id']).first()
-        user = session.query(cls.User).filter(cls.User.slack_id == profile['user_id']).first()
+        user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
 
         if user:
             
@@ -159,7 +159,7 @@ def slack():
             response.status_code = 400
             return response
 
-        u = User(slack_id=profile['user_id'], name=profile['user'])
+        u = User(name=profile['user'])
         org = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).first()
         orgexists = "true"
         if not org:
@@ -184,7 +184,7 @@ def slack():
 
     # Step 4. Create a new account or return an existing one.
     #user = User.query.filter_by(slack=profile['user_id']).first()
-    user = session.query(cls.User).filter(cls.User.slack_id == profile['user_id']).first()
+    user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
     org = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).first()
     orgexists = "true"
     if not org:
@@ -210,7 +210,7 @@ def slack():
 
     print 'slack profile:'+str(profile)
     #u = cls.User(slack_id=profile['user_id'], name=profile['user'])
-    jsonStr = {"slack_id":profile['user_id'],"name":profile['user']}
+    jsonStr = {"name":profile['user']}
     u = cls.User(jsonStr,session)
     session.add(u)
     session.commit()
