@@ -8,28 +8,13 @@ from operator import attrgetter
 
 state = {}
 
-	
-def init(org_id,session):
-	usersDict = {}
-	total_system_reputation = 0
-	
-	# get users:
-	userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == org_id).all()
-
-	for userOrg in userOrgObjects:
-		usersDict[userOrg.user_id] = userOrg
-		total_system_reputation = total_system_reputation + userOrg.org_reputation
-	
-	state['total_system_reputation'] = total_system_reputation
-	state['usersDict'] = usersDict
-	
-
 def getHighestEval(bids):
 	maxValue = max(bids, key=attrgetter('contribution_value_after_bid')).contribution_value_after_bid
+	
 	return maxValue
 	
 def issueTokens(tokes_to_distribute,contributers,session):
-	
+	logger = state['logger']	
 	# get collaborators:
 	for contributer in contributers:
 		user = state['usersDict'][contributer.contributer_id]		
@@ -39,7 +24,7 @@ def issueTokens(tokes_to_distribute,contributers,session):
 		session.add(user)
 		
 def calcValue(bids):
-	
+	logger = state['logger']	
 	# get reputation on zero (un-invested reputation)
 	total_invested_rep = 0
 	for bid in bids:
@@ -70,45 +55,13 @@ def calcValue(bids):
 
 	return 0
 
-	
-def add_to_bids(bids, current_bid):
-	Wi = 0;
-	users = state['usersDict']
-	current_bidder = users[current_bid.owner]
-	rep = int(current_bid.reputation)
-
-	#check how much reputation has been engaged by current_bidder,
-	for bid in bids:
-		if bid.owner == current_bidder.user_id:  
-			Wi += int(bid.reputation)
-	#check if something has to be trimmed
-	print "*******" + str(Wi);
-	if int(current_bidder.org_reputation) - Wi < rep:
-		if int(current_bidder.org_reputation) > Wi:
-			current_bid.reputation = int(current_bidder.org_reputation) - Wi
-		else:
-			return None;
-
-	print "current_bid.stake = " + str(current_bid.stake) + "and current_bid.rep = " + str(current_bid.reputation)
-
-	if int(current_bid.stake) > int(current_bid.reputation):
-		print "!@#!@#!@#!@#!@#!@#!@#!@#!#!@#!@#!@#"
-		current_bid.stake = current_bid.reputation
-
-	print "User reputation: "+ str(current_bidder.org_reputation) + "& Wi = " + str(Wi) + "Appending:" + str(current_bid.reputation)
-	bids.append(current_bid);
-	
-	return bids;
-
-
-
 def distribute_rep(bids, current_bid,session):
-
+	logger = state['logger']
 	users = state['usersDict']
 	current_bidder = users[current_bid.owner]
 
 	if(not current_bid.stake):
-		print 'stake is null --> stake is set to entire bid reputation:'+str(current_bid.reputation)
+		logger.info('stake is null --> stake is set to entire bid reputation:'+str(current_bid.reputation))
 		current_bid.stake = current_bid.reputation
 
 	#kill the stake of the current_bidder
@@ -121,70 +74,138 @@ def distribute_rep(bids, current_bid,session):
 
 
 def update_rep(bids, current_bid,session):
+	logger = state['logger']
 	summ = 0;	
 	users = state['usersDict']	
 
 	#calculate total sum of Weight * Decay
 	for bid in bids:
 		summ += float(bid.reputation) * decay(bid.tokens, current_bid.tokens)
-	print "summmm = " + str(summ)
+	logger.info("sum of Weight * Decay = " + str(summ))
 
 	#reallocate reputation
-	for bid in bids:
+	for bid in bids:		
 		user = users[bid.owner]
-		print "OLD REP === " + str(user.org_reputation)
-		print " ----  current_bid.stake = " + str(current_bid.stake)
-		user.org_reputation += math.ceil(float(current_bid.stake) * ( float(bid.reputation) * decay(bid.tokens, current_bid.tokens)  ) / summ) 
-		print "NEW REP === " + str(user.org_reputation)
+		logger.info("\n\nrealocating reputation for bidder Id:" + str(bid.owner))
+		
+		logger.info("OLD REP === " + str(user.org_reputation))
+		logger.info(" ----  current_bid.stake = " + str(current_bid.stake))
+		new_rep_weight = ( float(bid.reputation) * decay(bid.tokens, current_bid.tokens)  )
+		logger.info('new_rep_weight:'+str(new_rep_weight))
+		
+		user.org_reputation += math.ceil(float(current_bid.stake) * new_rep_weight / summ) 
+		logger.info("NEW REP === " + str(user.org_reputation))
 		session.add(user)
 
 
 def decay(vi, vn):
-	print "v1 = " + str(vi) + "vn = " + str(vn)
+	logger = state['logger']	
+	logger.info("v1 = " + str(vi) + " vn = " + str(vn))
 	decay = math.atan(1 / abs(int(vi) - int(vn)+0.1))
-	print "decay................." + str(decay)
+	logger.info("decay................." + str(decay))
 	return decay
 
-
-def bf_Log(messsage,level = 'info'):
-	if(logger):
-		logger.info(messsage)
-	return 0
+def validateBid(bids, current_bid):
+	logger = state['logger']	
+	logger.info('\n\n *** validateBid: ***:\n')
 	
-def set_Logger(the_logger):
-	logger = the_logger
+	Wi = 0;
+	users = state['usersDict']
+	current_bidder = users[current_bid.owner]
+	rep = int(current_bid.reputation)
 
-def process_bid(current_bid,session,logger = None):
-	print 'session3:'+str(session)
+	#check how much reputation has been engaged by current_bidder,
+	for bid in bids:
+		if bid.owner == current_bidder.user_id:  
+			Wi += int(bid.reputation)
+	logger.info('amount of reputation which  has been engaged by the current_bidder:'+str(Wi))
 	
-	print 'processing bid:'+str(current_bid)
-	contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == current_bid.contribution_id).first()
+	#check if something has to be trimmed
+	if int(current_bidder.org_reputation) - Wi < rep:
+		if int(current_bidder.org_reputation) > Wi:
+			current_bid.reputation = int(current_bidder.org_reputation) - Wi
+			logger.info("trimmed reputation to : "+str(current_bid.reputation))
+			
+		else:
+			logger.info("bidder has no more reputation to spare for current bid. exit.")
+			return None;
+
+	logger.info("current_bid.stake = " + str(current_bid.stake) + " and current_bid.rep = " + str(current_bid.reputation))
+
+	if int(current_bid.stake) > int(current_bid.reputation):
+		logger.info("bidder has put more stake than he has reputation - reducing stake to bidder's reputation.")
+		current_bid.stake = current_bid.reputation
+
+	logger.info( "bidder reputation: "+ str(current_bidder.org_reputation) + ", bidder total weight = " + str(Wi) + "Appending current bid reputation:" + str(current_bid.reputation))
+	logger.info('\n\n')
+
+	return current_bid;
+
+def debug_state(state):
+	logger = state['logger']
+	logger.info('\n\n *** current state ***:\n')
+	logger.info('previous highest eval:'+str(state['highest_eval']))
+	logger.info('total system reputation:'+str(state['total_system_reputation']))	
+	
+def getCurrentState(contributionObject,session):
+	usersDict = {}
+	total_system_reputation = 0
+
+	# get users:
 	user_org = contributionObject.userOrganization
-	init(user_org.organization_id,session)
+	userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == user_org.organization_id).all()
 
-	highest_eval = 0 
+	for userOrg in userOrgObjects:
+		usersDict[userOrg.user_id] = userOrg
+		total_system_reputation = total_system_reputation + userOrg.org_reputation
+
+	state['highest_eval'] = 0 
 	if(contributionObject.bids and len(contributionObject.bids)):
-		highest_eval = getHighestEval(contributionObject.bids)
+		state['highest_eval'] = getHighestEval(contributionObject.bids)
+
+	state['total_system_reputation'] = total_system_reputation
+	state['usersDict'] = usersDict
+	debug_state(state)
+
+
+def debug_bid(current_bid):
+	logger = state['logger']
+	logger.info('\n\n *** processing bid - info: ***\n')
+	logger.info('stake (risk):'+str(current_bid.stake))
+	logger.info('reputation (weight):'+str(current_bid.reputation))	
+	logger.info('tokens (eval):'+str(current_bid.tokens))
 	
-	#contributionObject.bids.append(current_bid)
-	#bids = contributionObject.bids
-	bids = add_to_bids(contributionObject.bids, current_bid)
-	if(not bids):
+def process_bid(current_bid,session,mylogger = None):
+	state['logger'] = mylogger
+	debug_bid(current_bid)
+	
+	# get contribution :
+	contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == current_bid.contribution_id).first()
+	
+	# update current state:
+	getCurrentState(contributionObject,session)
+	
+	# validate Bid:
+	current_bid = validateBid(contributionObject.bids, current_bid)
+	if(not current_bid):
 		return None
 
+	# add current bid to bids:
+	bids = contributionObject.bids
+	bids.append(current_bid);
+	
+	# TBD: implement - 'functionX', to separate calculation from distribution:
 	distribute_rep(bids, current_bid,session)
-
 	current_eval = calcValue(bids)
 
 	# process current eval:
-	eval_delta = int(current_eval) - int(highest_eval)
+	current_bid.contribution_value_after_bid = current_eval
+	eval_delta = int(current_eval) - int(state['highest_eval'])
 	if (eval_delta > 0):
 		issueTokens(eval_delta, contributionObject.contributionContributers,session)
 
-	current_bid.contribution_value_after_bid = current_eval
+	# success: add current bid and commit DB session:
 	session.add(current_bid)
-
-	# success: commit DB session:
 	session.commit()
 	return current_bid
 

@@ -132,10 +132,8 @@ def openFile(filename):
 
 def simulateBids():
 	logger = logging.getLogger("protocols")
-	print 'session'+str(session)
-	#vdp.initialize(session,logger)
 	
-	logger.info('Tester: simulate bids:')
+	logger.info('\n\n****************** Tester: running bids: ******************\n\n')
 	
 	for bidData in bids:
 		curent_bid = cls.Bid(bidData,session)
