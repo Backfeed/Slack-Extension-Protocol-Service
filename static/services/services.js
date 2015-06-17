@@ -101,3 +101,23 @@ bfAPIServices.factory('SaveOrg', [ '$resource', function($resource) {
 		}
 	});
 } ]);
+
+bfAPIServices.factory('CheckOrgTokenName', [ '$resource', function($resource) {
+	return $resource('organization/checkTokenName/:tokenName', {}, {
+		checkOrgTokenName : {
+			method : 'GET',
+			params : {},
+			isArray : false
+		}
+	});
+} ]);
+
+bfAPIServices.factory('AllSlackUsers', [ '$resource', function($resource) {
+	return $resource('allSlackUsers', {}, {
+		allSlackUsers : {
+			method : 'GET',
+			params : {},
+			isArray : true
+		}
+	});
+} ]);

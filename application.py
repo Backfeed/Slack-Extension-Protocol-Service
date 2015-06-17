@@ -15,6 +15,8 @@ from resources import AllContributionResource
 from resources import AllUserResource
 from resources import ContributionStatusResource
 from resources import OrganizationResource
+from resources import ContributionTokenExistsResource
+from resources import getAllSlackUsersResource
 
 import auth
 
@@ -53,6 +55,8 @@ api.add_resource(CloseContributionResource, '/contribution/close', endpoint='clo
 
 api.add_resource(AllContributionResource, '/contribution/all/<string:organizationId>', endpoint='allContribution')
 api.add_resource(ContributionStatusResource, '/contribution/status/<string:id>/<string:userId>', endpoint='contributionStatus')
+api.add_resource(ContributionTokenExistsResource, '/organization/checkTokenName/<string:tokenName>', endpoint='checkOrgToken')
+api.add_resource(getAllSlackUsersResource, '/allSlackUsers', endpoint='slackUsers')
 
 api.add_resource(OrganizationResource, '/organization', endpoint='organization')
 

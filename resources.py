@@ -8,7 +8,7 @@ from flask.ext.restful import marshal_with
 import json
 from auth import login_required
 import requests
-from flask import g
+from flask import g,request
 
 import vdp
 from datetime import datetime
@@ -42,6 +42,7 @@ organizationParser.add_argument('token_name', type=str)
 organizationParser.add_argument('slack_teamid', type=str,required=True)
 organizationParser.add_argument('intial_tokens', type=str)
 organizationParser.add_argument('name', type=str)
+organizationParser.add_argument('contributers', type=cls.OrgContributer, action='append')
 
 bidParser.add_argument('stake', type=str,required=True)
 bidParser.add_argument('tokens', type=str,required=True)
@@ -344,54 +345,90 @@ class ContributionStatusResource(Resource):
         return jsonStr
     
     
+class ContributionTokenExistsResource(Resource):
+    def get(self,tokenName):
+        orgObj = session.query(cls.Organization).filter(cls.Organization.token_name == tokenName).first()
+        if not orgObj:
+            return {"tokenAlreadyExist":"false"}
+        else:
+             return {"tokenAlreadyExist":"true"}        
+    
 class OrganizationResource(Resource):
     
     @marshal_with(userOrganization_fields)
     def post(self):
-        parsed_args = organizationParser.parse_args()
+        json = request.json
 
-        jsonStr = {"token_name":parsed_args['token_name'],
-                    "slack_teamid":parsed_args['slack_teamid'],
-                    "intial_tokens":parsed_args['intial_tokens'],
-                    "name":parsed_args['name']
+        jsonStr = {"token_name":json['token_name'],
+                    "slack_teamid":json['slack_teamid'],
+                    "intial_tokens":json['intial_tokens'],
+                    "name":json['name']
                     }
         organization = cls.Organization(jsonStr,session)
 
         session.add(organization)
         session.flush()
-        createUserAndUserOrganizations(organization.id)
+        contributerDict = {}
+        for contributer in json['contributers']:
+            contributerDict[contributer['contributer_id']] = contributer['reputation']
+        
+        createUserAndUserOrganizations(organization.id,contributerDict)
         session.commit()
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).filter(cls.UserOrganization.organization_id == organization.id).first()
         return userOrgObj, 201
     
-def createUserAndUserOrganizations(organizaionId):
+def getSlackUsers():
     team_users_api_url = 'https://slack.com/api/users.list'
     headers = {'User-Agent': 'DEAP'}
     r = requests.get(team_users_api_url, params={'token':g.access_token}, headers=headers)
+    users = json.loads(r.text)['members']
+    print 'slack users:'+str(users)
+    return users
+
+    
+class getAllSlackUsersResource(Resource):
+    def get(self):
+        return getSlackUsers()
+        
+    
+def createUserAndUserOrganizations(organizaionId,contributerDict):
+    
     usersInSystem = session.query(cls.User).all()
     usersDic = {}
     for u in usersInSystem:
         usersDic[u.name] = u.id
     # parse response:
-    users = json.loads(r.text)['members']
+    users = getSlackUsers()
     print 'slack users:'+str(users)
     for user in users :
         userId = ''
+        token = 0
+        repuation = 0
         try:
             userId = usersDic[user['name']]
         except KeyError:
             userId = ''
+        
+        try:
+            token = contributerDict[user['id']] 
+            repuation = token
+            print 'token is' + str(token)
+        except KeyError:
+            token = 0
+            repuation = 0
+         
+             
         if userId == '':
             jsonStr = {"name":user['name']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 
             userId = u.id
-                       
+                         
         jsonStr = {"user_id":userId,
                     "organization_id":organizaionId,
-                    "org_tokens":100,
-                    "org_reputation":100
+                    "org_tokens":token,
+                    "org_reputation":repuation
                     }
         userOrganization = cls.UserOrganization(jsonStr,session)
         session.add(userOrganization)    

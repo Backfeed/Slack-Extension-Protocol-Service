@@ -2,11 +2,12 @@ angular.module('MyApp').controller(
 		'ContributionsCtrl',
 		function($scope, $auth, $location, $stateParams, $alert, Contributions,
 				ContributionDetail, SaveContribution, CloseContribution,
-				Account, Users) {
-			var vm = this;
+				Account, Users) {			
 			var orgExists;
+			
+			$scope.currencyFormatting = function(value) { return value.toString() + " $"; };
 			$scope.organizationId = 'notintialized';
-			vm.model = {
+			$scope.model = {
 				title : '',
 				file : '',
 				owner : '',
@@ -14,7 +15,8 @@ angular.module('MyApp').controller(
 				users_organizations_id : '',
 				contributers : [ {
 					contributer_id : '',
-					contributer_percentage : ''
+					contributer_percentage : '',
+					contribution1: ''
 				} ],
 				intialBid : [ {
 					tokens : '',
@@ -22,18 +24,18 @@ angular.module('MyApp').controller(
 				} ]
 
 			}
+			
 			// if not authenticated return to splash:
 			if (!$auth.isAuthenticated()) {
 				$location.path('splash');
 			} else {
-				vm.getProfile = function() {
+				$scope.getProfile = function() {
 					Account.getProfile().success(function(data) {
-						$scope.userId = data.userId;
-						vm.userId = data.userId;
+						$scope.userId = data.userId;						
 						orgExists = data.orgexists;
 						if (orgExists == 'true') {
 							$scope.users_organizations_id = data.userOrgId;
-							vm.model.users_organizations_id = data.userOrgId;
+							$scope.model.users_organizations_id = data.userOrgId;
 							$scope.organizationId = data.orgId;
 						}
 						Account.setUserData(data);
@@ -64,26 +66,25 @@ angular.module('MyApp').controller(
 
 				userData = Account.getUserData();
 				if (userData == undefined) {
-					vm.getProfile();
+					$scope.getProfile();
 				} else {
-					vm.userId = userData.userId;
+					$scope.userId = userData.userId;
 					orgExists = userData.orgexists;
 					if (orgExists == 'true') {
 						$scope.users_organizations_id = userData.userOrgId;
 						$scope.organizationId = userData.orgId;
-						vm.model.users_organizations_id = userData.userOrgId;
+						$scope.model.users_organizations_id = userData.userOrgId;
 					}
-					vm.model.owner = userData.userId;
+					$scope.model.owner = userData.userId;
 				}
 
-				vm.getOrgUsers = function() {
+				$scope.getOrgUsers = function() {
 					$scope.data = Users.getOrg.getUsers({
 						organizationId : $scope.organizationId
 					});
 					$scope.data.$promise.then(function(result) {
 						Users.setAllOrgUsersData(result)						
-						vm.users = result;
-						init();
+						$scope.users = result;
 						//$location.path("/contribution/" + result.id);
 					});
 				};
@@ -91,17 +92,16 @@ angular.module('MyApp').controller(
 				allOrgUsersData = Users.getAllOrgUsersData();
 				if (orgExists == 'true') {
 					if (allOrgUsersData == undefined) {
-						vm.getOrgUsers();
+						$scope.getOrgUsers();
 					} else {
 
-						vm.users = allOrgUsersData;
-						init();
+						$scope.users = allOrgUsersData;
 					}
 				}
 
-				vm.contributionId = $stateParams.contributionId;
+				$scope.contributionId = $stateParams.contributionId;
 
-				vm.ContributionModelForView = {
+				$scope.ContributionModelForView = {
 					title : '',
 					file : '',
 					owner : '',
@@ -126,21 +126,42 @@ angular.module('MyApp').controller(
 					$location.path("/contribution/" + contributionId);
 
 				};
+				
+				$scope.changeContribution = function() {
+					totalContribution = 0;
+					allcontributers = $scope.model.contributers
+					for(i=0;i<allcontributers.length;i++){
+						totalContribution = totalContribution + +allcontributers[i].contribution1;
+						
+						
+					}
+					
+					for(i=0;i<allcontributers.length;i++){
+						allcontributers[i].contributer_percentage = (allcontributers[i].contribution1/totalContribution)*100+'%'
+						
+						
+					}
 
-				vm.originalFields = angular.copy(vm.fields);
+				};
+
+
 				// function definition
-				vm.onSubmit = function() {
+				$scope.onSubmit = function() {
 					console.log("In Submit method");
-					console.log(vm.model)
-					$scope.data = SaveContribution.save({}, vm.model);
+					console.log($scope.model)
+					$scope.data = SaveContribution.save({}, $scope.model);
 					$scope.data.$promise.then(function(result) {
 						alert('Successfully saved');
-						$location.path("/contribution/" + result.id);
+						$location.path("/bids/" + result.id);
 					});
 				};
+				
+				$scope.removeCollaboratorItem = function(index) {
+					$scope.model.contributers.splice(index, 1);
+			  };
 				$scope.createContribution = function() {
 					console.log("Create Contribution");
-					console.log(vm.model);
+					console.log($scope.model);
 					$location.path("/contribution");
 				};
 				$scope.addBid = function() {
@@ -157,9 +178,9 @@ angular.module('MyApp').controller(
 				};
 				
 
-				if (vm.contributionId && vm.contributionId != 0) {
+				if ($scope.contributionId && $scope.contributionId != 0) {
 					$scope.data1 = ContributionDetail.getDetail({
-						contributionId : vm.contributionId
+						contributionId : $scope.contributionId
 					});
 					$scope.data1.$promise.then(function(result) {
 						$scope.ContributionModelForView = result;
@@ -167,7 +188,13 @@ angular.module('MyApp').controller(
 				}
 				//$scope.users = User.query();
 				$scope.orderProp = "time_created"; // set initial order criteria
-
+				$scope.addCollaborator = function() {
+					$scope.model.contributers.push({
+						contributer_id:'',
+						contributer_percentage:'',
+						contribution1:''
+					}) ;
+				};
 				$scope.closeContribution = function() {
 					console.log("In closeContribution method");
 					console.log($scope.ContributionModelForView.id)
@@ -178,56 +205,7 @@ angular.module('MyApp').controller(
 						$location.path("/contributions");
 					});
 
-				};
-				function init() {					
-
-					vm.fields = [ {
-						type : 'input',
-						key : 'title',
-						templateOptions : {
-							label : 'Title:'
-						}
-					}, {
-						type : 'input',
-						key : 'file',
-						templateOptions : {
-							label : 'File'
-						}
-					}, {
-						type : 'repeatSection',
-						key : 'contributers',
-						templateOptions : {
-							btnText : 'Add another Contributer',
-							required : true,
-							fields : [ {
-								className : 'row',
-								fieldGroup : [ {
-									key : 'contributer_id',
-									className : 'col-xs-4',
-									type : 'select',
-									templateOptions : {
-										label : 'Contributer',
-										labelProp : 'name',
-										valueProp : 'id',
-										options : vm.users
-									}
-								}, {
-									type : 'input',
-									key : 'contributer_percentage',
-									className : 'col-xs-4',
-									templateOptions : {
-										label : 'Contributer Percentage:',
-									}
-								}
-
-								]
-							} ]
-						}
-					}
-
-					];
-
-				}
+				};				
 
 				if ($auth.isAuthenticated()) {
 					$scope.contributions = Contributions.getAllContributions({

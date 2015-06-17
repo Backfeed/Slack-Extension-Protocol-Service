@@ -1,5 +1,5 @@
 angular.module('MyApp')
-  .controller('SplashCtrl', function($scope, $alert, $auth,$location) {
+  .controller('SplashCtrl', function($scope, $alert, $auth,$location,Account) {
 		var body = document.getElementsByTagName('body')[0];
 		var element = angular.element(body);
 		element.addClass('splash-background')
@@ -12,6 +12,32 @@ angular.module('MyApp')
 		element.removeClass('splash-background')
 	 }
 	
+		$scope.getProfile = function() {
+		      Account.getProfile()
+		        .success(function(data) {
+					console.log('profileData:');
+					console.dir(data);
+		          	$scope.user = data;
+		          	if($scope.user.orgId != ''){
+		          						console.log('fpr contribution :');
+		          		$scope.changeView('/contributions')
+		          	}else{
+		          	console.log('for create org');
+		          		$scope.changeView('/organization')
+		          	}
+		          	
+					Account.setUserData(data);
+					
+		        })
+		        .error(function(error) {
+		          $alert({
+		            content: error.message,
+		            animation: 'fadeZoomFadeDown',
+		            type: 'material',
+		            duration: 3
+		          });
+		        });
+		    };
 	$scope.authenticate = function(provider) {
       $auth.authenticate(provider)
         .then(function() {
@@ -21,7 +47,12 @@ angular.module('MyApp')
             type: 'material',
             duration: 3
           });
-		  $scope.changeView('search')
+          if(Account.getUserData() == undefined){
+          	console.log('this is empty')
+          	$scope.getProfile();
+          }
+          
+          
 			
         })
         .catch(function(response) {
