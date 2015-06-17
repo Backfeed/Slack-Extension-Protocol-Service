@@ -8,3 +8,4 @@ flask
 .bash_history
 *.db
 resource.pyc
+Tester/protocols.log

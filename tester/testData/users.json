@@ -1,0 +1,33 @@
+
+{
+	"class":"User",
+    "objects":[		{
+						"name":"Tal",
+						"userOrganizations":{ 	
+											 "reference":"False",
+										 	 "class":"UserOrganization",
+											 "objects":[{
+															 "organization_id":"1",
+															 "org_tokens":"100",
+															 "org_reputation":"100"
+														}]
+										}					
+						
+					},
+					{
+										"name":"Shahar",
+										"userOrganizations":{ 	
+															 "reference":"False",
+														 	 "class":"UserOrganization",
+															 "objects":[{
+																			 "organization_id":"1",
+																			 "org_tokens":"100",
+																			 "org_reputation":"100"
+																			 
+																		}]
+														}					
+
+									}
+				]
+
+}
