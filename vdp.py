@@ -8,6 +8,12 @@ from operator import attrgetter
 
 state = {}
 
+def bf_Log(logger,messsage,level = 'info'):
+	if(logger):
+		logger.info(messsage)
+	return 0
+
+
 def getHighestEval(bids):
 	maxValue = max(bids, key=attrgetter('contribution_value_after_bid')).contribution_value_after_bid
 	
@@ -53,7 +59,7 @@ def calcValue(bids):
 			current_evaluation = int(bid.tokens)
 			return current_evaluation
 
-	return 0
+	return 0 # TBD: return error here (throw exception)
 
 def distribute_rep(bids, current_bid,session):
 	logger = state['logger']
@@ -61,7 +67,7 @@ def distribute_rep(bids, current_bid,session):
 	current_bidder = users[current_bid.owner]
 
 	if(not current_bid.stake):
-		logger.info('stake is null --> stake is set to entire bid reputation:'+str(current_bid.reputation))
+		bf_Log(logger,'stake is null --> stake is set to entire bid reputation:'+str(current_bid.reputation))
 		current_bid.stake = current_bid.reputation
 
 	#kill the stake of the current_bidder
@@ -81,33 +87,33 @@ def update_rep(bids, current_bid,session):
 	#calculate total sum of Weight * Decay
 	for bid in bids:
 		summ += float(bid.reputation) * decay(bid.tokens, current_bid.tokens)
-	logger.info("sum of Weight * Decay = " + str(summ))
+	bf_Log(logger,"sum of Weight * Decay = " + str(summ))
 
 	#reallocate reputation
 	for bid in bids:		
 		user = users[bid.owner]
-		logger.info("\n\nrealocating reputation for bidder Id:" + str(bid.owner))
+		bf_Log(logger,"\n\nrealocating reputation for bidder Id:" + str(bid.owner))
 		
-		logger.info("OLD REP === " + str(user.org_reputation))
-		logger.info(" ----  current_bid.stake = " + str(current_bid.stake))
+		bf_Log(logger,"OLD REP === " + str(user.org_reputation))
+		bf_Log(logger," ----  current_bid.stake = " + str(current_bid.stake))
 		new_rep_weight = ( float(bid.reputation) * decay(bid.tokens, current_bid.tokens)  )
-		logger.info('new_rep_weight:'+str(new_rep_weight))
+		bf_Log(logger,'new_rep_weight:'+str(new_rep_weight))
 		
 		user.org_reputation += math.ceil(float(current_bid.stake) * new_rep_weight / summ) 
-		logger.info("NEW REP === " + str(user.org_reputation))
+		bf_Log(logger,"NEW REP === " + str(user.org_reputation))
 		session.add(user)
 
 
 def decay(vi, vn):
 	logger = state['logger']	
-	logger.info("v1 = " + str(vi) + " vn = " + str(vn))
+	bf_Log(logger,"v1 = " + str(vi) + " vn = " + str(vn))
 	decay = math.atan(1 / abs(int(vi) - int(vn)+0.1))
-	logger.info("decay................." + str(decay))
+	bf_Log(logger,"decay................." + str(decay))
 	return decay
 
 def validateBid(bids, current_bid):
 	logger = state['logger']	
-	logger.info('\n\n *** validateBid: ***:\n')
+	bf_Log(logger,'\n\n *** validateBid: ***:\n')
 	
 	Wi = 0;
 	users = state['usersDict']
@@ -118,34 +124,34 @@ def validateBid(bids, current_bid):
 	for bid in bids:
 		if bid.owner == current_bidder.user_id:  
 			Wi += int(bid.reputation)
-	logger.info('amount of reputation which  has been engaged by the current_bidder:'+str(Wi))
+	bf_Log(logger,'amount of reputation which  has been engaged by the current_bidder:'+str(Wi))
 	
 	#check if something has to be trimmed
 	if int(current_bidder.org_reputation) - Wi < rep:
 		if int(current_bidder.org_reputation) > Wi:
 			current_bid.reputation = int(current_bidder.org_reputation) - Wi
-			logger.info("trimmed reputation to : "+str(current_bid.reputation))
+			bf_Log(logger,"trimmed reputation to : "+str(current_bid.reputation))
 			
 		else:
-			logger.info("bidder has no more reputation to spare for current bid. exit.")
+			bf_Log(logger,"bidder has no more reputation to spare for current bid. exit.")
 			return None;
 
-	logger.info("current_bid.stake = " + str(current_bid.stake) + " and current_bid.rep = " + str(current_bid.reputation))
+	bf_Log(logger,"current_bid.stake = " + str(current_bid.stake) + " and current_bid.rep = " + str(current_bid.reputation))
 
 	if int(current_bid.stake) > int(current_bid.reputation):
-		logger.info("bidder has put more stake than he has reputation - reducing stake to bidder's reputation.")
+		bf_Log(logger,"bidder has put more stake than he has reputation - reducing stake to bidder's reputation.")
 		current_bid.stake = current_bid.reputation
 
-	logger.info( "bidder reputation: "+ str(current_bidder.org_reputation) + ", bidder total weight = " + str(Wi) + "Appending current bid reputation:" + str(current_bid.reputation))
-	logger.info('\n\n')
+	bf_Log(logger, "bidder reputation: "+ str(current_bidder.org_reputation) + ", bidder total weight = " + str(Wi) + "Appending current bid reputation:" + str(current_bid.reputation))
+	bf_Log(logger,'\n\n')
 
 	return current_bid;
 
 def debug_state(state):
 	logger = state['logger']
-	logger.info('\n\n *** current state ***:\n')
-	logger.info('previous highest eval:'+str(state['highest_eval']))
-	logger.info('total system reputation:'+str(state['total_system_reputation']))	
+	bf_Log(logger,'\n\n *** current state ***:\n')
+	bf_Log(logger,'previous highest eval:'+str(state['highest_eval']))
+	bf_Log(logger,'total system reputation:'+str(state['total_system_reputation']))	
 	
 def getCurrentState(contributionObject,session):
 	usersDict = {}
@@ -170,10 +176,10 @@ def getCurrentState(contributionObject,session):
 
 def debug_bid(current_bid):
 	logger = state['logger']
-	logger.info('\n\n *** processing bid - info: ***\n')
-	logger.info('stake (risk):'+str(current_bid.stake))
-	logger.info('reputation (weight):'+str(current_bid.reputation))	
-	logger.info('tokens (eval):'+str(current_bid.tokens))
+	bf_Log(logger,'\n\n *** processing bid - info: ***\n')
+	bf_Log(logger,'stake (risk):'+str(current_bid.stake))
+	bf_Log(logger,'reputation (weight):'+str(current_bid.reputation))	
+	bf_Log(logger,'tokens (eval):'+str(current_bid.tokens))
 	
 def process_bid(current_bid,session,mylogger = None):
 	state['logger'] = mylogger
