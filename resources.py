@@ -203,8 +203,8 @@ class BidResource(Resource):
                    "time_created":datetime.now()
                     }
 
-        bid = cls.Bid(jsonStr,session)                       
-        bid = vdp.process_bid(bid)
+        bid = cls.Bid(jsonStr,session) 
+        bid = vdp.process_bid(bid,session)
         if( not bid ):
             abort(404, message="Failed to process bid".format(contributionid))
 

@@ -1,6 +1,6 @@
 #import logging.config
 #logging.config.fileConfig(params["loggingConfigFilename"])
-from db import session
+#from db import session
 import classes as cls
 
 import math
@@ -8,8 +8,8 @@ from operator import attrgetter
 
 state = {}
 
-
-def init(org_id):
+	
+def init(org_id,session):
 	usersDict = {}
 	total_system_reputation = 0
 	
@@ -28,7 +28,7 @@ def getHighestEval(bids):
 	maxValue = max(bids, key=attrgetter('contribution_value_after_bid')).contribution_value_after_bid
 	return maxValue
 	
-def issueTokens(tokes_to_distribute,contributers):
+def issueTokens(tokes_to_distribute,contributers,session):
 	
 	# get collaborators:
 	for contributer in contributers:
@@ -102,7 +102,7 @@ def add_to_bids(bids, current_bid):
 
 
 
-def distribute_rep(bids, current_bid):
+def distribute_rep(bids, current_bid,session):
 
 	users = state['usersDict']
 	current_bidder = users[current_bid.owner]
@@ -116,11 +116,11 @@ def distribute_rep(bids, current_bid):
 	session.add(current_bidder)
 
 	# and redistribute it around to the others
-	update_rep(bids, current_bid)
+	update_rep(bids, current_bid,session)
 
 
 
-def update_rep(bids, current_bid):
+def update_rep(bids, current_bid,session):
 	summ = 0;	
 	users = state['usersDict']	
 
@@ -146,12 +146,21 @@ def decay(vi, vn):
 	return decay
 
 
-def process_bid(current_bid):
+def bf_Log(messsage,level = 'info'):
+	if(logger):
+		logger.info(messsage)
+	return 0
+	
+def set_Logger(the_logger):
+	logger = the_logger
+
+def process_bid(current_bid,session,logger = None):
+	print 'session3:'+str(session)
 	
 	print 'processing bid:'+str(current_bid)
 	contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == current_bid.contribution_id).first()
 	user_org = contributionObject.userOrganization
-	init(user_org.organization_id)
+	init(user_org.organization_id,session)
 
 	highest_eval = 0 
 	if(contributionObject.bids and len(contributionObject.bids)):
@@ -163,14 +172,14 @@ def process_bid(current_bid):
 	if(not bids):
 		return None
 
-	distribute_rep(bids, current_bid)
+	distribute_rep(bids, current_bid,session)
 
 	current_eval = calcValue(bids)
 
 	# process current eval:
 	eval_delta = int(current_eval) - int(highest_eval)
 	if (eval_delta > 0):
-		issueTokens(eval_delta, contributionObject.contributionContributers)
+		issueTokens(eval_delta, contributionObject.contributionContributers,session)
 
 	current_bid.contribution_value_after_bid = current_eval
 	session.add(current_bid)
