@@ -37,6 +37,7 @@ angular.module('MyApp').controller(
 							$scope.users_organizations_id = data.userOrgId;
 							$scope.model.users_organizations_id = data.userOrgId;
 							$scope.organizationId = data.orgId;
+							$scope.access_token = data.access_token;
 						}
 						Account.setUserData(data);
 
@@ -143,15 +144,105 @@ angular.module('MyApp').controller(
 					}
 
 				};
+				
+				// ******************************* SLACK PLAY ***********************
+				
+				$scope.sendTestMessage = function(channelId,message) {
+							console.log('sending test message to slack :'+message);
 
+							// 'https://slack.com/api/users.list'
 
+							var url = 'https://slack.com/api/chat.postMessage'
+							console.log('url:'+url);
+
+							var token = "xoxp-3655944058-3674335518-3694970236-83726d";
+						//	var key = 'c1bb14ae5cc544231959fc6e9af43218';
+							var data = {
+								token:token,
+								channel:channelId,
+								text:message
+							}
+
+							// TBD: move to use angularJS instead of Jquery and get rid of need to change  Host when we deploy...
+							// TBD: which API ? do we get 'my borads or boards of orgenziation'
+							$.ajax({
+								type: "GET",
+							  url: url,
+							  data: data,
+							  success: function(){console.log('message posted succesfulyy!')},
+								persist:true,
+								dataType:'JSON'
+							});
+				};
+				
+				
+				$scope.gotChannels = function(data) {
+					console.log('recieved Channels:');
+					console.dir(data);
+					
+					
+					// get specific channel:
+					var chnls = data.channels;
+					for (chnIndx in chnls){
+						var chnl = chnls[chnIndx];
+						console.log('chnl.name:'+chnl.name)	
+						if(chnl.name == 'contributions_test'){
+							console.log('is random sending ...:')	;
+							
+							channelId = chnl.id
+							$scope.sendTestMessage(channelId,'contribution created: '+$scope.currentSavedContribution.title)
+						}			
+					}
+				};
+				
+				$scope.getChannels = function() {
+
+						console.log('getting channels using access Token:'+$scope.access_token);
+
+						// 'https://slack.com/api/users.list'
+
+						var url = 'https://slack.com/api/channels.list'
+						console.log('url:'+url);
+
+						var token = "xoxp-3655944058-3674335518-3694970236-83726d";
+					//	var key = 'c1bb14ae5cc544231959fc6e9af43218';
+						var data = {
+							token:token
+							//,key:key
+						}
+
+						// TBD: move to use angularJS instead of Jquery and get rid of need to change  Host when we deploy...
+						// TBD: which API ? do we get 'my borads or boards of orgenziation'
+						$.ajax({
+							type: "GET",
+						  url: url,
+						  data: data,
+						  success: $scope.gotChannels,
+							persist:true,
+							dataType:'JSON'
+						});
+					
+				  };
+
+					$scope.slackPlay = function(contribution) {
+						console.dir(contribution);
+						$scope.currentSavedContribution = contribution
+			
+						console.log('sending to slack, contribution:'+$scope.currentSavedContribution.title);
+						$scope.getChannels()
+						
+				  };
+				// *****************************************************
 				// function definition
 				$scope.onSubmit = function() {
 					console.log("In Submit method");
 					console.log($scope.model)
 					$scope.data = SaveContribution.save({}, $scope.model);
 					$scope.data.$promise.then(function(result) {
-						alert('Successfully saved');
+						
+						$scope.slackPlay(result);
+						
+						alert('Successfully saved:'+result.title);
 						$location.path("/bids/" + result.id);
 					});
 				};
