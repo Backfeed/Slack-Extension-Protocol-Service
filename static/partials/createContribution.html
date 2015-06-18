@@ -46,9 +46,11 @@
 								</div>
 								
 								<nobr>
+								<img alt="" ng-src="{{contributer.img}}">
 								<label>Contributer</label>
-								<select ng-model="contributer.contributer_id" data-placeholder="Choose Contributer">
-									<option ng-repeat="user in users" value="{{user.id}}" >{{user.name}}</option>	
+								
+								<select ng-model="contributer.contributer_id" ng-options="user.id as user.name for user in users" ng-change="contributer.img = updateContributer(contributer.contributer_id)"  data-placeholder="Choose Contributer">
+									
 								</select>
 								<label>Percentage</label>
 								<input size="5" type="text"

@@ -57,6 +57,7 @@ user_org_fields = {
     'name': fields.String, 
     'tokens': fields.String,  
     'reputation': fields.String, 
+     'url' : fields.String,
 }
 
 userOrganization_fields = {
@@ -150,7 +151,8 @@ class AllUserResource(Resource):
         users =[]    
         userOrganizationObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == organizationId).all()
         for userOrganization in userOrganizationObjects :
-            users.append({'id':userOrganization.user.id,'name':userOrganization.user.name,"tokens": userOrganization.org_tokens,"reputation": userOrganization.org_reputation})           
+            print 'url is'+str(userOrganization.user.url)
+            users.append({'url':userOrganization.user.url,'id':userOrganization.user.id,'name':userOrganization.user.name,"tokens": userOrganization.org_tokens,"reputation": userOrganization.org_reputation})           
         return users
         
 class BidResource(Resource):
@@ -404,7 +406,10 @@ def createUserAndUserOrganizations(organizaionId):
     
     usersInSystem = session.query(cls.User).all()
     usersDic = {}
+    currentUser = '';
     for u in usersInSystem:
+        if u.id == g.user_id:
+            currentUser = u
         usersDic[u.name] = u.id
     # parse response:
     users = getSlackUsers()
@@ -417,9 +422,11 @@ def createUserAndUserOrganizations(organizaionId):
             userId = usersDic[user['name']]
         except KeyError:
             userId = ''
-          
+        if userId  == g.user_id :
+            currentUser.url = user['profile']['image_24']
+            session.add(currentUser)
         if userId == '':
-            jsonStr = {"name":user['name']}
+            jsonStr = {"name":user['name'],"url":user['profile']['image_24']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 

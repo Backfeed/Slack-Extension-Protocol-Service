@@ -15,8 +15,9 @@ angular.module('MyApp').controller(
 				users_organizations_id : '',
 				contributers : [ {
 					contributer_id : '',
-					contributer_percentage : '',
-					contribution1: ''
+					contributer_percentage : '50',
+					contribution1: '',
+					img:''
 				} ],
 				intialBid : [ {
 					tokens : '',
@@ -77,6 +78,17 @@ angular.module('MyApp').controller(
 					}
 					$scope.model.owner = userData.userId;
 				}
+				
+				$scope.updateContributer = function(selectedUserId,index) {
+					for(i = 0 ; i<$scope.users.length ; i++){
+						if($scope.users[i].id == selectedUserId ){
+							return $scope.users[i].url
+						}
+					}
+					
+					
+				};
+
 
 				$scope.getOrgUsers = function() {
 					$scope.data = Users.getOrg.getUsers({
@@ -84,7 +96,7 @@ angular.module('MyApp').controller(
 					});
 					$scope.data.$promise.then(function(result) {
 						Users.setAllOrgUsersData(result)						
-						$scope.users = result;
+						$scope.users = result;						
 						//$location.path("/contribution/" + result.id);
 					});
 				};
@@ -191,7 +203,7 @@ angular.module('MyApp').controller(
 				$scope.addCollaborator = function() {
 					$scope.model.contributers.push({
 						contributer_id:'',
-						contributer_percentage:'',
+						contributer_percentage:'50',
 						contribution1:''
 					}) ;
 				};
