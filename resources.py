@@ -42,7 +42,6 @@ organizationParser.add_argument('token_name', type=str)
 organizationParser.add_argument('slack_teamid', type=str,required=True)
 organizationParser.add_argument('intial_tokens', type=str)
 organizationParser.add_argument('name', type=str)
-organizationParser.add_argument('contributers', type=cls.OrgContributer, action='append')
 
 bidParser.add_argument('stake', type=str,required=True)
 bidParser.add_argument('tokens', type=str,required=True)
