@@ -253,8 +253,6 @@ class ContributionResource(Resource):
                 abort(404, message="Contributer {} doesn't exist".format(contributionContributer.contributer_id))
             contributionContributer.contribution_id=contribution.id
             contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
-            print 'g.orgId'+str(g.orgId)
-            print 'userObj.id'+str(userObj.id)
             if (firstContribution == True):
                  userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
                  if userOrgObject:
@@ -266,6 +264,10 @@ class ContributionResource(Resource):
             contributionContributer.contributer_id = contribution.owner
             contributionContributer.contributer_percentage = '100'
             contribution.contributionContributers.append(contributionContributer)  
+            if (firstContribution == True):
+                userOrgObjectForOwner.org_reputation = 100
+                session.add(userOrgObjectForOwner) 
+                                
         if((parsed_args['intialBid'].obj1['tokens'] != '') & (parsed_args['intialBid'].obj1['reputation'] != '')):      
                 jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
                    "reputation":parsed_args['intialBid'].obj1['reputation'],
