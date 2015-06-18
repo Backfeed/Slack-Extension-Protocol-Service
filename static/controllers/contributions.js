@@ -137,7 +137,7 @@ angular.module('MyApp').controller(
 					}
 					
 					for(i=0;i<allcontributers.length;i++){
-						allcontributers[i].contributer_percentage = (allcontributers[i].contribution1/totalContribution)*100+'%'
+						allcontributers[i].contributer_percentage = (allcontributers[i].contribution1/totalContribution)*100
 						
 						
 					}

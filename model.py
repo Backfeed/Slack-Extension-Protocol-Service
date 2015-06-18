@@ -82,7 +82,6 @@ organization_table = schema.Table('organization', metadata,
 
     schema.Column('token_name', types.Unicode(255)),
     schema.Column('slack_teamid', types.Unicode(255)),
-    schema.Column('intial_tokens', types.Integer),
     schema.Column('name', types.Unicode(255)),
 )
 

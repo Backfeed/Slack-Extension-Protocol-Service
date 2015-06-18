@@ -1,51 +1,17 @@
 angular.module('MyApp')
   .controller('OrganizationCtrl', function($scope,$auth,$alert,$location,$stateParams,SaveOrg,Account,Users,AllSlackUsers,CheckOrgTokenName) {
 	  $scope.userData= ''
-      $scope.validationFailure = false;
-	  $scope.showContributer = false;
-	  $scope.getOrgUsers = function() {
-			$scope.data = AllSlackUsers.allSlackUsers();
-			$scope.data.$promise.then(function(result) {
-				$scope.allUsers = result;
-				//$location.path("/contribution/" + result.id);
-			});
-		};
+      $scope.validationFailure = true;
+	 
 	
 	  $scope.orgModel = {
 				token_name : '',
-				slack_teamid : '',
-				intial_tokens : '',
-				contributers : [ {
-					contributer_id : '',
-					contributer_percentage : '',
-					contribution1: '',
-					token: '',
-					reputation: ''
-				} ],
+				slack_teamid : '',				
 				name : ''
 
 			}
-	  $scope.getOrgUsers();
-	  $scope.removeCollaboratorItem = function(index) {
-			$scope.orgModel.contributers.splice(index, 1);
-	  };
-	  $scope.changeContribution = function() {
-			totalContribution = 0;
-			allcontributers = $scope.orgModel.contributers
-			for(i=0;i<allcontributers.length;i++){
-				totalContribution = totalContribution + +allcontributers[i].contribution1;
-				
-				
-			}
-			
-			for(i=0;i<allcontributers.length;i++){
-				allcontributers[i].contributer_percentage = (allcontributers[i].contribution1/totalContribution)*100;
-				allcontributers[i].token = ($scope.orgModel.intial_tokens * allcontributers[i].contributer_percentage)/100;
-				allcontributers[i].reputation = ($scope.orgModel.intial_tokens * allcontributers[i].contributer_percentage)/100;
-				
-			}
-
-		};
+	 
+	  
 	  $scope.getProfile = function() {
 	      Account.getProfile()
 	        .success(function(data) {
@@ -108,25 +74,7 @@ angular.module('MyApp')
 	  
    }
    
-   $scope.checkTokens = function(){
-	   console.log('$scope.orgModel.intial_tokens:' +$scope.orgModel.intial_tokens)
-	   if($scope.orgModel.intial_tokens != ''){
-		   $scope.showContributer = true;
-		}else{
-			$scope.showContributer = false;
-		}
-	   
-	  
-   }
-   $scope.addCollaborator = function() {
-		$scope.orgModel.contributers.push({
-			contributer_id:'',
-			contributer_percentage:'',
-			contribution1:'',
-			token: '',
-			reputation: ''
-		}) ;
-	};
+  
 	$scope.submit = function(){
 		console.log("In Submit method");
 		console.log($scope.orgModel)

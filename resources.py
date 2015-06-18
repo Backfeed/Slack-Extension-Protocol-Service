@@ -20,7 +20,6 @@ class Resource(FlaskResource):
    method_decorators = [login_required]   # applies to all inherited resources
 
 userParser = reqparse.RequestParser()
-organizationParser = reqparse.RequestParser()
 userOrganizationParser = reqparse.RequestParser()
 contributionParser = reqparse.RequestParser()
 bidParser = reqparse.RequestParser()
@@ -38,10 +37,6 @@ userParser.add_argument('userId', type=str)
 userParser.add_argument('name', type=str,required=True)
 userParser.add_argument('slack_id', type=str)
 
-organizationParser.add_argument('token_name', type=str)
-organizationParser.add_argument('slack_teamid', type=str,required=True)
-organizationParser.add_argument('intial_tokens', type=str)
-organizationParser.add_argument('name', type=str)
 
 bidParser.add_argument('stake', type=str,required=True)
 bidParser.add_argument('tokens', type=str,required=True)
@@ -239,9 +234,15 @@ class ContributionResource(Resource):
         contribution.owner = parsed_args['owner']
         contribution.title = parsed_args['title']
         contribution.users_organizations_id = parsed_args['users_organizations_id']
-        userObj = getUser(contribution.owner)        
+        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == parsed_args['users_organizations_id']).first()
+        userObj = getUser(contribution.owner) 
+               
         if not userObj:
-            abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.owner))        
+            abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.owner))    
+        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == parsed_args['users_organizations_id']).first()
+        firstContribution = False
+        if (not contributionObject ):
+            firstContribution = True
         for contributer in parsed_args['contributers']:             
             contributionContributer = cls.ContributionContributer()
             contributionContributer.contributer_id = contributer.obj1['contributer_id']
@@ -252,6 +253,13 @@ class ContributionResource(Resource):
                 abort(404, message="Contributer {} doesn't exist".format(contributionContributer.contributer_id))
             contributionContributer.contribution_id=contribution.id
             contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
+            print 'g.orgId'+str(g.orgId)
+            print 'userObj.id'+str(userObj.id)
+            if (firstContribution == True):
+                 userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
+                 if userOrgObject:
+                    userOrgObject.org_reputation = contributer.obj1['contributer_percentage']
+                    session.add(userOrgObject)                                               
             contribution.contributionContributers.append(contributionContributer)  
         if(len(contribution.contributionContributers) == 0):
             contributionContributer = cls.ContributionContributer()
@@ -266,6 +274,9 @@ class ContributionResource(Resource):
                     }
                 intialBidObj = cls.Bid(jsonStr,session)        
                 contribution.bids.append(intialBidObj)
+        
+        
+        
         session.add(contribution)
         session.commit()        
        
@@ -360,18 +371,15 @@ class OrganizationResource(Resource):
 
         jsonStr = {"token_name":json['token_name'],
                     "slack_teamid":json['slack_teamid'],
-                    "intial_tokens":json['intial_tokens'],
                     "name":json['name']
                     }
         organization = cls.Organization(jsonStr,session)
 
         session.add(organization)
         session.flush()
-        contributerDict = {}
-        for contributer in json['contributers']:
-            contributerDict[contributer['contributer_id']] = contributer['reputation']
+      
         
-        createUserAndUserOrganizations(organization.id,contributerDict)
+        createUserAndUserOrganizations(organization.id)
         session.commit()
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).filter(cls.UserOrganization.organization_id == organization.id).first()
         return userOrgObj, 201
@@ -390,7 +398,7 @@ class getAllSlackUsersResource(Resource):
         return getSlackUsers()
         
     
-def createUserAndUserOrganizations(organizaionId,contributerDict):
+def createUserAndUserOrganizations(organizaionId):
     
     usersInSystem = session.query(cls.User).all()
     usersDic = {}
@@ -407,16 +415,7 @@ def createUserAndUserOrganizations(organizaionId,contributerDict):
             userId = usersDic[user['name']]
         except KeyError:
             userId = ''
-        
-        try:
-            token = contributerDict[user['id']] 
-            repuation = token
-            print 'token is' + str(token)
-        except KeyError:
-            token = 0
-            repuation = 0
-         
-             
+          
         if userId == '':
             jsonStr = {"name":user['name']}
             u = cls.User(jsonStr,session)
