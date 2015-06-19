@@ -359,10 +359,11 @@ class ContributionStatusResource(Resource):
             totalReputaion = totalReputaion + bid.reputation
             if(str(bid.owner) == str(userId)):
                 myReputaion = myReputaion + bid.reputation 
-                myValuation = myValuation + bid.tokens
+                myValuation = myValuation + bid.tokens*bid.reputation
         if (last_bid):
             currentValuation = last_bid.contribution_value_after_bid
- 
+        if(myValuation != 0 & myReputaion != 0):
+            myValuation = myValuation/myReputaion
         jsonStr = {"currentValuation":currentValuation,
                    "totalReputaion":totalReputaion,
                    "myValuation":myValuation,

@@ -1,7 +1,7 @@
 angular.module('MyApp')
   .controller('OrganizationCtrl', function($scope,$auth,$alert,$location,$stateParams,SaveOrg,Account,Users,AllSlackUsers,CheckOrgTokenName,AllOrgs) {
 	  $scope.userData= ''
-      $scope.validationFailure = true;
+      $scope.validationFailure = false;
 	 
 	
 	  $scope.orgModel = {
@@ -78,6 +78,10 @@ angular.module('MyApp')
    
    $scope.orderProp = "name";
 	$scope.submit = function(){
+		if($scope.validationFailure == true){
+			alert('This name is already taken please use other')
+			return
+		}
 		console.log("In Submit method");
 		console.log($scope.orgModel)
 		$scope.data = SaveOrg.save({},$scope.orgModel);

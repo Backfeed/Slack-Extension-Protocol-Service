@@ -182,6 +182,18 @@ angular.module('MyApp').controller(
 
 				// function definition
 				$scope.onSubmit = function() {
+					allcontributers = $scope.model.contributers
+					totalActive = 0;
+					for(i=0;i<allcontributers.length;i++){
+						if(allcontributers[i].contributer_id != 0){
+							totalActive = totalActive + 1;
+						}
+					}
+					console.log('total is '+totalActive);
+					if(totalActive <=0 ){
+						alert("At least one contributer should be there");
+						return
+					}
 					console.log("In Submit method");
 					console.log($scope.model)
 					$scope.data = SaveContribution.save({}, $scope.model);
