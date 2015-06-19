@@ -362,7 +362,7 @@ class ContributionStatusResource(Resource):
                 myValuation = myValuation + bid.tokens*bid.reputation
         if (last_bid):
             currentValuation = last_bid.contribution_value_after_bid
-        if(myValuation != 0 & myReputaion != 0):
+        if(myValuation != 0 and myReputaion != 0):
             myValuation = myValuation/myReputaion
         jsonStr = {"currentValuation":currentValuation,
                    "totalReputaion":totalReputaion,
