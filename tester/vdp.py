@@ -111,6 +111,18 @@ def decay(vi, vn):
 	bf_Log(logger,"decay................." + str(decay))
 	return decay
 
+def isBidderFirstBid(bids, current_bid):
+	logger = state['logger']	
+	bf_Log(logger,'\n\n *** isBidderFirstBid: ***:\n')
+	for bid in bids:
+		if bid.owner == current_bid.owner:
+			bf_Log(logger,'is not  bidders first bid.')
+			return False
+	
+	bf_Log(logger,'is  bidders first bid.')
+	return True
+
+
 def validateBid(bids, current_bid):
 	logger = state['logger']	
 	bf_Log(logger,'\n\n *** validateBid: ***:\n')
@@ -135,6 +147,10 @@ def validateBid(bids, current_bid):
 		else:
 			bf_Log(logger,"bidder has no more reputation to spare for current bid. exit.")
 			return None;
+	elif(not int(current_bidder.org_reputation)):
+		bf_Log(logger,"bidder has no more reputation to spare for current bid. exit.")
+		return None;		
+		
 
 	bf_Log(logger,"current_bid.stake = " + str(current_bid.stake) + " and current_bid.rep = " + str(current_bid.reputation))
 
@@ -152,7 +168,9 @@ def debug_state(state):
 	bf_Log(logger,'\n\n *** current state ***:\n')
 	bf_Log(logger,'previous highest eval:'+str(state['highest_eval']))
 	bf_Log(logger,'total system reputation:'+str(state['total_system_reputation']))	
-	
+	bf_Log(logger,'is contribution Zero:'+str(state['is_contribution_zero']))
+
+
 def getCurrentState(contributionObject,session):
 	usersDict = {}
 	total_system_reputation = 0
@@ -161,7 +179,15 @@ def getCurrentState(contributionObject,session):
 	user_org = contributionObject.userOrganization
 	userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == user_org.organization_id).all()
 
+	state['is_contribution_zero'] = True
+	accumulated_number_of_contributions = 0
 	for userOrg in userOrgObjects:
+		# check if contribution zero (once we know it isnt dont check again) :
+		if(state['is_contribution_zero'] and userOrg.contributions and len(userOrg.contributions)):
+			accumulated_number_of_contributions += len(userOrg.contributions)
+			if(accumulated_number_of_contributions > 1):
+				state['is_contribution_zero'] = False
+		
 		usersDict[userOrg.user_id] = userOrg
 		total_system_reputation = total_system_reputation + userOrg.org_reputation
 
@@ -181,8 +207,9 @@ def debug_bid(current_bid):
 	bf_Log(logger,'reputation (weight):'+str(current_bid.reputation))	
 	bf_Log(logger,'tokens (eval):'+str(current_bid.tokens))
 	
-def process_bid(current_bid,session,mylogger = None):
-	state['logger'] = mylogger
+	
+def process_bid(current_bid,session,logger = None):
+	state['logger'] = logger
 	debug_bid(current_bid)
 	
 	# get contribution :
@@ -190,6 +217,11 @@ def process_bid(current_bid,session,mylogger = None):
 	
 	# update current state:
 	getCurrentState(contributionObject,session)
+	
+	# validate is First Bid:
+	if(not isBidderFirstBid(contributionObject.bids, current_bid)):
+		bf_Log(logger,'is Not bidders first bid - exiting (we currently dont allow several bids per contribution.)')
+		return None
 	
 	# validate Bid:
 	current_bid = validateBid(contributionObject.bids, current_bid)
