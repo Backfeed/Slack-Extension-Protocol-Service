@@ -9,13 +9,14 @@
 		
 						<div class="panel panel-default">
 							<div class="panel-heading">
-								<h3 class="panel-title">My Bids</h3>
+								<h3 class="panel-title">Bids</h3>
 							</div>
 							<table class="table">
 
 								<th>Bid Tokens</th>
 								<th>Bid Reputations</th>
 								<th>Bid Stake</th>
+								<th>Bid Owner</th>
 
 
 								<tr ng-repeat="bid in ContributionModelForView.bids">
@@ -23,7 +24,7 @@
 									<td>{{bid.tokens}}</td>
 									<td>{{bid.reputation}}</td>
 									<td>{{bid.stake}}</td>
-									
+									<td>{{bid.bidderName}}</td>
 									</div>
 								</tr>
 							</table>

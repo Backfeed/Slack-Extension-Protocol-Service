@@ -80,7 +80,7 @@
 							<button type="submit"  class="btn btn-primary" ng-click='addCollaborator()'>Add Collaborator</button>
 				</div>
 				
-				<div align="center" ><button type="submit" class="btn btn-primary submit-button" ng-disabled="model.title == '' || model.file == ''" ng-click="onSubmit()">Submit</button></div>
+				<div align="center" ><button type="submit" class="btn btn-primary submit-button" ng-disabled="!model.title || !model.file || buttonDisabled" ng-click="onSubmit()">Submit</button></div>
 						
 
 			</form>

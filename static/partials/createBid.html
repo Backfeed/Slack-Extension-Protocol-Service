@@ -9,10 +9,10 @@
 				<div class="form-group">
 					<label for="token">Token:</label> <input
 						type="text" class="form-control" id="token"
-						ng-model="bid.tokens" >					
+						ng-model="bid.tokens" required >					
 
 				</div>
-				<div align="center" ><button type="submit" class="btn btn-primary submit-button" ng-click="submit()">Bud</button></div>
+				<div align="center" ><button type="submit" class="btn btn-primary submit-button" ng-disabled="!bid.tokens" ng-click="submit()">Bid</button></div>
 			</form>
 		</div>
 	</div>

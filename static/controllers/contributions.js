@@ -6,6 +6,7 @@ angular.module('MyApp').controller(
 			var orgExists;
 			$scope.currencyFormatting = function(value) { return value.toString() + " $"; };
 			$scope.organizationId = 'notintialized';
+			$scope.buttonDisabled = true;
 			$scope.model = {
 				title : '',
 				file : '',
@@ -95,10 +96,11 @@ angular.module('MyApp').controller(
 							$scope.model.contributers[index].contributer_percentage = ''
 							$scope.model.contributers[index].contribution1 = 50
 							$scope.changeContribution();
-							alert('This collbrator is already beend added')
+							alert('This collbrator is already been added')
 							return '';
 						}
 					}
+					
 					$scope.changeContribution();
 					return urlImage;
 					
@@ -141,7 +143,10 @@ angular.module('MyApp').controller(
 					} ],
 					bids : [ {
 						tokens : '',
-						reputation : ''
+						reputation : '',
+						stake : '',
+						owner : '',
+						bidderName : ''
 					} ]
 				};
 
@@ -157,11 +162,16 @@ angular.module('MyApp').controller(
 				
 				$scope.changeContribution = function() {
 					totalContribution = 0;
-					console.log('comes here in change')
 					allcontributers = $scope.model.contributers
+					valid = true;
+					if(allcontributers.length){
+						valid = false;	
+					}
 					for(i=0;i<allcontributers.length;i++){
 						if(allcontributers[i].contributer_id != 0){
 							totalContribution = totalContribution + +allcontributers[i].contribution1;
+						}else{
+							valid = false;							
 						}
 						
 						
@@ -176,6 +186,8 @@ angular.module('MyApp').controller(
 						
 						
 					}
+					
+					$scope.buttonDisabled = valid;
 
 				};
 
@@ -250,6 +262,7 @@ angular.module('MyApp').controller(
 						contribution1:'50',
 						img:'images/avatar.jpg'
 					}) ;
+					$scope.buttonDisabled = true;
 				};
 				$scope.closeContribution = function() {
 					console.log("In closeContribution method");

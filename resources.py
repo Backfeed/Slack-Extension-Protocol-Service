@@ -84,6 +84,7 @@ bid_nested_fields['stake'] = fields.String
 bid_nested_fields['tokens'] = fields.String
 bid_nested_fields['reputation'] = fields.String
 bid_nested_fields['owner'] = fields.Integer
+bid_nested_fields['bidderName'] = fields.String
 
 contributer_nested_fields = {}
 contributer_nested_fields['contributer_id'] = fields.String
@@ -228,6 +229,9 @@ class ContributionResource(Resource):
             abort(404, message="Contribution {} doesn't exist".format(id))
         for contributer in contributionObject.contributionContributers:
             contributer.name= getUser(contributer.contributer_id).name
+                
+        for bid in contributionObject.bids:
+            bid.bidderName = getUser(bid.owner).name
         return contributionObject
 
     def delete(self, id):
