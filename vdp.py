@@ -71,7 +71,7 @@ def distribute_rep(bids, current_bid,session):
 		current_bid.stake = current_bid.reputation
 
 	#kill the stake of the current_bidder
-	current_bidder.org_reputation -= int(current_bid.stake)
+	current_bidder.org_reputation -= math.ceil(float(current_bid.stake))
 	session.add(current_bidder)
 
 	# and redistribute it around to the others
@@ -118,7 +118,7 @@ def validateBid(bids, current_bid):
 	Wi = 0;
 	users = state['usersDict']
 	current_bidder = users[current_bid.owner]
-	rep = int(current_bid.reputation)
+	rep = math.ceil(float(current_bid.reputation))
 
 	#check how much reputation has been engaged by current_bidder,
 	for bid in bids:
@@ -138,7 +138,7 @@ def validateBid(bids, current_bid):
 
 	bf_Log(logger,"current_bid.stake = " + str(current_bid.stake) + " and current_bid.rep = " + str(current_bid.reputation))
 
-	if int(current_bid.stake) > int(current_bid.reputation):
+	if float(current_bid.stake) > int(current_bid.reputation):
 		bf_Log(logger,"bidder has put more stake than he has reputation - reducing stake to bidder's reputation.")
 		current_bid.stake = current_bid.reputation
 
