@@ -58,7 +58,7 @@
 										disabled="disabled"  id="contributer_percentage" ng-model="contributer.contributer_percentage">
 										
 								<div align="right"><label for="contribution"> <span class="pull-right"><span ng-bind="contributer.contribution1" class="ng-binding"></span> </span></label></div>
-								<div align="right"><input style="width: 200px;" type="range" min="0" max="100" step="1"  ng-disabled ="model.title" ng-model="contributer.contribution1" ng-change="changeContribution()"></div>
+								<div align="right"><input style="width: 200px;" type="range" min="0" max="100" step="1"  ng-disabled ="contributer.contributer_id == '0'" ng-model="contributer.contribution1" ng-change="changeContribution()"></div>
 								
 								
 								
