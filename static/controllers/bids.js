@@ -82,7 +82,7 @@ angular.module('MyApp')
 			alert('Bid Successfully created');
 			$location.path("/contribution/"+$scope.contributionId);
 		},	function (result) {
-				alert('Bid failed since entire weight has already been spent for this contribution. ');
+				alert('Evaluation was not processed since you have no reputation left to stake for this contribution.');
 				$location.path("/contribution/"+$scope.contributionId);
 			});
 		
