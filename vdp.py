@@ -26,7 +26,9 @@ def issueTokens(tokes_to_distribute,contributers,session):
 		user = state['usersDict'][contributer.contributer_id]		
 		tokens_to_add = math.ceil( ( tokes_to_distribute * contributer.contributer_percentage ) / 100 ) 
 		user.org_tokens += tokens_to_add
-		user.org_reputation += tokens_to_add
+		# on seeding flow dont issue reputation:
+		if(not state['is_contribution_zero']):
+			user.org_reputation += tokens_to_add
 		session.add(user)
 		
 def calcValue(bids):
@@ -207,6 +209,22 @@ def debug_bid(current_bid):
 	bf_Log(logger,'reputation (weight):'+str(current_bid.reputation))	
 	bf_Log(logger,'tokens (eval):'+str(current_bid.tokens))
 	
+
+def noremlizeSystemReps(contribution_obj,first_eval):
+	
+	if(not state['total_system_reputation']):
+		return False
+	
+	# becuase its contribution-zero we dont have to go over all the system's users ,but only the collaborators 
+	# since we know that they currently are the only users with reputation 
+	contributers = contribution_obj.contributionContributers
+	for contributer in contributers:
+		user_org = state['usersDict'][contributer.contributer_id]
+		user_rep_weight = float(user_org.org_reputation / state['total_system_reputation'])
+		user_org.org_reputation = math.ceil(user_rep_weight * first_eval)
+		session.add(user_org)
+		
+	return True
 	
 def process_bid(current_bid,session,logger = None):
 	state['logger'] = logger
@@ -233,8 +251,13 @@ def process_bid(current_bid,session,logger = None):
 	bids.append(current_bid);
 	
 	# TBD: implement - 'functionX', to separate calculation from distribution:
-	distribute_rep(bids, current_bid,session)
+	if(not state['is_contribution_zero']):
+		distribute_rep(bids, current_bid,session)
 	current_eval = calcValue(bids)
+	
+	# on seeding flow : normelize all the users reputations  in the org, according to current evaluation:
+	if(state['is_contribution_zero'] and state['highest_eval'] == 0 and current_eval > 0 ):
+		noremlizeSystemReps(contributionObject)
 
 	# process current eval:
 	current_bid.contribution_value_after_bid = current_eval
