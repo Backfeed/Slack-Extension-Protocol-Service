@@ -35,6 +35,10 @@
   <ul class="nav navbar-nav" ng-show = 'ifOrgExists()'>
     <li><a href="/#/users">Users</a></li> 
   </ul>
+  
+  <ul class="nav navbar-nav" ng-show = 'ifOrgExists()'>
+    <li><a href="/#/orgs">Orgs</a></li> 
+  </ul>
   <ul ng-if="isAuthenticated()" class="nav navbar-nav pull-right">
 	<!--  <a class="navbar-brand" ng-show = 'ifOrgExists()'>{{ user.slackTeamName  }}</a> -->
 	<a class="navbar-brand" href="/#/profile" >{{ user.displayName  }}</a>

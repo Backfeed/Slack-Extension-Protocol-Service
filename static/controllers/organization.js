@@ -1,5 +1,5 @@
 angular.module('MyApp')
-  .controller('OrganizationCtrl', function($scope,$auth,$alert,$location,$stateParams,SaveOrg,Account,Users,AllSlackUsers,CheckOrgTokenName) {
+  .controller('OrganizationCtrl', function($scope,$auth,$alert,$location,$stateParams,SaveOrg,Account,Users,AllSlackUsers,CheckOrgTokenName,AllOrgs) {
 	  $scope.userData= ''
       $scope.validationFailure = true;
 	 
@@ -11,6 +11,8 @@ angular.module('MyApp')
 
 			}
 	 
+	  
+	  $scope.organizations = AllOrgs.allOrgs();
 	  
 	  $scope.getProfile = function() {
 	      Account.getProfile()
@@ -74,7 +76,7 @@ angular.module('MyApp')
 	  
    }
    
-  
+   $scope.orderProp = "name";
 	$scope.submit = function(){
 		console.log("In Submit method");
 		console.log($scope.orgModel)

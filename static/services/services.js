@@ -121,3 +121,13 @@ bfAPIServices.factory('AllSlackUsers', [ '$resource', function($resource) {
 		}
 	});
 } ]);
+
+bfAPIServices.factory('AllOrgs', [ '$resource', function($resource) {
+	return $resource('organization/all', {}, {
+		allOrgs : {
+			method : 'GET',
+			params : {},
+			isArray : true
+		}
+	});
+} ]);

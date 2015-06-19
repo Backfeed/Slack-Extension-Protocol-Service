@@ -4,7 +4,6 @@ angular.module('MyApp').controller(
 				ContributionDetail, SaveContribution, CloseContribution,
 				Account, Users) {			
 			var orgExists;
-			
 			$scope.currencyFormatting = function(value) { return value.toString() + " $"; };
 			$scope.organizationId = 'notintialized';
 			$scope.model = {
@@ -14,10 +13,10 @@ angular.module('MyApp').controller(
 				min_reputation_to_close : '',
 				users_organizations_id : '',
 				contributers : [ {
-					contributer_id : '',
-					contributer_percentage : '50',
-					contribution1: '',
-					img:''
+					contributer_id : '0',
+					contributer_percentage : '',
+					contribution1: '50',
+					img:'images/avatar.jpg'
 				} ],
 				intialBid : [ {
 					tokens : '',
@@ -80,11 +79,28 @@ angular.module('MyApp').controller(
 				}
 				
 				$scope.updateContributer = function(selectedUserId,index) {
-					for(i = 0 ; i<$scope.users.length ; i++){
+					console.log('comes here firt')
+					urlImage = ''
+					for(i = 0 ; i<$scope.users.length ; i++){						
 						if($scope.users[i].id == selectedUserId ){
-							return $scope.users[i].url
+							urlImage =  $scope.users[i].url
+							break;
 						}
 					}
+					for(j=0;j<$scope.model.contributers.length ; j++){
+						console.log(' $scope.model.contributers[j].contributer_id:' +  $scope.model.contributers[j].contributer_id)
+						if(selectedUserId == $scope.model.contributers[j].contributer_id && $scope.model.contributers[j].contributer_percentage != ''){
+							$scope.model.contributers[index].contributer_id = 0	
+							$scope.model.contributers[index].img = 'images/avatar.jpg'
+							$scope.model.contributers[index].contributer_percentage = ''
+							$scope.model.contributers[index].contribution1 = 50
+							$scope.changeContribution();
+							alert('This collbrator is already beend added')
+							return '';
+						}
+					}
+					$scope.changeContribution();
+					return urlImage;
 					
 					
 				};
@@ -141,15 +157,22 @@ angular.module('MyApp').controller(
 				
 				$scope.changeContribution = function() {
 					totalContribution = 0;
+					console.log('comes here in change')
 					allcontributers = $scope.model.contributers
 					for(i=0;i<allcontributers.length;i++){
-						totalContribution = totalContribution + +allcontributers[i].contribution1;
+						if(allcontributers[i].contributer_id != 0){
+							totalContribution = totalContribution + +allcontributers[i].contribution1;
+						}
+						
 						
 						
 					}
 					
 					for(i=0;i<allcontributers.length;i++){
-						allcontributers[i].contributer_percentage = (allcontributers[i].contribution1/totalContribution)*100
+						if(allcontributers[i].contributer_id != 0){
+							allcontributers[i].contributer_percentage = (allcontributers[i].contribution1/totalContribution)*100
+						}
+						
 						
 						
 					}
@@ -169,7 +192,12 @@ angular.module('MyApp').controller(
 				};
 				
 				$scope.removeCollaboratorItem = function(index) {
+					
 					$scope.model.contributers.splice(index, 1);
+					for(j=0;j<$scope.model.contributers.length ; j++){
+						console.log(' $scope.model.contributers[j].contributer_id:' +  $scope.model.contributers[j].contributer_id)
+					}
+					$scope.changeContribution();
 			  };
 				$scope.createContribution = function() {
 					console.log("Create Contribution");
@@ -201,10 +229,14 @@ angular.module('MyApp').controller(
 				//$scope.users = User.query();
 				$scope.orderProp = "time_created"; // set initial order criteria
 				$scope.addCollaborator = function() {
+					
+					
+					
 					$scope.model.contributers.push({
-						contributer_id:'',
-						contributer_percentage:'50',
-						contribution1:''
+						contributer_id:'0',
+						contributer_percentage:'',
+						contribution1:'50',
+						img:'images/avatar.jpg'
 					}) ;
 				};
 				$scope.closeContribution = function() {

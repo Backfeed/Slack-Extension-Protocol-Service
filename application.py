@@ -17,6 +17,7 @@ from resources import ContributionStatusResource
 from resources import OrganizationResource
 from resources import ContributionTokenExistsResource
 from resources import getAllSlackUsersResource
+from resources import AllOrganizationResource
 
 import auth
 
@@ -60,6 +61,7 @@ api.add_resource(getAllSlackUsersResource, '/allSlackUsers', endpoint='slackUser
 
 api.add_resource(OrganizationResource, '/organization', endpoint='organization')
 
+api.add_resource(AllOrganizationResource, '/organization/all', endpoint='allOrganizations')
 
 
 # Navigation:

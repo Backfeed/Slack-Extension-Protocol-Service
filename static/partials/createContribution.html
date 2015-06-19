@@ -46,18 +46,18 @@
 								</div>
 								
 								<nobr>
-								<img alt="" ng-src="{{contributer.img}}">
+								<img HEIGHT=50 WIDTH=50 alt="" ng-src="{{contributer.img}}">
 								<label>Contributer</label>
 								
-								<select ng-model="contributer.contributer_id" ng-options="user.id as user.name for user in users" ng-change="contributer.img = updateContributer(contributer.contributer_id)"  data-placeholder="Choose Contributer">
+								<select ng-model="contributer.contributer_id" ng-options="user.id as user.name for user in users" ng-change="contributer.img = updateContributer(contributer.contributer_id,$index)"  data-placeholder="Choose Contributer">
 									
 								</select>
 								<label>Percentage</label>
 								<input size="5" type="text"
-										disabled= "disabled"  id="contributer_percentage" ng-model="contributer.contributer_percentage">
+										disabled="disabled"  id="contributer_percentage" ng-model="contributer.contributer_percentage">
 										
 								<div align="right"><label for="contribution"> <span class="pull-right"><span ng-bind="contributer.contribution1" class="ng-binding"></span> </span></label></div>
-								<div align="right"><input style="width: 200px;" type="range" min="0" max="100" step="1"  ng-model="contributer.contribution1" ng-change="changeContribution()"></div>
+								<div align="right"><input style="width: 200px;" type="range" min="0" max="100" step="1"  ng-disabled ="contributer.contributer_id == '0'" ng-model="contributer.contribution1" ng-change="changeContribution()"></div>
 								
 								
 								

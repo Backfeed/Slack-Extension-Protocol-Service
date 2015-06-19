@@ -41,6 +41,11 @@ angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mg
         url: '/users',
         templateUrl: 'partials/users.html'
       })
+       .state('orgs', {
+		controller: 'OrganizationCtrl',
+        url: '/orgs',
+        templateUrl: 'partials/orgs.html'
+      })
      .state('userDetail', {
         url: '/user/:userId',
         templateUrl: 'partials/userDetail.html',

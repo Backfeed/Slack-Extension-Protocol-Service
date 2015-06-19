@@ -60,6 +60,12 @@ user_org_fields = {
      'url' : fields.String,
 }
 
+org_fields = {
+    'id': fields.Integer,
+    'name': fields.String, 
+    'token_name': fields.String,      
+}
+
 userOrganization_fields = {
     'id': fields.Integer,
     'user_id': fields.String,
@@ -144,6 +150,12 @@ class UserResource(Resource):
         session.add(user)
         session.commit()
         return user, 201
+    
+class AllOrganizationResource(Resource):
+    @marshal_with(org_fields)
+    def get(self):
+        organizations = session.query(cls.Organization).all()
+        return organizations
     
 class AllUserResource(Resource):
     @marshal_with(user_org_fields)
