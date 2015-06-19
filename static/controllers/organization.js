@@ -1,17 +1,25 @@
 angular.module('MyApp')
-  .controller('OrganizationCtrl', function($scope,$auth,$alert,$location,$stateParams,SaveOrg,Account) {
-	  var vm = this;
-	  vm.orgModel = {
+  .controller('OrganizationCtrl', function($scope,$auth,$alert,$location,$stateParams,SaveOrg,Account,Users,AllSlackUsers,CheckOrgTokenName,AllOrgs) {
+	  $scope.userData= ''
+      $scope.validationFailure = false;
+	 
+	
+	  $scope.orgModel = {
 				token_name : '',
-				slack_teamid : '',
-				intial_tokens : '',
+				slack_teamid : '',				
 				name : ''
 
 			}
+	 
+	  
+	  $scope.organizations = AllOrgs.allOrgs();
+	  
 	  $scope.getProfile = function() {
 	      Account.getProfile()
 	        .success(function(data) {
 				Account.setUserData(data);
+				$scope.userData = Account.getUserData();
+				alert($scope.userData)
 				
 	        })
 	        .error(function(error) {
@@ -23,14 +31,14 @@ angular.module('MyApp')
 	          });
 	        });
 	    };	    
-	     userData = Account.getUserData();
-		 console.log("userData is"+userData);
-		 if(userData == undefined){
+	     $scope.userData = Account.getUserData();
+		 console.log("userData is"+$scope.userData);
+		 if($scope.userData == undefined){
 			 $scope.getProfile();
 		 }else{
-			 vm.userId = userData.userId;
-			 vm.orgModel.name = userData.slackTeamName;
-			 vm.orgModel.slack_teamid = userData.slackTeamId;
+			 $scope.userId = $scope.userData.userId;
+			 $scope.orgModel.name = $scope.userData.slackTeamName;
+			 $scope.orgModel.slack_teamid = $scope.userData.slackTeamId;
 		 }
 	// if not authenticated return to splash:
 	if(!$auth.isAuthenticated()){
@@ -41,45 +49,52 @@ angular.module('MyApp')
   
    
 	
-   vm.orgFields = [
-                      {
-                          key: 'token_name',
-                          type: 'input',
-                          templateOptions: {
-                              type: 'text',
-                              label: 'Token Name',
-                              placeholder: 'Enter Token Name',
-                              required: true
-                          }
-                      },
-                      {
-                          key: 'intial_tokens',
-                          type: 'input',
-                          templateOptions: {
-                              type: 'text',
-                              label: 'Intial Tokens',
-                              placeholder: 'Enter Intial Tokens',
-                              required: true
-                          }
-                      }
-                  ];
-                  
-          
-	
-	vm.submit = function(){
+   
+   $scope.changeTeam = function(){
+	   console.log('comes here in logout')
+	   $location.path("/logout");
+	   
+   };
+   
+   
+   
+   $scope.checkTokenName = function(){
+	   if($scope.orgModel.token_name != ''){
+		   $scope.data1 = CheckOrgTokenName.checkOrgTokenName({
+			   tokenName : $scope.orgModel.token_name
+			});
+			$scope.data1.$promise.then(function(result) {
+				console.log('this is it');				
+				if(result.tokenAlreadyExist == 'true'){
+					$scope.validationFailure = true;
+				}else{
+					$scope.validationFailure = false;
+				}
+			});
+	   }
+	   
+	  
+   }
+   
+   $scope.orderProp = "name";
+	$scope.submit = function(){
+		if($scope.validationFailure == true){
+			alert('This name is already taken please use other')
+			return
+		}
 		console.log("In Submit method");
-		console.log(vm.orgModel)
-		vm.data = SaveOrg.save({},vm.orgModel);
-		vm.data.$promise.then(function (result) {
-			
-			userData.orgId = result.organization_id;
-			userData.userOrgId = result.id;
-		    userData.orgexists = "true";
+		console.log($scope.orgModel)
+		$scope.data = SaveOrg.save({},$scope.orgModel);
+		$scope.data.$promise.then(function (result) {
+		
+			$scope.userData.orgId = result.organization_id;
+			$scope.userData.userOrgId = result.id;
+			$scope.userData.orgexists = "true";
 			console.log('Inserted org id : '+result.organization_id)
 			console.log('Inserted userorg id : '+result.id)
-		 	Account.setUserData(userData);
+		 	Account.setUserData($scope.userData);
 			alert('Successfully created organization');
-			$location.path("/contributions"); 
+			$location.path("/contribution"); 
 			
 		});
 		

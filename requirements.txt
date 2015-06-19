@@ -4,5 +4,5 @@ sqlalchemy
 flask-cors
 pymysql
 PYJwt
- 
+requests
 

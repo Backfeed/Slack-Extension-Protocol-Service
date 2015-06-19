@@ -21,6 +21,7 @@ user_table = schema.Table('user', metadata,
         schema.Sequence('user_seq_id', optional=True), primary_key=True),
 
     schema.Column('name', types.Unicode(255)),
+    schema.Column('url', types.Unicode(255)),
 )
 
 """
@@ -57,7 +58,7 @@ contribution_table = schema.Table('contribution', metadata,
     schema.Column('time_created', types.DateTime(), default=now),
     schema.Column('file', types.Text()),
     schema.Column('title', types.Text()),
-    schema.Column('status', types.String,default='Open'),
+    schema.Column('status', types.String(100),default='Open'),
 )
 
 """
@@ -82,7 +83,6 @@ organization_table = schema.Table('organization', metadata,
 
     schema.Column('token_name', types.Unicode(255)),
     schema.Column('slack_teamid', types.Unicode(255)),
-    schema.Column('intial_tokens', types.Integer),
     schema.Column('name', types.Unicode(255)),
 )
 

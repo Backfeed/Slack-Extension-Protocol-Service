@@ -8,7 +8,7 @@ from flask.ext.restful import marshal_with
 import json
 from auth import login_required
 import requests
-from flask import g
+from flask import g,request
 
 import vdp
 from datetime import datetime
@@ -20,7 +20,6 @@ class Resource(FlaskResource):
    method_decorators = [login_required]   # applies to all inherited resources
 
 userParser = reqparse.RequestParser()
-organizationParser = reqparse.RequestParser()
 userOrganizationParser = reqparse.RequestParser()
 contributionParser = reqparse.RequestParser()
 bidParser = reqparse.RequestParser()
@@ -38,10 +37,6 @@ userParser.add_argument('userId', type=str)
 userParser.add_argument('name', type=str,required=True)
 userParser.add_argument('slack_id', type=str)
 
-organizationParser.add_argument('token_name', type=str)
-organizationParser.add_argument('slack_teamid', type=str,required=True)
-organizationParser.add_argument('intial_tokens', type=str)
-organizationParser.add_argument('name', type=str)
 
 bidParser.add_argument('stake', type=str,required=True)
 bidParser.add_argument('tokens', type=str,required=True)
@@ -62,6 +57,13 @@ user_org_fields = {
     'name': fields.String, 
     'tokens': fields.String,  
     'reputation': fields.String, 
+     'url' : fields.String,
+}
+
+org_fields = {
+    'id': fields.Integer,
+    'name': fields.String, 
+    'token_name': fields.String,      
 }
 
 userOrganization_fields = {
@@ -149,13 +151,20 @@ class UserResource(Resource):
         session.commit()
         return user, 201
     
+class AllOrganizationResource(Resource):
+    @marshal_with(org_fields)
+    def get(self):
+        organizations = session.query(cls.Organization).all()
+        return organizations
+    
 class AllUserResource(Resource):
     @marshal_with(user_org_fields)
     def get(self,organizationId):
         users =[]    
         userOrganizationObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == organizationId).all()
         for userOrganization in userOrganizationObjects :
-            users.append({'id':userOrganization.user.id,'name':userOrganization.user.name,"tokens": userOrganization.org_tokens,"reputation": userOrganization.org_reputation})           
+            print 'url is'+str(userOrganization.user.url)
+            users.append({'url':userOrganization.user.url,'id':userOrganization.user.id,'name':userOrganization.user.name,"tokens": userOrganization.org_tokens,"reputation": userOrganization.org_reputation})           
         return users
         
 class BidResource(Resource):
@@ -239,9 +248,15 @@ class ContributionResource(Resource):
         contribution.owner = parsed_args['owner']
         contribution.title = parsed_args['title']
         contribution.users_organizations_id = parsed_args['users_organizations_id']
-        userObj = getUser(contribution.owner)        
+        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == parsed_args['users_organizations_id']).first()
+        userObj = getUser(contribution.owner) 
+               
         if not userObj:
-            abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.owner))        
+            abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.owner))    
+        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == parsed_args['users_organizations_id']).first()
+        firstContribution = False
+        if (not contributionObject ):
+            firstContribution = True
         for contributer in parsed_args['contributers']:             
             contributionContributer = cls.ContributionContributer()
             contributionContributer.contributer_id = contributer.obj1['contributer_id']
@@ -252,12 +267,21 @@ class ContributionResource(Resource):
                 abort(404, message="Contributer {} doesn't exist".format(contributionContributer.contributer_id))
             contributionContributer.contribution_id=contribution.id
             contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
+            if (firstContribution == True):
+                 userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
+                 if userOrgObject:
+                    userOrgObject.org_reputation = contributer.obj1['contributer_percentage']
+                    session.add(userOrgObject)                                               
             contribution.contributionContributers.append(contributionContributer)  
         if(len(contribution.contributionContributers) == 0):
             contributionContributer = cls.ContributionContributer()
             contributionContributer.contributer_id = contribution.owner
             contributionContributer.contributer_percentage = '100'
             contribution.contributionContributers.append(contributionContributer)  
+            if (firstContribution == True):
+                userOrgObjectForOwner.org_reputation = 100
+                session.add(userOrgObjectForOwner) 
+                                
         if((parsed_args['intialBid'].obj1['tokens'] != '') & (parsed_args['intialBid'].obj1['reputation'] != '')):      
                 jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
                    "reputation":parsed_args['intialBid'].obj1['reputation'],
@@ -266,6 +290,9 @@ class ContributionResource(Resource):
                     }
                 intialBidObj = cls.Bid(jsonStr,session)        
                 contribution.bids.append(intialBidObj)
+        
+        
+        
         session.add(contribution)
         session.commit()        
        
@@ -332,10 +359,11 @@ class ContributionStatusResource(Resource):
             totalReputaion = totalReputaion + bid.reputation
             if(str(bid.owner) == str(userId)):
                 myReputaion = myReputaion + bid.reputation 
-                myValuation = myValuation + bid.tokens
+                myValuation = myValuation + bid.tokens*bid.reputation
         if (last_bid):
             currentValuation = last_bid.contribution_value_after_bid
- 
+        if(myValuation != 0 & myReputaion != 0):
+            myValuation = myValuation/myReputaion
         jsonStr = {"currentValuation":currentValuation,
                    "totalReputaion":totalReputaion,
                    "myValuation":myValuation,
@@ -344,54 +372,83 @@ class ContributionStatusResource(Resource):
         return jsonStr
     
     
+class ContributionTokenExistsResource(Resource):
+    def get(self,tokenName):
+        orgObj = session.query(cls.Organization).filter(cls.Organization.token_name == tokenName).first()
+        if not orgObj:
+            return {"tokenAlreadyExist":"false"}
+        else:
+             return {"tokenAlreadyExist":"true"}        
+    
 class OrganizationResource(Resource):
     
     @marshal_with(userOrganization_fields)
     def post(self):
-        parsed_args = organizationParser.parse_args()
+        json = request.json
 
-        jsonStr = {"token_name":parsed_args['token_name'],
-                    "slack_teamid":parsed_args['slack_teamid'],
-                    "intial_tokens":parsed_args['intial_tokens'],
-                    "name":parsed_args['name']
+        jsonStr = {"token_name":json['token_name'],
+                    "slack_teamid":json['slack_teamid'],
+                    "name":json['name']
                     }
         organization = cls.Organization(jsonStr,session)
 
         session.add(organization)
         session.flush()
+      
+        
         createUserAndUserOrganizations(organization.id)
         session.commit()
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).filter(cls.UserOrganization.organization_id == organization.id).first()
         return userOrgObj, 201
     
-def createUserAndUserOrganizations(organizaionId):
+def getSlackUsers():
     team_users_api_url = 'https://slack.com/api/users.list'
     headers = {'User-Agent': 'DEAP'}
     r = requests.get(team_users_api_url, params={'token':g.access_token}, headers=headers)
+    users = json.loads(r.text)['members']
+    print 'slack users:'+str(users)
+    return users
+
+    
+class getAllSlackUsersResource(Resource):
+    def get(self):
+        return getSlackUsers()
+        
+    
+def createUserAndUserOrganizations(organizaionId):
+    
     usersInSystem = session.query(cls.User).all()
     usersDic = {}
+    currentUser = '';
     for u in usersInSystem:
+        if u.id == g.user_id:
+            currentUser = u
         usersDic[u.name] = u.id
     # parse response:
-    users = json.loads(r.text)['members']
+    users = getSlackUsers()
     print 'slack users:'+str(users)
     for user in users :
         userId = ''
+        token = 0
+        repuation = 0
         try:
             userId = usersDic[user['name']]
         except KeyError:
             userId = ''
+        if userId  == g.user_id :
+            currentUser.url = user['profile']['image_24']
+            session.add(currentUser)
         if userId == '':
-            jsonStr = {"name":user['name']}
+            jsonStr = {"name":user['name'],"url":user['profile']['image_24']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 
             userId = u.id
-                       
+                         
         jsonStr = {"user_id":userId,
                     "organization_id":organizaionId,
-                    "org_tokens":100,
-                    "org_reputation":100
+                    "org_tokens":token,
+                    "org_reputation":repuation
                     }
         userOrganization = cls.UserOrganization(jsonStr,session)
         session.add(userOrganization)    

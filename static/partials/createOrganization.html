@@ -1,6 +1,36 @@
-<form novalidate ng-controller="OrganizationCtrl as vm" ng-submit="vm.submit()">
-    <h1>Create Organization</h1>
-    <formly-form model="vm.orgModel" fields="vm.orgFields" form="vm.orgForm">
-        <button type="submit" class="btn btn-primary" ng-disabled="vm.orgForm.$invalid">Submit</button>
-    </formly-form>
-</form>
+<div class="container profile">
+	<div class="row">
+		<div class="col-sm-10">
+			<form class="form-horizontal" ng-controller="OrganizationCtrl"
+				role="form">
+				<legend><i class="ion-clipboard"></i> Hi {{userData.displayName}} , Are you ready</legend>
+		      <div class="form-group">
+		      						<label for="teamName">Who are you follows everyday:</label>
+									<input type="text"
+										class="form-control" id="teamName" value="{{userData.slackTeamName}}" disabled="disabled">
+									<button type="submit"  class="btn btn-primary" ng-click='changeTeam()'>Change Team</button>
+
+								</div>
+							 <div class="form-group">
+		      						<label for="tokenName">Creating a new value system:</label>
+									<input type="text"
+										class="form-control" id="tokenName" ng-model="orgModel.token_name" ng-blur="checkTokenName()">
+							 <div class="invalid-message" ng-show="validationFailure">
+    <span class="invalid-mail" ng-show="validationFailure && orgModel.token_name != ''">This name is already taken please use other</span> 
+
+     </div>
+								</div>
+							
+					
+						
+						
+						
+						
+				
+				<div align="center" ><button type="submit" class="btn btn-primary submit-button" ng-disabled="orgModel.token_name == '' || validationFailure" ng-click="submit()">Submit</button></div>
+						
+
+			</form>
+		</div>
+	</div>
+</div>

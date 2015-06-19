@@ -1,5 +1,5 @@
-angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices','formly','formlyBootstrap'])
-  .config(function($stateProvider, $urlRouterProvider, $authProvider,formlyConfigProvider) {
+angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices'])
+  .config(function($stateProvider, $urlRouterProvider, $authProvider) {
     $stateProvider
 	  .state('splash', {
 		controller: 'SplashCtrl',
@@ -40,6 +40,11 @@ angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mg
 		controller: 'UsersCtrl',
         url: '/users',
         templateUrl: 'partials/users.html'
+      })
+       .state('orgs', {
+		controller: 'OrganizationCtrl',
+        url: '/orgs',
+        templateUrl: 'partials/orgs.html'
       })
      .state('userDetail', {
         url: '/user/:userId',
@@ -90,30 +95,5 @@ angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mg
 	$authProvider.slack({
       clientId: '2969711723.3476875864'
     });
-    formlyConfigProvider.setType({
-        name: 'repeatSection',
-        templateUrl: 'repeatSection.html',
-        controller: function($scope) {
-          $scope.formOptions = {formState: $scope.formState};
-          $scope.addNew = addNew;
-          
-          $scope.copyFields = copyFields;
-          
-          function copyFields(fields) {
-            return angular.copy(fields);
-          }
-          
-          function addNew() {
-            $scope.model[$scope.options.key] = $scope.model[$scope.options.key] || [];
-            var repeatsection = $scope.model[$scope.options.key];
-            var lastSection = repeatsection[repeatsection.length - 1];
-            var newsection = {};
-            if (lastSection) {
-              newsection = angular.copy(lastSection);
-            }
-
-            repeatsection.push(newsection);
-          }
-        }
-      });
+   
   });

@@ -1,35 +1,89 @@
-<form ng-submit="vm.onSubmit()" ng-controller="ContributionsCtrl as vm" novalidate>
-<h1>Create Contribution</h1>
-        <formly-form model="vm.model" fields="vm.fields" form="vm.form">
-          <button type="submit" class="btn btn-primary submit-button" ng-disabled="vm.fields.$invalid">Submit</button>
-        </formly-form>
-      </form>
-<script type="text/ng-template" id="repeatSection.html">
-      <div>
-      	<!--loop through each element in model array-->
-      	<div class="{{hideRepeat}}">
-          <div class="repeatsection" ng-repeat="element in model[options.key]" ng-init="fields = copyFields(to.fields)">
-            <formly-form
-                 fields="fields"
-                 model="element"
-                 bind-name="'formly_ng_repeat' + index + $parent.$index">
-            </formly-form>
-			<div ng-if="to.btnText !=''">
-            <div style="margin-bottom:20px;">
-              <button type="button" class="btn btn-sm btn-danger" ng-click="model[options.key].splice($index, 1)">
-                Remove
-              </button>
-			 <hr>
-            </div>
 
-			</div>
-           
-        </div>
-		<div ng-if="to.btnText !=''">
-        <p class="AddNewButton" >
-  	      <button type="button" class="btn btn-primary" ng-click="addNew()" >{{to.btnText}}</button>
-        </p>
+<div class="container profile">
+	<div class="row">
+		<div class="col-sm-10">
+			<form class="form-horizontal" ng-controller="ContributionsCtrl"
+				role="form" >
+				<legend><i class="ion-clipboard"></i> Adding New Value is the best</legend>
+		      
+		
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h3 class="panel-title">Title</h3>
+							</div>
+							
+							<div class="panel-body">
+								<div class="form-group">
+									<input type="text"
+										class="form-control" id="title" ng-model="model.title" required>
+										
+								</div>
+
+							</div>
+						</div>
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h3 class="panel-title">Content</h3>
+							</div>
+							
+							<div class="panel-body">
+								<div class="form-group">
+									<textarea 
+										class="form-control" id="title" ng-model="model.file" required></textarea>
+								</div>
+
+							</div>
+						</div>
+						
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h3 class="panel-title">Collaborators</h3>
+							</div>
+							<div ng-repeat="contributer in model.contributers">
+							
+								<div class="panel-body">
+								<div class="form-group">
+									<!-- Place Holder for Avtar -->
+								</div>
+								
+								<nobr>
+								<img HEIGHT=50 WIDTH=50 alt="" ng-src="{{contributer.img}}">
+								<label>Contributer</label>
+								
+								<select ng-model="contributer.contributer_id" ng-options="user.id as user.name for user in users" ng-change="contributer.img = updateContributer(contributer.contributer_id,$index)"  data-placeholder="Choose Contributer">
+									
+								</select>
+								<label>Percentage</label>
+								<input size="5" type="text"
+										disabled="disabled"  id="contributer_percentage" ng-model="contributer.contributer_percentage">
+										
+								<div align="right"><label for="contribution"> <span class="pull-right"><span ng-bind="contributer.contribution1" class="ng-binding"></span> </span></label></div>
+								<div align="right"><input style="width: 200px;" type="range" min="0" max="100" step="1"  ng-disabled ="model.title" ng-model="contributer.contribution1" ng-change="changeContribution()"></div>
+								
+								
+								
+									
+									
+								</nobr>
+															
+								
+									
+
+								
+								
+		
+		
+								<button type="submit" class="btn btn-primary submit-button" ng:click='removeCollaboratorItem($index)'>Remove</button>
+									
+							</div>
+							</div>
+							<button type="submit"  class="btn btn-primary" ng-click='addCollaborator()'>Add Collaborator</button>
+				</div>
+				
+				<div align="center" ><button type="submit" class="btn btn-primary submit-button" ng-disabled="model.title == '' || model.file == ''" ng-click="onSubmit()">Submit</button></div>
+						
+
+			</form>
 		</div>
-      </div>
-	  
-    </script>      
+	</div>
+</div>

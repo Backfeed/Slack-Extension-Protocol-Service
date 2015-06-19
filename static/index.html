@@ -12,6 +12,7 @@
   <link href="//cdn.jsdelivr.net/animatecss/3.2.0/animate.css" rel="stylesheet">
   <link href="stylesheets/angular-slider.css" rel="stylesheet">
   <link href="stylesheets/styles.css" rel="stylesheet">
+  
 
 </head>
 <body >
@@ -34,7 +35,10 @@
   <ul class="nav navbar-nav" ng-show = 'ifOrgExists()'>
     <li><a href="/#/users">Users</a></li> 
   </ul>
-  <button class="btn btn-lg btn-warning" ng-click="createOrg()" ng-hide = 'ifOrgExists()'>Create Org</button>
+  
+  <ul class="nav navbar-nav" ng-show = 'ifOrgExists()'>
+    <li><a href="/#/orgs">Orgs</a></li> 
+  </ul>
   <ul ng-if="isAuthenticated()" class="nav navbar-nav pull-right">
 	<!--  <a class="navbar-brand" ng-show = 'ifOrgExists()'>{{ user.slackTeamName  }}</a> -->
 	<a class="navbar-brand" href="/#/profile" >{{ user.displayName  }}</a>
@@ -60,8 +64,8 @@
 <script src="vendor/satellizer.js"></script>
 <script src="vendor/angular-slider.js"></script>
 <script src="vendor/api-check.js"></script>
-<script src="vendor/formly.js"></script>
-<script src="vendor/angular-formly-templates-bootstrap.js"></script>
+
+
 
 <!-- Application Code -->
 <script src="app.js"></script>
