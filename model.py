@@ -58,7 +58,7 @@ contribution_table = schema.Table('contribution', metadata,
     schema.Column('time_created', types.DateTime(), default=now),
     schema.Column('file', types.Text()),
     schema.Column('title', types.Text()),
-    schema.Column('status', types.String,default='Open'),
+    schema.Column('status', types.String(100),default='Open'),
 )
 
 """
