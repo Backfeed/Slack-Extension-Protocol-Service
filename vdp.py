@@ -210,7 +210,7 @@ def debug_bid(current_bid):
 	bf_Log(logger,'tokens (eval):'+str(current_bid.tokens))
 	
 
-def noremlizeSystemReps(contribution_obj,first_eval):
+def noremlizeSystemReps(contribution_obj,first_eval,session):
 	
 	if(not state['total_system_reputation']):
 		return False
@@ -257,7 +257,7 @@ def process_bid(current_bid,session,logger = None):
 	
 	# on seeding flow : normelize all the users reputations  in the org, according to current evaluation:
 	if(state['is_contribution_zero'] and state['highest_eval'] == 0 and current_eval > 0 ):
-		noremlizeSystemReps(contributionObject)
+		noremlizeSystemReps(contributionObject,current_eval,session)
 
 	# process current eval:
 	current_bid.contribution_value_after_bid = current_eval
