@@ -48,7 +48,7 @@ def getUser(id):
 	
 
 def loadContributionIntoDB():
-	
+		
 	contribution = cls.Contribution()
 	
 	# owner is currently hard coded to first user in DB	-
@@ -70,6 +70,17 @@ def loadContributionIntoDB():
 		contributionContributer.contributer_percentage=contributer['contributer_percentage']
 		contribution.contributionContributers.append(contributionContributer) 
 	session.add(contribution)
+	
+	
+	
+	# now add dummy contribution just so the above is not contribution-0:
+	contribution2 = cls.Contribution()
+	
+	# owner is currently hard coded to first user in DB	-
+	contribution2.owner = 1
+	contribution2.users_organizations_id = 1
+	session.add(contribution2)
+	
 	session.commit()
 
 
