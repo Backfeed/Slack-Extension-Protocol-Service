@@ -99,6 +99,7 @@ contribution_fields['status'] = fields.String
 contribution_fields['owner'] = fields.String
 contribution_fields['file'] = fields.String
 contribution_fields['title'] = fields.String
+contribution_fields['tokenName'] = fields.String
 contribution_fields['bids'] = fields.Nested(bid_nested_fields)
 contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
 
@@ -232,6 +233,8 @@ class ContributionResource(Resource):
                 
         for bid in contributionObject.bids:
             bid.bidderName = getUser(bid.owner).name
+        contributionObject.tokenName = contributionObject.userOrganization.organization.token_name
+        print 'tokenName'+contributionObject.tokenName
         return contributionObject
 
     def delete(self, id):

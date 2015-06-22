@@ -41,6 +41,7 @@ angular.module('MyApp')
 				$scope.data1.$promise.then(function(result) {
 					console.log('result.title'+result.title)
 					$scope.title = result.title;
+					$scope.tokenName = result.tokenName;
 				});
 				console.log('userData.userId'+userData.userId)
 				console.log('userData.orgId'+userData.orgId)
