@@ -195,8 +195,8 @@ angular.module('MyApp').controller(
 				// ******************************* SLACK PLAY ***********************
 				
                 $scope.formatContributionData = function(contributionData) {
-                    var str =   '\ntitle:'+contributionData.title +
-                                '\ncontent:'+contributionData.file;
+                    var str =   contributionData.title +
+                                '\ncontent: \n'+contributionData.file;
                     return str;
                 }
 			  
@@ -245,7 +245,7 @@ angular.module('MyApp').controller(
 							console.log('is random sending ...:')	;
 							
 							channelId = chnl.id
-							$scope.sendTestMessage(channelId,'contribution was created. '+$scope.formatContributionData($scope.currentSavedContribution))
+							$scope.sendTestMessage(channelId,'new contribution was created:\n'+$scope.formatContributionData($scope.currentSavedContribution))
 						}			
 					}
 				};
