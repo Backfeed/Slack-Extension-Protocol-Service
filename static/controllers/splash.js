@@ -20,7 +20,7 @@ angular.module('MyApp')
 		          	$scope.user = data;
 		          	if($scope.user.orgId != ''){
 		          						console.log('fpr contribution :');
-		          		$scope.changeView('/contributions')
+		          		$scope.changeView('/mainPage')
 		          	}else{
 		          	console.log('for create org');
 		          		$scope.changeView('/organization')

@@ -1,3 +1,67 @@
-<div>
-Hello	
+
+	
+<div  class="navbar navbar-default navbar-static-top" >
+
+	  <div class="navbar-header">
+      <a  href="/"><img src="/images/SearchainBrand.png" HEIGHT = 50 WIDTH=50 ></a>
+    </div>
+
+	  <ul ng-if="isAuthenticated()" class="nav navbar-nav pull-right">
+		<!--  <a class="navbar-brand" ng-show = 'ifOrgExists()'>{{ user.slackTeamName  }}</a> -->
+		<a class="navbar-brand" href="/#/profile" >{{ user.displayName  }}</a>
+	    <li><a href="/#/logout">Logout</a></li>
+	  </ul>
+
+      <form class="navbar-form navbar-left" role="search" name="testing1">
+        <div class="form-group">
+          <input 	type = "text"  
+						placeholder="What are we talking about ... " 
+						ng-model	="cTagKey.query" 		
+						val-on-timeout
+						typing-limit = "1250"
+				        focus-limit  = "5000"
+				       	blur-limit   = "500" 
+						name         = "givenName1" 
+						class="form-control">
+        </div>
+        <button type="submit" ng-click = "searchButtonClicked($event)" 	ui-route="/results" class="btn btn-default">Go</button>
+      </form>
+
+	<div class="container col-sm-12"  >
+	   	<tags-input  ng-model="cTags" 
+						class = "bootstrap " 
+						on-tag-added="createTagClicked($tag)" 
+						on-tag-removed="removeTagClicked($tag)"
+						min-tags = "1"
+						min-length = "2">
+		        <auto-complete source="cTagKey.loadAutoComplete($query)" debounce-delay="100"
+				    													 min-length="1"
+				    													 highlight-matched-text="true"
+				    													 max-results-to-show="10">
+				</auto-complete>   
+		    </tags-input>
+	 </div>
+
+
+
+	<div class="container profile">
+	  
+			<div class="col-sm-9">
+			      	<div ng-repeat="link in links">
+				        <div class="panel"  style="cursor:pointer">
+							<div class="panel-body">
+								<div class="row text-show">
+						          Link:{{link.name}}
+								   
+						        </div>					        
+						        <div class="row">
+									<span class="label label-primary">tag1</span>
+									<span class="label label-primary">tag2</span>
+								</div>
+							</div>
+				        </div>
+				      </div>
+			    </div>
+			</div>
+
 </div>

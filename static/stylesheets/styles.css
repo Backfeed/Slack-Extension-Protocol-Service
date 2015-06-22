@@ -72,10 +72,7 @@ width: 100%
 }
 .splash-background{
 
-     background: url('../images/background_4.jpg');
-     background-size: 1440px 800px;
-     background-repeat:no-repeat;
-     display: compact;
+
 
 	
 }
@@ -97,7 +94,9 @@ a {
 .text-muted {
   color: #90939a;
 }
-
+.text-show {
+  color: black;
+}
 .navbar {
   border: 0;
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, .26);

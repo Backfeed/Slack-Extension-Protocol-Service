@@ -3,27 +3,7 @@ angular.module('MyApp').controller(
 		function($scope, $auth, $location, $stateParams, $alert, Contributions,
 				ContributionDetail, SaveContribution, CloseContribution,
 				Account, Users,CTagKey,ngProgress) {			
-			var orgExists;
-			$scope.organizationId = 'notintialized';
-			$scope.buttonDisabled = true;
-			$scope.model = {
-				title : '',
-				file : '',
-				owner : '',
-				min_reputation_to_close : '',
-				users_organizations_id : '',
-				contributers : [ {
-					contributer_id : '0',
-					contributer_percentage : '',
-					contribution1: '50',
-					img:'images/avatar.jpg'
-				} ],
-				intialBid : [ {
-					tokens : '',
-					reputation : ''
-				} ]
-
-			}
+			
 			
 				$scope.cTagKey =  CTagKey;
 			    $scope.mainQuery = '';
@@ -79,7 +59,6 @@ angular.module('MyApp').controller(
 						orgExists = data.orgexists;
 						if (orgExists == 'true') {
 							$scope.users_organizations_id = data.userOrgId;
-							$scope.model.users_organizations_id = data.userOrgId;
 							$scope.organizationId = data.orgId;
 							$scope.access_token = data.access_token;
 						}
@@ -95,39 +74,11 @@ angular.module('MyApp').controller(
 					});
 				};
 
-				$scope.ifOrgExists = function() {
-					if (Account.getUserData() != undefined) {
-						$scope.user = Account.getUserData();						
-						if (Account.getUserData().orgexists == 'false') {
-							orgExists = "false";
-							return false;
-						} else {
-							orgExists = "true";
-							return true;
-						}
-					} 
-
-				};
-
 				userData = Account.getUserData();
 				if (userData == undefined) {
 					$scope.getProfile();
 				} else {
 					$scope.userId = userData.userId;
-					orgExists = userData.orgexists;
-					if (orgExists == 'true') {
-						$scope.users_organizations_id = userData.userOrgId;
-						$scope.organizationId = userData.orgId;
-						$scope.model.users_organizations_id = userData.userOrgId;
-					}
-					$scope.model.owner = userData.userId;
-				}
-				
-
-				if ($auth.isAuthenticated()) {
-					$scope.contributions = Contributions.getAllContributions({
-						organizationId : $scope.organizationId
-					});
 				}
 
 			}
