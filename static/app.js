@@ -1,4 +1,4 @@
-angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices'])
+angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices','ngTagsInput','ngProgress'])
   .config(function($stateProvider, $urlRouterProvider, $authProvider) {
     $stateProvider
 	  .state('splash', {
@@ -26,6 +26,17 @@ angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mg
         templateUrl: 'partials/contributionStatus.html',
         controller: 'ContributionStatusCtrl'
       })
+
+		.state('mainPage', {
+		  controller: 'MainPageCtrl',
+		  url: '/mainPage',
+		  templateUrl: 'partials/mainPage.html'
+		})
+		.state('resultsPage', {
+		  controller: 'ResultsCtrl',
+		  url: '/results',
+		  templateUrl: 'partials/results.html'
+		})
 	  .state('contributions', {
 		controller: 'ContributionsCtrl',
         url: '/contributions',
@@ -90,7 +101,7 @@ angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mg
         }
       });
 
-    $urlRouterProvider.otherwise('/contributions');
+    $urlRouterProvider.otherwise('/mainPage');
 
 	$authProvider.slack({
       clientId: '2969711723.3476875864'

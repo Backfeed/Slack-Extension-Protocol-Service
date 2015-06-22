@@ -12,9 +12,6 @@
   <link href="//cdn.jsdelivr.net/animatecss/3.2.0/animate.css" rel="stylesheet">
   <link href="stylesheets/angular-slider.css" rel="stylesheet">
   <link href="stylesheets/styles.css" rel="stylesheet">
-
-  <link href="stylesheets/ng-tags-input.css" rel="stylesheet">
-  <link href="stylesheets/ng-progress.css" rel="stylesheet">
   
 
 </head>
@@ -68,10 +65,6 @@
 <script src="vendor/angular-slider.js"></script>
 <script src="vendor/api-check.js"></script>
 
-<script src="vendor/ng-tags-input.js"></script>
-<script src="vendor/ng-progress.min.js"></script>
-
-
 
 
 <!-- Application Code -->
@@ -92,10 +85,6 @@
 <script src="controllers/navbar.js"></script>
 <script src="services/account.js"></script>
 <script src="services/services.js"></script>
-
-<script src="controllers/mainPage.js"></script>
-<script src="controllers/results.js"></script>
-
 
 </body>
 </html>

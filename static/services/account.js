@@ -23,83 +23,84 @@ angular.module('MyApp')
 	
 	  };
 	})
+	
+	.factory('CTagKey', function ($rootScope) {
+	  var extractedCTags = [];
+	  var userCreatedCTags = [];
+	  var query = '';
+	  var cTags = []; 
+	//	console.log('INIT:  this.cTags'+this.cTags);
 
-.factory('Query', function ($http,$state) {
-  var extractedHTags = [];
-  var query = '';
-  var hTags = []; 
-  var results = [];
+	  var addCTag = function (cTag) {
+			userCreatedCTags.push(cTag);
+			//console.log('extractedCTags:'+extractedCTags);
+			this.cTags = extractedCTags.concat(userCreatedCTags);
+	  };
 
+	  var removeCTag = 	function (cTag) {
+		//debugger;
+		// TBD: if removing from extracted tags list it so next query analysis we wont create it again
+			console.log('going to remove  cTag.text:'+cTag.text+'cTags:'+this.cTags);
 
-
-  return {
-	setQuery: function(query) {
-		console.log('execute: query:'+query);
-		this.query = query;
-	    //this.results = $http.post('/api/query', {'query':query});
-	},
-	getQuery: function() {
-	 	return 	this.query;
-	    //
-	},
-	getResults: function(callback) {
-		this.results = $http.post('/api/query', {'query':this.query}).
-		  success(function(data, status, headers, config) {
-		    // this callback will be called asynchronously
-		    // when the response is available
-			console.log('query succeded.');
-			callback();
-		  }).
-		  error(function(data, status, headers, config) {
-		    // called asynchronously if an error occurs
-		    // or server returns response with an error status.
-			console.log('query failed.');
-		  });
-		 
-		
-	     return this.results;
-		
-	},
-    analyzeQuery: function (query, callback) {
-		this.query = query;
-      // TBD: use backend module  instead ?
-		// reset tags:
-		 extractedHTags = [];
-
-		
-		// extract Capital starting Words from Query:
-		var words = query.split(" ");
-		
-		var arrayLength = words.length;
-		for (var i = 0; i < arrayLength; i++) {
-		    var word = words[i];
-		    if(word[0] && word[0] === word[0].toUpperCase()){
-				extractedHTags.push({text:word});
+			for (var i = 0; i < userCreatedCTags.length; i++) {
+			    var ctag = userCreatedCTags[i];
+			    if(ctag && ctag.text === cTag.text){
+					userCreatedCTags.splice(i, 1);
+				}
 			}
-		}
-		console.log('this.hTags'+this.hTags);
-    },
-	loadAutoComplete: function (tagQuery) {
-		var words =  this.query.split(" ");
-		var autocompleteValues = [];
-		var arrayLength = words.length;
-		for (var i = 0; i < arrayLength; i++) {
-		    var word = words[i];
-		 
-			autocompleteValues.push(word);
-			
-		}
-		console.log('auticomplete values:'+autocompleteValues);
-		var p5 = new Promise(function(resolve, reject) { resolve(autocompleteValues) ;});
-		return p5;
-		
-    },
+			for (var i = 0; i < extractedCTags.length; i++) {
+			    var ctag = extractedCTags[i];
+			    if(ctag && ctag.text === cTag.text){
+					extractedCTags.splice(i, 1);
+				}
+			}
+	  };
 
-	resetCTag: function () {
-  		// reset tags:
-		var extractedHTags = [];
-    }
-  };
-});
+	  return {
+	    analyzeQuery: function (query, callback) {
+			this.query = query;
+	      // TBD: use backend module  instead ?
+			// reset tags:
+			 extractedCTags = [];
 
-;
+
+			// extract Capital starting Words from Query:
+			var words = query.split(" ");
+
+			var arrayLength = words.length;
+			for (var i = 0; i < arrayLength; i++) {
+			    var word = words[i];
+			    if(word[0] && word[0] === word[0].toUpperCase()){
+					extractedCTags.push({text:word});
+				}
+			}
+			this.cTags = extractedCTags.concat(userCreatedCTags);
+			console.log('this.cTags'+this.cTags);
+	    },
+		loadAutoComplete: function (tagQuery) {
+			var words =  this.query.split(" ");
+			var autocompleteValues = [];
+			var arrayLength = words.length;
+			for (var i = 0; i < arrayLength; i++) {
+			    var word = words[i];
+
+				autocompleteValues.push(word);
+
+			}
+			console.log('auticomplete values:'+autocompleteValues);
+			var p5 = new Promise(function(resolve, reject) { resolve(autocompleteValues) ;});
+			return p5;
+
+	    },
+	    cTags: cTags,
+		addCTag: addCTag,
+		removeCTag:removeCTag,
+		resetCTag: function () {
+	  		// reset tags:
+			var extractedCTags = [];
+	    },
+		query:query
+	  };
+	});
+
+

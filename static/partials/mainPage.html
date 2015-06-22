@@ -1,0 +1,39 @@
+<div class=" container  col-sm-offset-2 col-sm-9 ">
+	<div class="row col-md-offset-1">
+    	<img ng-src="/images/SearChainLogo.png">
+    </div>
+	<form name="testing" >
+			<div class="input-group">
+			
+			  <input 	type = "text" class="form-control main-input" 
+						placeholder="What are we talking about ... " 
+						ng-model	="cTagKey.query" 		
+						val-on-timeout
+						typing-limit = "1250"
+				        focus-limit  = "5000"
+				       	blur-limit   = "500" 
+						name         = "givenName" 
+						class="form-control">
+						
+			  <span class="input-group-addon  btn btn-default" 
+					ng-click = "searchButtonClicked($event)" ><span class="glyphicon glyphicon-search"></span></span>
+			</div>
+	</form>
+</div>
+
+<!-- TBD: consider  changing to my own tags for more flexibility - may use ui-bootstrap Typehead for autocolmplete -->
+
+<div class="container col-sm-offset-2 col-sm-9 " >
+   <tags-input  ng-model="cTags" 
+				class = "bootstrap " 
+				on-tag-added="createTagClicked($tag)" 
+				on-tag-removed="removeTagClicked($tag)"
+				min-tags = "1"
+				min-length = "2">
+        <auto-complete source="cTagKey.loadAutoComplete($query)" debounce-delay="100"
+		    													 min-length="1"
+		    													 highlight-matched-text="true"
+		    													 max-results-to-show="10">
+		</auto-complete>   
+    </tags-input>
+ </div>
