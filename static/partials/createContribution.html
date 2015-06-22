@@ -26,7 +26,7 @@
 				  			</div>
 	
 							<div class = 'col-sm-3'>
-								<select ng-model = "contributer.contributer_id" ng-options="user.id as user.name for user in users" 
+								<select ng-model = "contributer.contributer_id" ng-options="user.id as user.name for user in contributer.usersList" 
 										ng-change="contributer.img = updateContributer(contributer.contributer_id,$index)"  data-placeholder="Choose Contributer">
 								</select>
 							</div>

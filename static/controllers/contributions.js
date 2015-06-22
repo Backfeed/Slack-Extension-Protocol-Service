@@ -17,7 +17,8 @@ angular.module('MyApp').controller(
 					contributer_id : '0',
 					contributer_percentage : '',
 					contribution1: '50',
-					img:'images/avatar.jpg'
+					img:'images/avatar.jpg',
+					usersList:[]
 				} ],
 				intialBid : [ {
 					tokens : '',
@@ -88,19 +89,7 @@ angular.module('MyApp').controller(
 							urlImage =  $scope.users[i].url
 							break;
 						}
-					}
-					for(j=0;j<$scope.model.contributers.length ; j++){
-						console.log(' $scope.model.contributers[j].contributer_id:' +  $scope.model.contributers[j].contributer_id)
-						if(selectedUserId == $scope.model.contributers[j].contributer_id && $scope.model.contributers[j].contributer_percentage != ''){
-							$scope.model.contributers[index].contributer_id = 0	
-							$scope.model.contributers[index].img = 'images/avatar.jpg'
-							$scope.model.contributers[index].contributer_percentage = ''
-							$scope.model.contributers[index].contribution1 = 50
-							$scope.changeContribution();
-							alert('This collbrator is already been added')
-							return '';
-						}
-					}
+					}					
 					
 					$scope.changeContribution();
 					return urlImage;
@@ -115,7 +104,8 @@ angular.module('MyApp').controller(
 					});
 					$scope.data.$promise.then(function(result) {
 						Users.setAllOrgUsersData(result)						
-						$scope.users = result;						
+						$scope.users = result;	
+						$scope.model.contributers[0].usersList = $scope.users;
 						//$location.path("/contribution/" + result.id);
 					});
 				};
@@ -127,7 +117,9 @@ angular.module('MyApp').controller(
 					} else {
 
 						$scope.users = allOrgUsersData;
+						$scope.model.contributers[0].usersList = $scope.users;
 					}
+					
 				}
 
 				$scope.contributionId = $stateParams.contributionId;
@@ -315,11 +307,7 @@ angular.module('MyApp').controller(
 				};
 				
 				$scope.removeCollaboratorItem = function(index) {
-					
-					$scope.model.contributers.splice(index, 1);
-					for(j=0;j<$scope.model.contributers.length ; j++){
-						console.log(' $scope.model.contributers[j].contributer_id:' +  $scope.model.contributers[j].contributer_id)
-					}
+					$scope.model.contributers.splice(index, 1);						
 					$scope.changeContribution();
 			  };
 				$scope.createContribution = function() {
@@ -352,14 +340,26 @@ angular.module('MyApp').controller(
 				//$scope.users = User.query();
 				$scope.orderProp = "time_created"; // set initial order criteria
 				$scope.addCollaborator = function() {
-					
-					
-					
+					allcontributers = $scope.model.contributers							
+					newUserList = [];
+					for(i = 0 ; i<$scope.users.length ; i++){
+						userExist = false;
+						for(j=0;j<allcontributers.length;j++){
+							if($scope.users[i].id == allcontributers[j].contributer_id ){
+								userExist = true;
+								break;
+							}
+						}
+						if(userExist == false){
+							newUserList.push($scope.users[i]);
+						}
+					}																
 					$scope.model.contributers.push({
 						contributer_id:'0',
 						contributer_percentage:'',
 						contribution1:'50',
-						img:'images/avatar.jpg'
+						img:'images/avatar.jpg',
+						usersList:newUserList
 					}) ;
 					$scope.buttonDisabled = true;
 				};
