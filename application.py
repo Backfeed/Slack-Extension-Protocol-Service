@@ -18,6 +18,7 @@ from resources import OrganizationResource
 from resources import ContributionTokenExistsResource
 from resources import getAllSlackUsersResource
 from resources import AllOrganizationResource
+from db import session,engine
 
 import auth
 
@@ -87,7 +88,15 @@ def signup():
 def slack():
 	return auth.slack()
 
-
+@application.teardown_appcontext
+def shutdown_session(exception=None):
+    session.remove()
+    
+    
+@application.before_request
+def db_connect():
+    engine.execute("USE ebdb")
+	
 if __name__ == '__main__':
       application.run(host='0.0.0.0',debug=True)
       #application.run(debug=True)

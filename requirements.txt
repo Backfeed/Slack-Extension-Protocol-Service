@@ -5,4 +5,5 @@ flask-cors
 pymysql
 PYJwt
 requests
+Flask-Migrate
 

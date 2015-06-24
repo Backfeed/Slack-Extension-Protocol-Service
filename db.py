@@ -18,7 +18,7 @@ session = scoped_session(Session)
 # Create an engine and create all the tables we need
 engine = create_engine(DB_URI,echo=True)
 model.metadata.bind = engine
-model.metadata.create_all()
+#model.metadata.create_all()
 sm = orm.sessionmaker(bind=engine, autoflush=False, autocommit=False,expire_on_commit=True)
 session = orm.scoped_session(sm)
 
