@@ -95,14 +95,14 @@ def shutdown_session(exception=None):
     
 @application.before_request
 def db_connect():
-	envType = os.getenv('ENV_TYPE', 'Local')
-    print 'envType is'+envType
-    if(envType == 'Local'):
+    envType = os.getenv('ENV_TYPE', 'Local')
+    if envType == 'Local' :
         pass
-    if(envType == 'Prod'):
+    if envType == 'Prod' :
         engine.execute("USE ebdb")
-    if(envType == 'Stage'):
-        engine.execute("USE ebdb")   
+    if envType == 'Stage' :
+        engine.execute("USE ebdb")        
+  
 	
 if __name__ == '__main__':
       application.run(host='0.0.0.0',debug=True)
