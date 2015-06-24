@@ -3,7 +3,7 @@ from alembic import context
 from sqlalchemy import create_engine
 from sqlalchemy import pool
 from logging.config import fileConfig
-
+import os
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -54,7 +54,14 @@ def run_migrations_online():
 
     """
     engine =create_engine(config.get_main_option("sqlalchemy.url"),echo=True)
-    engine.execute("USE ebdb")
+    envType = os.getenv('ENV_TYPE', 'Local')
+    print 'envType is'+envType
+    if(envType == 'Local'):
+        pass
+    if(envType == 'Prod'):
+        engine.execute("USE ebdb")
+    if(envType == 'Stage'):
+        engine.execute("USE ebdb") 
     connection = engine.connect()
     
     context.configure(connection=connection,
