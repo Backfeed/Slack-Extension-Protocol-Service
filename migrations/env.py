@@ -56,11 +56,11 @@ def run_migrations_online():
     engine =create_engine(config.get_main_option("sqlalchemy.url"),echo=True)
     envType = os.getenv('ENV_TYPE', 'Local')
     print 'envType is'+envType
-    if(envType == 'Local'):
+    if envType == 'Local' :
         pass
-    if(envType == 'Prod'):
+    if envType == 'Prod' :
         engine.execute("USE ebdb")
-    if(envType == 'Stage'):
+    if envType == 'Stage' :
         engine.execute("USE ebdb") 
     connection = engine.connect()
     
