@@ -220,7 +220,7 @@ def noremlizeSystemReps(contribution_obj,first_eval,session):
 	contributers = contribution_obj.contributionContributers
 	for contributer in contributers:
 		user_org = state['usersDict'][contributer.contributer_id]
-		user_rep_weight = float(user_org.org_reputation / state['total_system_reputation'])
+		user_rep_weight = user_org.org_reputation / float(state['total_system_reputation'])
 		user_org.org_reputation = math.ceil(user_rep_weight * first_eval)
 		session.add(user_org)
 		
