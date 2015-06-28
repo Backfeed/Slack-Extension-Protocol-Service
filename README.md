@@ -1,34 +1,21 @@
-Demo RESTful HTTP API using Flask, Flask-Restful and SQLAlchemy
+Backfeed RESTful HTTP API 
 ===================
 
-1. Install requisite packages:
+using Flask, Flask-Restful and SQLAlchemy.
+and angularjs (for monitoring UI.)
 
-    pip install -r requirements.txt
+to run locally:
 
-2. Run service:
+1. set up a vagrant machine (see Vagrantfile, provosion.sh) or Install requisite packages:
+
+    pip install -r requirements.txt  
+
+2. create main.db (local sqlite database file) :
+
+	python migrationManager.py db upgrade
+
+3. Run service:
 
     python ./application.py
 
-3. Give it a try:  run: clientExample/curl.sh
-
-```
->> import requests, json
->> requests.get('http://localhost:5000/todos').json()
-[]
->> requests.post('http://localhost:5000/todos',
-                 headers={'Content-Type': 'application/json'},
-                 data=json.dumps({'task': 'go outside!'})).json()
-{u'id': 1, u'task': u'go outside!', u'uri': u'http://localhost:5000/todos/1'}
->> requests.get('http://localhost:5000/todos/1').json()
-{u'id': 1, u'task': u'go outside!', u'uri': u'http://localhost:5000/todos/1'}
->> requests.put('http://localhost:5000/todos/1',
-                headers={'Content-Type': 'application/json'},
-                data=json.dumps({'task': 'go to the gym'})).json()
-{u'id': 1, u'task': u'go to the gym', u'uri': u'http://localhost:5000/todos/1'}
->> requests.delete('http://localhost:5000/todos/1')
->> requests.get('http://localhost:5000/todos').json()
-[]
-```
-
-Don't forget that you must past a "Content-Type: application/json" header along
-w/ your request!
+4. check it out at:  http://localhost:5000
