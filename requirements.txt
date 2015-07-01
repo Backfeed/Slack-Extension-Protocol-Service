@@ -6,5 +6,4 @@ pymysql
 PYJwt
 requests
 Flask-Migrate
-pyOpenSSL
 
