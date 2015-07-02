@@ -58,6 +58,7 @@ user_org_fields = {
     'tokens': fields.String,  
     'reputation': fields.String, 
      'url' : fields.String,
+     'real_name':fields.String,
 }
 
 org_fields = {
@@ -166,7 +167,7 @@ class AllUserResource(Resource):
         userOrganizationObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == organizationId).all()
         for userOrganization in userOrganizationObjects :
             print 'url is'+str(userOrganization.user.url)
-            users.append({'url':userOrganization.user.url,'id':userOrganization.user.id,'name':userOrganization.user.name,"tokens": userOrganization.org_tokens,"reputation": userOrganization.org_reputation})           
+            users.append({'url':userOrganization.user.url,'real_name':userOrganization.user.real_name,'id':userOrganization.user.id,'name':userOrganization.user.name,"tokens": userOrganization.org_tokens,"reputation": userOrganization.org_reputation})           
         return users
         
 class BidResource(Resource):
@@ -444,9 +445,10 @@ def createUserAndUserOrganizations(organizaionId):
             userId = ''
         if userId  == g.user_id :
             currentUser.url = user['profile']['image_24']
+            currentUser.real_name = user['profile']['real_name']
             session.add(currentUser)
-        if userId == '':
-            jsonStr = {"name":user['name'],"url":user['profile']['image_24']}
+        if userId == '':            
+            jsonStr = {"name":user['name'],"url":user['profile']['image_24'],"real_name":user['profile']['real_name']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 

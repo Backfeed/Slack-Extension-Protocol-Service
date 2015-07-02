@@ -19,6 +19,7 @@ def upgrade():
     op.create_table('user',
     sa.Column('id', sa.INTEGER(), nullable=False),
     sa.Column('name', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('real_name', sa.VARCHAR(length=255), nullable=True),
     sa.Column('url', sa.VARCHAR(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
