@@ -36,8 +36,8 @@ def upgrade():
     sa.Column('organization_id', sa.INTEGER(), nullable=True),
     sa.Column('org_tokens', sa.INTEGER(), nullable=True),
     sa.Column('org_reputation', sa.INTEGER(), nullable=True),
-    sa.ForeignKeyConstraint(['organization_id'], [u'organization.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], [u'user.id'], ),
+    sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('contribution',
@@ -49,8 +49,8 @@ def upgrade():
     sa.Column('file', sa.TEXT(), nullable=True),
     sa.Column('title', sa.TEXT(), nullable=True),
     sa.Column('status', sa.VARCHAR(length=100), nullable=True),
-    sa.ForeignKeyConstraint(['owner'], [u'user.id'], ),
-    sa.ForeignKeyConstraint(['users_organizations_id'], [u'users_organizations.id'], ),
+    sa.ForeignKeyConstraint(['owner'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['users_organizations_id'], ['users_organizations.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('contribution_contributer',
@@ -58,8 +58,8 @@ def upgrade():
     sa.Column('contribution_id', sa.INTEGER(), nullable=True),
     sa.Column('contributer_id', sa.INTEGER(), nullable=True),
     sa.Column('contributer_percentage', sa.INTEGER(), nullable=True),
-    sa.ForeignKeyConstraint(['contributer_id'], [u'user.id'], ),
-    sa.ForeignKeyConstraint(['contribution_id'], [u'contribution.id'], ),
+    sa.ForeignKeyConstraint(['contributer_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['contribution_id'], ['contribution.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     
@@ -74,8 +74,8 @@ def upgrade():
     sa.Column('current_rep_to_return', sa.INTEGER(), nullable=True),
     sa.Column('contribution_value_after_bid', sa.INTEGER(), nullable=True),
     sa.Column('time_created', sa.DATETIME(), nullable=True),
-    sa.ForeignKeyConstraint(['contribution_id'], [u'contribution.id'], ),
-    sa.ForeignKeyConstraint(['owner'], [u'user.id'], ),
+    sa.ForeignKeyConstraint(['contribution_id'], ['contribution.id'], ),
+    sa.ForeignKeyConstraint(['owner'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     
