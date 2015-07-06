@@ -380,23 +380,38 @@ class ContributionStatusResource(Resource):
         return jsonStr
     
     
-class ContributionTokenExistsResource(Resource):
+class OrganizationTokenExistsResource(Resource):
     def get(self,tokenName):
         orgObj = session.query(cls.Organization).filter(cls.Organization.token_name == tokenName).first()
         if not orgObj:
             return {"tokenAlreadyExist":"false"}
         else:
-             return {"tokenAlreadyExist":"true"}        
+             return {"tokenAlreadyExist":"true"}    
+         
+class OrganizationCodeExistsResource(Resource):
+    def get(self,code):
+        orgObj = session.query(cls.Organization).filter(cls.Organization.code == code).first()
+        if not orgObj:
+            return {"codeAlreadyExist":"false"}
+        else:
+             return {"codeAlreadyExist":"true"}      
     
 class OrganizationResource(Resource):
     
     @marshal_with(userOrganization_fields)
     def post(self):
         json = request.json
-
+        orgObj = session.query(cls.Organization).filter(cls.Organization.code == json['code']).first()
+        if orgObj:
+            return {"codeExist":"true"}
+        
+        orgObj = session.query(cls.Organization).filter(cls.Organization.token_name == json['token_name']).first()
+        if orgObj:
+            return {"tokenExist":"true"}
+        
         jsonStr = {"token_name":json['token_name'],
                     "slack_teamid":json['slack_teamid'],
-                    "name":json['name']
+                    "name":json['name'],"code":json['code']
                     }
         organization = cls.Organization(jsonStr,session)
 

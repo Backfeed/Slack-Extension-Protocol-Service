@@ -25,9 +25,10 @@ def upgrade():
     )
     op.create_table('organization',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('token_name', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('token_name', sa.VARCHAR(length=255), nullable=False),
     sa.Column('slack_teamid', sa.VARCHAR(length=255), nullable=True),
-    sa.Column('name', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('name', sa.VARCHAR(length=255), nullable=False),
+    sa.Column('code', sa.VARCHAR(length=255), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )   
     op.create_table('users_organizations',

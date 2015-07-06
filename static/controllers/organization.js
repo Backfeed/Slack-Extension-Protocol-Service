@@ -1,13 +1,14 @@
 angular.module('MyApp')
-  .controller('OrganizationCtrl', function($scope,$auth,$alert,$location,$stateParams,SaveOrg,Account,Users,AllSlackUsers,CheckOrgTokenName,AllOrgs) {
+  .controller('OrganizationCtrl', function($scope,$auth,$alert,$location,$stateParams,SaveOrg,Account,Users,AllSlackUsers,CheckOrgTokenName,AllOrgs,CheckOrgCode) {
 	  $scope.userData= ''
-      $scope.validationFailure = false;
-	 
+      $scope.validationFailureForTokenName = false;
+	  $scope.validationFailureForCode = false;
 	
 	  $scope.orgModel = {
 				token_name : '',
 				slack_teamid : '',				
-				name : ''
+				name : '',
+				code : ''
 
 			}
 	 
@@ -66,9 +67,27 @@ angular.module('MyApp')
 			$scope.data1.$promise.then(function(result) {
 				console.log('this is it');				
 				if(result.tokenAlreadyExist == 'true'){
-					$scope.validationFailure = true;
+					$scope.validationFailureForTokenName = true;
 				}else{
-					$scope.validationFailure = false;
+					$scope.validationFailureForTokenName = false;
+				}
+			});
+	   }
+	   
+	  
+   }
+   
+   $scope.checkCode = function(){
+	   if($scope.orgModel.code != ''){
+		   $scope.data1 = CheckOrgCode.checkOrgCode({
+			   code : $scope.orgModel.code
+			});
+			$scope.data1.$promise.then(function(result) {
+				console.log('this is it');				
+				if(result.codeAlreadyExist == 'true'){
+					$scope.validationFailureForCode = true;
+				}else{
+					$scope.validationFailureForCode = false;
 				}
 			});
 	   }
@@ -78,15 +97,23 @@ angular.module('MyApp')
    
    $scope.orderProp = "name";
 	$scope.submit = function(){
-		if($scope.validationFailure == true){
+		if($scope.validationFailureForTokenName == true){
 			alert('This name is already taken please use other')
+			return
+		}
+		if($scope.validationFailureForCode == true){
+			alert('This code is already taken please use other')
 			return
 		}
 		console.log("In Submit method");
 		console.log($scope.orgModel)
 		$scope.data = SaveOrg.save({},$scope.orgModel);
 		$scope.data.$promise.then(function (result) {
-		
+			if(result.id == 0){
+				alert('This code or name is already taken please use other')
+				return;
+			}			
+			
 			$scope.userData.orgId = result.organization_id;
 			$scope.userData.userOrgId = result.id;
 			$scope.userData.orgexists = "true";

@@ -82,9 +82,10 @@ organization_table = schema.Table('organization', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('organization_seq_id', optional=True), primary_key=True),
 
-    schema.Column('token_name', types.Unicode(255)),
+    schema.Column('token_name', types.Unicode(255),nullable=False),
     schema.Column('slack_teamid', types.Unicode(255)),
-    schema.Column('name', types.Unicode(255)),
+    schema.Column('name', types.Unicode(255),nullable=False),
+    schema.Column('code', types.Unicode(255),nullable=False),
 )
 
 """
