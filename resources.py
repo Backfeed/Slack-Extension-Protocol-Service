@@ -454,6 +454,10 @@ def createUserAndUserOrganizations(organizaionId):
         userId = ''
         token = 0
         repuation = 0
+        if user['deleted'] == True :
+            continue
+        if user['is_bot'] == True :
+            continue
         try:
             userId = usersDic[user['name']]
         except KeyError:
