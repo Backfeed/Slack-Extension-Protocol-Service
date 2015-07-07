@@ -7,6 +7,8 @@ angular.module('MyApp').controller(
 			$scope.currencyFormatting = function(value) { return value.toString() + " $"; };
 			$scope.organizationId = 'notintialized';
 			$scope.buttonDisabled = true;
+			var slackUsersMap = {};
+			
 			$scope.model = {
 				title : '',
 				file : '',
@@ -105,6 +107,9 @@ angular.module('MyApp').controller(
 					$scope.data.$promise.then(function(result) {
 						Users.setAllOrgUsersData(result)						
 						$scope.users = result;	
+						for(i = 0 ; i<$scope.users.length ; i++){
+							slackUsersMap[$scope.users[i].id] = $scope.users[i].name;
+						}						
 						$scope.model.contributers[0].usersList = $scope.users;
 						//$location.path("/contribution/" + result.id);
 					});
@@ -117,6 +122,9 @@ angular.module('MyApp').controller(
 					} else {
 
 						$scope.users = allOrgUsersData;
+						for(i = 0 ; i<$scope.users.length ; i++){
+							slackUsersMap[$scope.users[i].id] = $scope.users[i].name;
+						}	
 						$scope.model.contributers[0].usersList = $scope.users;
 					}
 					
@@ -187,8 +195,14 @@ angular.module('MyApp').controller(
 				// ******************************* SLACK PLAY ***********************
 				
                 $scope.formatContributionData = function(contributionData) {
+                	var contributers = contributionData.contributionContributers;
+                	contributersData = '';
+                	for ( i=0;i<contributers.length;i++){
+                		contributersData = contributersData +'<@'+slackUsersMap[contributers[i].contributer_id] +'> '+contributers[i].contributer_percentage +'%\n';
+                	}
                     var str =   contributionData.title +
-                                '\ncontent: \n'+contributionData.file;
+                                '\ncontent: \n'+contributionData.file +
+                                '\nCollaborators: \n'+contributersData;
                     return str;
                 }
 			  
