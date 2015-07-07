@@ -22,21 +22,31 @@
 							      						<label for="tokenName">Creating a new value system ... how would you like to call it?</label>
 														<input type="text"
 															class="form-control" id="tokenName" ng-model="orgModel.token_name" ng-blur="checkTokenName()">
-												 <div class="invalid-message" ng-show="validationFailure">
+												 <div class="invalid-message" ng-show="validationFailureForTokenName">
 					    								<span class="invalid-mail" 
-														ng-show="validationFailure && orgModel.token_name != ''">
+														ng-show="validationFailureForTokenName && orgModel.token_name != ''">
 														This name is already taken please use other</span> 
 
 					     						</div>
 													</div>
-							
+							<div class="form-group">
+							      						<label for="code">Code</label>
+														<input type="text"
+															class="form-control" id="code" ng-model="orgModel.code" ng-blur="checkCode()">
+												 <div class="invalid-message" ng-show="validationFailureForCode">
+					    								<span class="invalid-mail" 
+														ng-show="validationFailureForCode && orgModel.code != ''">
+														This code is already taken please use other</span> 
+
+					     						</div>
+													</div>
 					
 						
 						
 						
 						
 				
-									<div align="center" ><button type="submit" class="btn btn-warning submit-button" ng-disabled="!orgModel.token_name  || validationFailure" ng-click="submit()">Begin a new era ...</button></div>
+									<div align="center" ><button type="submit" class="btn btn-warning submit-button" ng-disabled="!orgModel.token_name || !orgModel.code  || validationFailureForTokenName || validationFailureForCode" ng-click="submit()">Begin a new era ...</button></div>
 						
 
 								</form>

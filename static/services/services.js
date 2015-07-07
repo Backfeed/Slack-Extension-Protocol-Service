@@ -112,6 +112,17 @@ bfAPIServices.factory('CheckOrgTokenName', [ '$resource', function($resource) {
 	});
 } ]);
 
+bfAPIServices.factory('CheckOrgCode', [ '$resource', function($resource) {
+	return $resource('organization/checkCode/:code', {}, {
+		checkOrgCode : {
+			method : 'GET',
+			params : {},
+			isArray : false
+		}
+	});
+} ]);
+
+
 bfAPIServices.factory('AllSlackUsers', [ '$resource', function($resource) {
 	return $resource('allSlackUsers', {}, {
 		allSlackUsers : {

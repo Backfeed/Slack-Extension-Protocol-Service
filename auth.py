@@ -198,21 +198,24 @@ def slack():
 
     # Step 4. Create a new account or return an existing one.
     #user = User.query.filter_by(slack=profile['user_id']).first()
-    user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
+    
     org = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).first()
     orgexists = "true"
     if not org:
         orgexists = "false"
+    if org:
+        syncUsers(org.id,access_token)
+    user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
     if user:
         
-        if org:
+        if org:            
             userOrg = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == org.id).filter(cls.UserOrganization.user_id == user.id).first()
             if not userOrg:
                 #associate user and org
                 jsonStr = {"user_id":user.id,
                     "organization_id": org.id,
-                    "org_tokens":100,
-                    "org_reputation":100
+                    "org_tokens":0,
+                    "org_reputation":0
                     }     
                 userOrg = cls.UserOrganization(jsonStr,session)
                 session.add(userOrg)
@@ -229,18 +232,61 @@ def slack():
     session.add(u)
     session.commit()
     if org:
-        userOrg = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == org.id).filter(cls.UserOrganization.user_id == user.id).first()
+        userOrg = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == org.id).filter(cls.UserOrganization.user_id == u.id).first()
         if not userOrg:
             #associate user and org
             userOrg = cls.UserOrganization()
             userOrg.org_id = org.id
             userOrg.user_id = u.id
-            userOrg.org_tokens = 100
-            userOrg.org_reputation = 100;
+            userOrg.org_tokens = 0
+            userOrg.org_reputation = 0;
             session.add(userOrg)
-            session.commit()
+            session.commit()        
         token = create_token(user,profile['team_id'],profile['team'],orgexists,org.id,userOrg.id,access_token,profile['user_id'])
         return jsonify(token=token)
     
     token = create_token(u,profile['team_id'],profile['team'],orgexists,'','',access_token,profile['user_id'])
     return jsonify(token=token)
+
+def syncUsers(orgId,access_token):
+    # get all  the db users
+    usersInSystem= session.query(cls.User).all()
+    # get al user organizations in this org
+    userOrgs = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId)
+    usersOrgDic = {}
+    for userOrg in userOrgs:                
+        usersOrgDic[userOrg.user_id] = userOrg.id
+    # get all slack users
+    team_users_api_url = 'https://slack.com/api/users.list'
+    headers = {'User-Agent': 'DEAP'}
+    r = requests.get(team_users_api_url, params={'token':access_token}, headers=headers)
+    slackUsers = json.loads(r.text)['members']
+    usersDic = {}
+    for user in usersInSystem:                
+        usersDic[user.name] = user.id
+    for slackUser in slackUsers :
+        if slackUser['deleted'] == True :
+            continue
+        if slackUser['is_bot'] == True :
+            continue
+        try:
+            userId = usersDic[slackUser['name']]
+        except KeyError:
+            jsonStr = {"name":slackUser['name'],"url":slackUser['profile']['image_24'],"real_name":slackUser['profile']['real_name']}
+            u = cls.User(jsonStr,session)
+            session.add(u) 
+            session.flush() 
+            userId = u.id
+        
+        userOrg = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).filter(cls.UserOrganization.user_id == userId).first()
+        if not userOrg:
+            #associate user and org
+            jsonStr = {"user_id":userId,
+                "organization_id": orgId,
+                "org_tokens":0,
+                "org_reputation":0
+                }     
+            userOrg = cls.UserOrganization(jsonStr,session)
+            session.add(userOrg)
+            session.commit()
+                
