@@ -251,7 +251,7 @@ angular.module('MyApp').controller(
 							console.log('is random sending ...:')	;
 							
 							channelId = chnl.id
-							$scope.sendTestMessage(channelId,'new contribution was created:\n'+$scope.formatContributionData($scope.currentSavedContribution))
+							$scope.sendTestMessage(channelId,'New Value:\n'+$scope.formatContributionData($scope.currentSavedContribution))
 						}			
 					}
 				};
