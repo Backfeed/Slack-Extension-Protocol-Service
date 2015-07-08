@@ -21,6 +21,16 @@ bfAPIServices.factory('ContributionDetail', [ '$resource', function($resource) {
 	});
 } ]);
 
+bfAPIServices.factory('ContributionDelete', [ '$resource', function($resource) {
+	return $resource('contribution/:contributionId', {}, {
+		delete : {
+			method : 'DELETE',
+			params : {},
+			isArray : false
+		}
+	});
+} ]);
+
 bfAPIServices.factory('SaveContribution', [ '$resource', function($resource) {
 	return $resource('contribution', {}, {
 		save : {

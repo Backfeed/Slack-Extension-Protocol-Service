@@ -249,6 +249,10 @@ class ContributionResource(Resource):
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(id))
+        for contributer in contributionObject.contributionContributers:
+            session.delete(contributer)
+        for bid in contributionObject.bids:
+            session.delete(bid)
         session.delete(contributionObject)
         session.commit()
         return {}, 204

@@ -1,7 +1,7 @@
 angular.module('MyApp').controller(
 		'ContributionsCtrl',
 		function($scope, $auth, $location, $stateParams, $alert, Contributions,
-				ContributionDetail, SaveContribution, CloseContribution,
+				ContributionDetail, SaveContribution, CloseContribution,ContributionDelete,
 				Account, Users) {			
 			var orgExists;
 			$scope.currencyFormatting = function(value) { return value.toString() + " $"; };
@@ -388,7 +388,20 @@ angular.module('MyApp').controller(
 						$location.path("/contributions");
 					});
 
-				};				
+				};	
+				
+				$scope.deleteContribution = function() {
+					console.log("In deleteContribution method");
+					console.log($scope.ContributionModelForView.id)
+					$scope.data = ContributionDelete.delete({
+						contributionId : $scope.contributionId
+					});
+					$scope.data.$promise.then(function(result) {
+						alert('Contribution deleted');
+						$location.path("/contributions");
+					});
+
+				};	
 
 				if ($auth.isAuthenticated()) {
 					$scope.contributions = Contributions.getAllContributions({
