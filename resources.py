@@ -101,6 +101,7 @@ contribution_fields['owner'] = fields.String
 contribution_fields['file'] = fields.String
 contribution_fields['title'] = fields.String
 contribution_fields['tokenName'] = fields.String
+contribution_fields['currentValuation'] = fields.Integer
 contribution_fields['bids'] = fields.Nested(bid_nested_fields)
 contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
 
@@ -231,10 +232,16 @@ class ContributionResource(Resource):
             abort(404, message="Contribution {} doesn't exist".format(id))
         for contributer in contributionObject.contributionContributers:
             contributer.name= getUser(contributer.contributer_id).name
-                
+        last_bid = None 
+        currentValuation = 0      
         for bid in contributionObject.bids:
             bid.bidderName = getUser(bid.owner).name
+            last_bid = bid
+            
+        if (last_bid):
+            currentValuation = last_bid.contribution_value_after_bid
         contributionObject.tokenName = contributionObject.userOrganization.organization.token_name
+        contributionObject.currentValuation = currentValuation
         print 'tokenName'+contributionObject.tokenName
         return contributionObject
 

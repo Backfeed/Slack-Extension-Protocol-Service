@@ -138,6 +138,7 @@ angular.module('MyApp').controller(
 					owner : '',
 					min_reputation_to_close : '',
 					users_organizations_id : '',
+					currentValuation : '',
 					contributionContributers : [ {
 						contributer_id : '',
 						contributer_percentage : ''
