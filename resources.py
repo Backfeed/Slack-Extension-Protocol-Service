@@ -101,6 +101,7 @@ contribution_fields['owner'] = fields.String
 contribution_fields['file'] = fields.String
 contribution_fields['title'] = fields.String
 contribution_fields['tokenName'] = fields.String
+contribution_fields['code'] = fields.String
 contribution_fields['currentValuation'] = fields.Integer
 contribution_fields['bids'] = fields.Nested(bid_nested_fields)
 contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
@@ -241,6 +242,7 @@ class ContributionResource(Resource):
         if (last_bid):
             currentValuation = last_bid.contribution_value_after_bid
         contributionObject.tokenName = contributionObject.userOrganization.organization.token_name
+		contributionObject.code = contributionObject.userOrganization.organization.code
         contributionObject.currentValuation = currentValuation
         print 'tokenName'+contributionObject.tokenName
         return contributionObject
