@@ -242,8 +242,8 @@ class ContributionResource(Resource):
         if (last_bid):
             currentValuation = last_bid.contribution_value_after_bid
         contributionObject.tokenName = contributionObject.userOrganization.organization.token_name
-		contributionObject.code = contributionObject.userOrganization.organization.code
         contributionObject.currentValuation = currentValuation
+        contributionObject.code = contributionObject.userOrganization.organization.code
         print 'tokenName'+contributionObject.tokenName
         return contributionObject
 
