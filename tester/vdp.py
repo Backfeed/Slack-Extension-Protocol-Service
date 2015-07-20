@@ -26,9 +26,7 @@ def issueTokens(tokes_to_distribute,contributers,session):
 		user = state['usersDict'][contributer.contributer_id]		
 		tokens_to_add = math.ceil( ( tokes_to_distribute * contributer.contributer_percentage ) / 100 ) 
 		user.org_tokens += tokens_to_add
-		# on seeding flow dont issue reputation:
-		if(not state['is_contribution_zero']):
-			user.org_reputation += tokens_to_add
+		user.org_reputation += tokens_to_add
 		session.add(user)
 		
 def calcValue(bids):
@@ -170,7 +168,6 @@ def debug_state(state):
 	bf_Log(logger,'\n\n *** current state ***:\n')
 	bf_Log(logger,'previous highest eval:'+str(state['highest_eval']))
 	bf_Log(logger,'total system reputation:'+str(state['total_system_reputation']))	
-	bf_Log(logger,'is contribution Zero:'+str(state['is_contribution_zero']))
 
 
 def getCurrentState(contributionObject,session):
@@ -181,15 +178,7 @@ def getCurrentState(contributionObject,session):
 	user_org = contributionObject.userOrganization
 	userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == user_org.organization_id).all()
 
-	state['is_contribution_zero'] = True
-	accumulated_number_of_contributions = 0
 	for userOrg in userOrgObjects:
-		# check if contribution zero (once we know it isnt dont check again) :
-		if(state['is_contribution_zero'] and userOrg.contributions and len(userOrg.contributions)):
-			accumulated_number_of_contributions += len(userOrg.contributions)
-			if(accumulated_number_of_contributions > 1):
-				state['is_contribution_zero'] = False
-		
 		usersDict[userOrg.user_id] = userOrg
 		total_system_reputation = total_system_reputation + userOrg.org_reputation
 
@@ -209,22 +198,6 @@ def debug_bid(current_bid):
 	bf_Log(logger,'reputation (weight):'+str(current_bid.reputation))	
 	bf_Log(logger,'tokens (eval):'+str(current_bid.tokens))
 	
-
-def noremlizeSystemReps(contribution_obj,first_eval,session):
-	
-	if(not state['total_system_reputation']):
-		return False
-	
-	# becuase its contribution-zero we dont have to go over all the system's users ,but only the collaborators 
-	# since we know that they currently are the only users with reputation 
-	contributers = contribution_obj.contributionContributers
-	for contributer in contributers:
-		user_org = state['usersDict'][contributer.contributer_id]
-		user_rep_weight = user_org.org_reputation / float(state['total_system_reputation'])
-		user_org.org_reputation = math.ceil(user_rep_weight * first_eval)
-		session.add(user_org)
-		
-	return True
 	
 def process_bid(current_bid,session,logger = None):
 	state['logger'] = logger
@@ -250,14 +223,8 @@ def process_bid(current_bid,session,logger = None):
 	bids = contributionObject.bids
 	bids.append(current_bid);
 	
-	# TBD: implement - 'functionX', to separate calculation from distribution:
-	if(not state['is_contribution_zero']):
-		distribute_rep(bids, current_bid,session)
+	distribute_rep(bids, current_bid,session)
 	current_eval = calcValue(bids)
-	
-	# on seeding flow : normelize all the users reputations  in the org, according to current evaluation:
-	if(state['is_contribution_zero'] and state['highest_eval'] == 0 and current_eval > 0 ):
-		noremlizeSystemReps(contributionObject,current_eval,session)
 
 	# process current eval:
 	current_bid.contribution_value_after_bid = current_eval
