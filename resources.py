@@ -432,7 +432,7 @@ class OrganizationResource(Resource):
         session.flush()
       
         
-        createUserAndUserOrganizations(organization.id)
+        createUserAndUserOrganizations(organization.id,json['contributers'],json['token'])
         session.commit()
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).filter(cls.UserOrganization.organization_id == organization.id).first()
         return userOrgObj, 201
@@ -448,12 +448,24 @@ def getSlackUsers():
     
 class getAllSlackUsersResource(Resource):
     def get(self):
-        return getSlackUsers()
+        users = getSlackUsers()
+        usersJson = []
+        for user in users :
+            if user['deleted'] == True :
+                continue
+            if user['is_bot'] == True :
+                continue
+            jsonStr = {"id":user['id'],"name":user['name'],"url":user['profile']['image_24'],"real_name":user['profile']['real_name']}
+            usersJson.append(jsonStr)
+        return usersJson
         
     
-def createUserAndUserOrganizations(organizaionId):
+def createUserAndUserOrganizations(organizaionId,contributers,token):
     
     usersInSystem = session.query(cls.User).all()
+    contributionDic = {}
+    for contributer in contributers :
+        contributionDic[contributer['contributer_id']] = (float(token)/100)*float(contributer['contributer_percentage'])
     usersDic = {}
     currentUser = '';
     for u in usersInSystem:
@@ -464,9 +476,15 @@ def createUserAndUserOrganizations(organizaionId):
     users = getSlackUsers()
     print 'slack users:'+str(users)
     for user in users :
-        userId = ''
         token = 0
         repuation = 0
+        try:
+            token = contributionDic[user['id']]
+            repuation = token
+        except KeyError:
+            token = 0
+            repuation = 0
+        userId = ''
         if user['deleted'] == True :
             continue
         if user['is_bot'] == True :
