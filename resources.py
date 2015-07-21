@@ -287,6 +287,7 @@ class ContributionResource(Resource):
             if not userObj:
                 abort(404, message="Contributer {} doesn't exist".format(contributionContributer.contributer_id))
             contributionContributer.contribution_id=contribution.id
+            contributionContributer.name = userObj.name
             contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
             if (firstContribution == True):
                  userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
@@ -298,6 +299,7 @@ class ContributionResource(Resource):
             contributionContributer = cls.ContributionContributer()
             contributionContributer.contributer_id = contribution.owner
             contributionContributer.contributer_percentage = '100'
+            contributionContributer.name = userObj.name
             contribution.contributionContributers.append(contributionContributer)  
             if (firstContribution == True):
                 userOrgObjectForOwner.org_reputation = 100
