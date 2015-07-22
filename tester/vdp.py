@@ -1,6 +1,9 @@
 #import logging.config
 #logging.config.fileConfig(params["loggingConfigFilename"])
 #from db import session
+
+from functionTester.protocol_function import BidInfo,FIn,ProtocolFunctionV1
+
 import classes as cls
 
 import math
@@ -60,6 +63,14 @@ def calcValue(bids):
 			return current_evaluation
 
 	return 0 # TBD: return error here (throw exception)
+
+
+def distribute_rep2(bids, current_bid,session):
+	logger = state['logger']
+	users = state['usersDict']
+	current_bidder = users[current_bid.owner]
+	
+	# stopped here *********************************
 
 def distribute_rep(bids, current_bid,session):
 	logger = state['logger']
@@ -223,8 +234,28 @@ def process_bid(current_bid,session,logger = None):
 	bids = contributionObject.bids
 	bids.append(current_bid);
 	
-	distribute_rep(bids, current_bid,session)
-	current_eval = calcValue(bids)
+	
+	# **********************
+	# establish bids:
+	bidsInfo = []
+	for bid in bids:
+		bidInfo = BidInfo(bid.tokens,bid.reputation,bid.stake,bid.owner)
+		bidsInfo.append(bidInfo)
+
+	# establish current bid (to be last bid):
+	current_bid_info = bidsInfo[-1]
+
+	# establish total system reputation:
+	total_sys_rep = state['total_system_reputation']
+
+	fin = FIn(bidsInfo,current_bid_info,total_sys_rep)
+	f = ProtocolFunctionV1(logger)
+	result = f.execute(fin)
+	current_eval = result.evaluation
+	
+	#distribute_rep(bids, current_bid,session)
+	#current_eval = calcValue(bids)
+	# **********************
 
 	# process current eval:
 	current_bid.contribution_value_after_bid = current_eval

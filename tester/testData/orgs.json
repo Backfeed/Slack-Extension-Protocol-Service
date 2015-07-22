@@ -4,7 +4,8 @@
 						"name":"BF",
 						"token_name":"BFToken",
 						"slack_teamid":"slackteamid",
-						"initial_tokens":"1000"
+						"initial_tokens":"1000",
+						"code":"BFToken"
 					}
 				]
 }
