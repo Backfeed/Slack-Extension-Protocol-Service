@@ -1,11 +1,5 @@
-#import logging.config
-#logging.config.fileConfig(params["loggingConfigFilename"])
-#from db import session
-
-from functionTester.protocol_function import BidInfo,FIn,ProtocolFunctionV1
-
+from protocol_function import BidInfo,FIn,ProtocolFunctionV1
 import classes as cls
-
 import math
 from operator import attrgetter
 
@@ -19,109 +13,9 @@ def bf_Log(logger,messsage,level = 'info'):
 
 def getHighestEval(bids):
 	maxValue = max(bids, key=attrgetter('contribution_value_after_bid')).contribution_value_after_bid
-	
 	return maxValue
 	
-def issueTokens(tokes_to_distribute,contributers,session):
-	logger = state['logger']	
-	# get collaborators:
-	for contributer in contributers:
-		user = state['usersDict'][contributer.contributer_id]		
-		tokens_to_add = math.ceil( ( tokes_to_distribute * contributer.contributer_percentage ) / 100 ) 
-		user.org_tokens += tokens_to_add
-		user.org_reputation += tokens_to_add
-		session.add(user)
-		
-def calcValue(bids):
-	logger = state['logger']	
-	# get reputation on zero (un-invested reputation)
-	total_invested_rep = 0
-	for bid in bids:
-		total_invested_rep = total_invested_rep + int(bid.reputation)
 	
-	uninvested_rep =  state['total_system_reputation'] - total_invested_rep
-	
-	# Sort by tokens : (To sort the list in place...)
-	bids.sort(key=lambda x: x.tokens, reverse=False)
-	#bids_sorted_by_tokens = sorted(bids, key=lambda bid: bid.tokens, reverse=False)
-		
-	# check if we passed 50% of total rep in system if so we hit the median:
-	if( uninvested_rep > math.ceil(state['total_system_reputation']/2) ):
-		
-		# we hit the median so update current bid with current evaluation:
-		return 0
-	
-	acumulated_rep = uninvested_rep	
-	for bid in bids:
-		acumulated_rep = acumulated_rep + int(bid.reputation)
-		
-		# check if we passed 50% of total rep in system if so we hit the median:
-		if( acumulated_rep > math.ceil(state['total_system_reputation']/2) ):
-			
-			# we hit the median so update current bid with current evaluation:
-			current_evaluation = int(bid.tokens)
-			return current_evaluation
-
-	return 0 # TBD: return error here (throw exception)
-
-
-def distribute_rep2(bids, current_bid,session):
-	logger = state['logger']
-	users = state['usersDict']
-	current_bidder = users[current_bid.owner]
-	
-	# stopped here *********************************
-
-def distribute_rep(bids, current_bid,session):
-	logger = state['logger']
-	users = state['usersDict']
-	current_bidder = users[current_bid.owner]
-
-	if(not current_bid.stake):
-		bf_Log(logger,'stake is null --> stake is set to entire bid reputation:'+str(current_bid.reputation))
-		current_bid.stake = current_bid.reputation
-
-	#kill the stake of the current_bidder
-	current_bidder.org_reputation -= math.ceil(float(current_bid.stake))
-	session.add(current_bidder)
-
-	# and redistribute it around to the others
-	update_rep(bids, current_bid,session)
-
-
-
-def update_rep(bids, current_bid,session):
-	logger = state['logger']
-	summ = 0;	
-	users = state['usersDict']	
-
-	#calculate total sum of Weight * Decay
-	for bid in bids:
-		summ += float(bid.reputation) * decay(bid.tokens, current_bid.tokens)
-	bf_Log(logger,"sum of Weight * Decay = " + str(summ))
-
-	#reallocate reputation
-	for bid in bids:		
-		user = users[bid.owner]
-		bf_Log(logger,"\n\nrealocating reputation for bidder Id:" + str(bid.owner))
-		
-		bf_Log(logger,"OLD REP === " + str(user.org_reputation))
-		bf_Log(logger," ----  current_bid.stake = " + str(current_bid.stake))
-		new_rep_weight = ( float(bid.reputation) * decay(bid.tokens, current_bid.tokens)  )
-		bf_Log(logger,'new_rep_weight:'+str(new_rep_weight))
-		
-		user.org_reputation += math.ceil(float(current_bid.stake) * new_rep_weight / summ) 
-		bf_Log(logger,"NEW REP === " + str(user.org_reputation))
-		session.add(user)
-
-
-def decay(vi, vn):
-	logger = state['logger']	
-	bf_Log(logger,"v1 = " + str(vi) + " vn = " + str(vn))
-	decay = math.atan(1 / abs(int(vi) - int(vn)+0.1))
-	bf_Log(logger,"decay................." + str(decay))
-	return decay
-
 def isBidderFirstBid(bids, current_bid):
 	logger = state['logger']	
 	bf_Log(logger,'\n\n *** isBidderFirstBid: ***:\n')
@@ -162,7 +56,6 @@ def validateBid(bids, current_bid):
 		bf_Log(logger,"bidder has no more reputation to spare for current bid. exit.")
 		return None;		
 		
-
 	bf_Log(logger,"current_bid.stake = " + str(current_bid.stake) + " and current_bid.rep = " + str(current_bid.reputation))
 
 	if float(current_bid.stake) > int(current_bid.reputation):
@@ -209,7 +102,39 @@ def debug_bid(current_bid):
 	bf_Log(logger,'reputation (weight):'+str(current_bid.reputation))	
 	bf_Log(logger,'tokens (eval):'+str(current_bid.tokens))
 	
-	
+def issueTokens(tokes_to_distribute,contributers,session):
+	logger = state['logger']	
+	# get collaborators:
+	for contributer in contributers:
+		user = state['usersDict'][contributer.contributer_id]		
+		tokens_to_add = math.ceil( ( tokes_to_distribute * contributer.contributer_percentage ) / 100 ) 
+		user.org_tokens += tokens_to_add
+		user.org_reputation += tokens_to_add
+		session.add(user)
+
+
+def distribute_rep(bids_distribution, current_bid,session):
+	logger = state['logger']
+	users = state['usersDict']
+	current_bidder = users[current_bid.owner]
+
+	if(not current_bid.stake):
+		bf_Log(logger,'stake is null --> stake is set to entire bid reputation:'+str(current_bid.reputation))
+		current_bid.stake = current_bid.reputation
+
+	#kill the stake of the current_bidder
+	current_bidder.org_reputation -= math.ceil(float(current_bid.stake))
+	session.add(current_bidder)	
+
+	#reallocate reputation
+	for ownerId in bids_distribution:
+		user = users[int(ownerId)]
+		bf_Log(logger,"\n\nrealocating reputation for bidder Id:" + str(ownerId))
+		bf_Log(logger,"OLD REP === " + str(user.org_reputation))		
+		user.org_reputation += bids_distribution[ownerId] 
+		bf_Log(logger,"NEW REP === " + str(user.org_reputation))
+		session.add(user)
+				
 def process_bid(current_bid,session,logger = None):
 	state['logger'] = logger
 	debug_bid(current_bid)
@@ -234,28 +159,19 @@ def process_bid(current_bid,session,logger = None):
 	bids = contributionObject.bids
 	bids.append(current_bid);
 	
-	
-	# **********************
-	# establish bids:
+	# prepare input Info for calc:
 	bidsInfo = []
 	for bid in bids:
-		bidInfo = BidInfo(bid.tokens,bid.reputation,bid.stake,bid.owner)
-		bidsInfo.append(bidInfo)
+		bidsInfo.append( BidInfo(bid.tokens,bid.reputation,bid.stake,bid.owner) )
 
-	# establish current bid (to be last bid):
 	current_bid_info = bidsInfo[-1]
 
-	# establish total system reputation:
-	total_sys_rep = state['total_system_reputation']
-
-	fin = FIn(bidsInfo,current_bid_info,total_sys_rep)
+	fin = FIn(bidsInfo,current_bid_info,state['total_system_reputation'])
 	f = ProtocolFunctionV1(logger)
 	result = f.execute(fin)
-	current_eval = result.evaluation
 	
-	#distribute_rep(bids, current_bid,session)
-	#current_eval = calcValue(bids)
-	# **********************
+	distribute_rep(result.rep_distributions, current_bid,session)
+	current_eval = result.evaluation
 
 	# process current eval:
 	current_bid.contribution_value_after_bid = current_eval
