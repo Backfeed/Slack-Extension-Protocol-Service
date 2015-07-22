@@ -18,7 +18,7 @@ import classes as cls
 
 
 # TBD: move to settings 
-SLACK_SECRET = os.environ.get('SLACK_SECRET') or 'e7efc9a81d4043defb7b7e27816ae27e'
+SLACK_SECRET = os.environ.get('SLACK_SECRET') or '8b8d0ea7e6da2a88fb4d4cc77366fb4d'
 TOKEN_SECRET = os.environ.get('SECRET_KEY') or 'JWT Token Secret String'
 
 def login_required(f):
