@@ -19,6 +19,7 @@ from resources import OrganizationTokenExistsResource
 from resources import OrganizationCodeExistsResource
 from resources import getAllSlackUsersResource
 from resources import AllOrganizationResource
+from resources import BidContributionResource
 from db import session,engine
 
 import auth
@@ -49,6 +50,7 @@ api.add_resource(AllUserResource, '/users/all/<string:organizationId>', endpoint
 
 api.add_resource(BidResource, '/bids/<string:id>', endpoint='bids')
 api.add_resource(BidResource, '/bids', endpoint='bid')
+api.add_resource(BidContributionResource, '/bid/<string:contributionId>/<string:userId>', endpoint='contributionbids')
 
 api.add_resource(ContributionResource, '/contribution', endpoint='contribution')
 api.add_resource(ContributionResource, '/contribution/<string:id>', endpoint='contributions')

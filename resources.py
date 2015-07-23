@@ -223,6 +223,14 @@ class BidResource(Resource):
             abort(404, message="Failed to process bid".format(contributionid))
 
         return bid, 201
+    
+class BidContributionResource(Resource):
+    def get(self, contributionId,userId):
+        char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.owner == userId).first()        
+        if not char:
+            return {"bidExists":"false"}
+        else:
+            return {"bidExists":"true"}        
 
 class ContributionResource(Resource):
     @marshal_with(contribution_fields)
