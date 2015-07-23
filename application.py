@@ -78,6 +78,10 @@ def index():
 def me():
 	return auth.me()
 
+@application.route('/auth/ext_login', methods=['POST'])
+def ext_login():
+	return auth.ext_login()
+
 @application.route('/auth/login', methods=['POST'])
 def login():
 	return auth.login()

@@ -1,12 +1,14 @@
 angular.module('MyApp').controller(
 		'ContributionsCtrl',
 		function($scope, $auth, $location, $stateParams, $alert, Contributions,
-				ContributionDetail, SaveContribution, CloseContribution,
+				ContributionDetail, SaveContribution, CloseContribution,ContributionDelete,
 				Account, Users) {			
 			var orgExists;
 			$scope.currencyFormatting = function(value) { return value.toString() + " $"; };
 			$scope.organizationId = 'notintialized';
 			$scope.buttonDisabled = true;
+			var slackUsersMap = {};
+			
 			$scope.model = {
 				title : '',
 				file : '',
@@ -105,6 +107,9 @@ angular.module('MyApp').controller(
 					$scope.data.$promise.then(function(result) {
 						Users.setAllOrgUsersData(result)						
 						$scope.users = result;	
+						for(i = 0 ; i<$scope.users.length ; i++){
+							slackUsersMap[$scope.users[i].id] = $scope.users[i].name;
+						}						
 						$scope.model.contributers[0].usersList = $scope.users;
 						//$location.path("/contribution/" + result.id);
 					});
@@ -117,6 +122,9 @@ angular.module('MyApp').controller(
 					} else {
 
 						$scope.users = allOrgUsersData;
+						for(i = 0 ; i<$scope.users.length ; i++){
+							slackUsersMap[$scope.users[i].id] = $scope.users[i].name;
+						}	
 						$scope.model.contributers[0].usersList = $scope.users;
 					}
 					
@@ -130,6 +138,7 @@ angular.module('MyApp').controller(
 					owner : '',
 					min_reputation_to_close : '',
 					users_organizations_id : '',
+					currentValuation : '',
 					contributionContributers : [ {
 						contributer_id : '',
 						contributer_percentage : ''
@@ -187,8 +196,14 @@ angular.module('MyApp').controller(
 				// ******************************* SLACK PLAY ***********************
 				
                 $scope.formatContributionData = function(contributionData) {
+                	var contributers = contributionData.contributionContributers;
+                	contributersData = '';
+                	for ( i=0;i<contributers.length;i++){
+                		contributersData = contributersData +'<@'+slackUsersMap[contributers[i].contributer_id] +'> '+contributers[i].contributer_percentage +'%\n';
+                	}
                     var str =   contributionData.title +
-                                '\ncontent: \n'+contributionData.file;
+                                '\ncontent: \n'+contributionData.file +
+                                '\nCollaborators: \n'+contributersData;
                     return str;
                 }
 			  
@@ -237,7 +252,7 @@ angular.module('MyApp').controller(
 							console.log('is random sending ...:')	;
 							
 							channelId = chnl.id
-							$scope.sendTestMessage(channelId,'new contribution was created:\n'+$scope.formatContributionData($scope.currentSavedContribution))
+							$scope.sendTestMessage(channelId,'New Value:\n'+$scope.formatContributionData($scope.currentSavedContribution))
 						}			
 					}
 				};
@@ -373,7 +388,20 @@ angular.module('MyApp').controller(
 						$location.path("/contributions");
 					});
 
-				};				
+				};	
+				
+				$scope.deleteContribution = function() {
+					console.log("In deleteContribution method");
+					console.log($scope.ContributionModelForView.id)
+					$scope.data = ContributionDelete.delete({
+						contributionId : $scope.contributionId
+					});
+					$scope.data.$promise.then(function(result) {
+						alert('Contribution deleted');
+						$location.path("/contributions");
+					});
+
+				};	
 
 				if ($auth.isAuthenticated()) {
 					$scope.contributions = Contributions.getAllContributions({

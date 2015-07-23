@@ -101,6 +101,8 @@ contribution_fields['owner'] = fields.String
 contribution_fields['file'] = fields.String
 contribution_fields['title'] = fields.String
 contribution_fields['tokenName'] = fields.String
+contribution_fields['code'] = fields.String
+contribution_fields['currentValuation'] = fields.Integer
 contribution_fields['bids'] = fields.Nested(bid_nested_fields)
 contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
 
@@ -231,10 +233,17 @@ class ContributionResource(Resource):
             abort(404, message="Contribution {} doesn't exist".format(id))
         for contributer in contributionObject.contributionContributers:
             contributer.name= getUser(contributer.contributer_id).name
-                
+        last_bid = None 
+        currentValuation = 0      
         for bid in contributionObject.bids:
             bid.bidderName = getUser(bid.owner).name
+            last_bid = bid
+            
+        if (last_bid):
+            currentValuation = last_bid.contribution_value_after_bid
         contributionObject.tokenName = contributionObject.userOrganization.organization.token_name
+        contributionObject.currentValuation = currentValuation
+        contributionObject.code = contributionObject.userOrganization.organization.code
         print 'tokenName'+contributionObject.tokenName
         return contributionObject
 
@@ -242,6 +251,10 @@ class ContributionResource(Resource):
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(id))
+        for contributer in contributionObject.contributionContributers:
+            session.delete(contributer)
+        for bid in contributionObject.bids:
+            session.delete(bid)
         session.delete(contributionObject)
         session.commit()
         return {}, 204
@@ -274,6 +287,7 @@ class ContributionResource(Resource):
             if not userObj:
                 abort(404, message="Contributer {} doesn't exist".format(contributionContributer.contributer_id))
             contributionContributer.contribution_id=contribution.id
+            contributionContributer.name = userObj.name
             contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
             if (firstContribution == True):
                  userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
@@ -285,6 +299,7 @@ class ContributionResource(Resource):
             contributionContributer = cls.ContributionContributer()
             contributionContributer.contributer_id = contribution.owner
             contributionContributer.contributer_percentage = '100'
+            contributionContributer.name = userObj.name
             contribution.contributionContributers.append(contributionContributer)  
             if (firstContribution == True):
                 userOrgObjectForOwner.org_reputation = 100
@@ -419,7 +434,7 @@ class OrganizationResource(Resource):
         session.flush()
       
         
-        createUserAndUserOrganizations(organization.id)
+        createUserAndUserOrganizations(organization.id,json['contributers'],json['token'])
         session.commit()
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).filter(cls.UserOrganization.organization_id == organization.id).first()
         return userOrgObj, 201
@@ -435,12 +450,24 @@ def getSlackUsers():
     
 class getAllSlackUsersResource(Resource):
     def get(self):
-        return getSlackUsers()
+        users = getSlackUsers()
+        usersJson = []
+        for user in users :
+            if user['deleted'] == True :
+                continue
+            if user['is_bot'] == True :
+                continue
+            jsonStr = {"id":user['id'],"name":user['name'],"url":user['profile']['image_24'],"real_name":user['profile']['real_name']}
+            usersJson.append(jsonStr)
+        return usersJson
         
     
-def createUserAndUserOrganizations(organizaionId):
+def createUserAndUserOrganizations(organizaionId,contributers,token):
     
     usersInSystem = session.query(cls.User).all()
+    contributionDic = {}
+    for contributer in contributers :
+        contributionDic[contributer['contributer_id']] = (float(token)/100)*float(contributer['contributer_percentage'])
     usersDic = {}
     currentUser = '';
     for u in usersInSystem:
@@ -451,9 +478,15 @@ def createUserAndUserOrganizations(organizaionId):
     users = getSlackUsers()
     print 'slack users:'+str(users)
     for user in users :
-        userId = ''
         token = 0
         repuation = 0
+        try:
+            token = contributionDic[user['id']]
+            repuation = token
+        except KeyError:
+            token = 0
+            repuation = 0
+        userId = ''
         if user['deleted'] == True :
             continue
         if user['is_bot'] == True :

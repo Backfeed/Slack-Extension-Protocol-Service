@@ -1,6 +1,11 @@
 angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStrap', 'satellizer','BFAPIServices'])
   .config(function($stateProvider, $urlRouterProvider, $authProvider) {
     $stateProvider
+	  .state('extPopUp', {
+		controller: 'ExtPopUpCtrl',
+        url: '/extPopUp',
+        templateUrl: 'partials/extPopUp.html'
+	  })
 	  .state('splash', {
 		controller: 'SplashCtrl',
         url: '/splash',
@@ -93,7 +98,7 @@ angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mg
     $urlRouterProvider.otherwise('/contributions');
 
 	$authProvider.slack({
-      clientId: '2969711723.3476875864'
+      clientId: '3655944058.8056068470'
     });
    
   });

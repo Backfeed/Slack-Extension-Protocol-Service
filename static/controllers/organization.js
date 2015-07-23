@@ -8,12 +8,29 @@ angular.module('MyApp')
 				token_name : '',
 				slack_teamid : '',				
 				name : '',
-				code : ''
+				code : '',
+				token : '',
+				contributers : [ {
+					contributer_id : '0',
+					contributer_percentage : '',
+					contribution1: '50',
+					img:'images/avatar.jpg',
+					usersList:[]
+				} ]
 
 			}
-	 
-	  
+	  $scope.getOrgUsers = function() {
+		    $scope.data = AllSlackUsers.allSlackUsers();
+			$scope.data.$promise.then(function(result) {
+				$scope.users = result;	
+				$scope.orgModel.contributers[0].usersList = $scope.users;
+				//$location.path("/contribution/" + result.id);
+			});
+		};
+	  $scope.getOrgUsers();
 	  $scope.organizations = AllOrgs.allOrgs();
+	  
+	 
 	  
 	  $scope.getProfile = function() {
 	      Account.getProfile()
@@ -40,6 +57,7 @@ angular.module('MyApp')
 			 $scope.userId = $scope.userData.userId;
 			 $scope.orgModel.name = $scope.userData.slackTeamName;
 			 $scope.orgModel.slack_teamid = $scope.userData.slackTeamId;
+			 $scope.getOrgUsers();
 		 }
 	// if not authenticated return to splash:
 	if(!$auth.isAuthenticated()){
@@ -57,6 +75,87 @@ angular.module('MyApp')
 	   
    };
    
+   
+   
+   $scope.updateContributer = function(selectedUserId,index) {
+		console.log('comes here firt')
+		urlImage = ''
+		for(i = 0 ; i<$scope.users.length ; i++){						
+			if($scope.users[i].id == selectedUserId ){
+				urlImage =  $scope.users[i].url
+				break;
+			}
+		}					
+		
+		$scope.changeContribution();
+		return urlImage;
+		
+		
+	};
+	
+	
+	
+	$scope.changeContribution = function() {
+		totalContribution = 0;
+		allcontributers = $scope.orgModel.contributers
+		valid = true;
+		if(allcontributers.length){
+			valid = false;	
+		}
+		for(i=0;i<allcontributers.length;i++){
+			if(allcontributers[i].contributer_id != 0){
+				totalContribution = totalContribution + +allcontributers[i].contribution1;
+			}else{
+				valid = false;							
+			}
+			
+			
+			
+		}
+		
+		for(i=0;i<allcontributers.length;i++){
+			if(allcontributers[i].contributer_id != 0){
+				allcontributers[i].contributer_percentage = (allcontributers[i].contribution1/totalContribution)*100
+			}
+			
+			
+			
+		}
+		
+		$scope.buttonDisabled = valid;
+
+	};
+	
+	$scope.removeCollaboratorItem = function(index) {
+		$scope.orgModel.contributers.splice(index, 1);						
+		$scope.changeContribution();
+  };
+  
+  $scope.addCollaborator = function() {
+	  	console.log('comes here in add');
+		allcontributers = $scope.orgModel.contributers							
+		newUserList = [];
+		for(i = 0 ; i<$scope.users.length ; i++){
+			userExist = false;
+			for(j=0;j<allcontributers.length;j++){
+				if($scope.users[i].id == allcontributers[j].contributer_id ){
+					userExist = true;
+					break;
+				}
+			}
+			if(userExist == false){
+				newUserList.push($scope.users[i]);
+			}
+		}																
+		$scope.orgModel.contributers.push({
+			contributer_id:'0',
+			contributer_percentage:'',
+			contribution1:'50',
+			img:'images/avatar.jpg',
+			usersList:newUserList
+		}) ;
+		$scope.buttonDisabled = true;
+	};
    
    
    $scope.checkTokenName = function(){

@@ -33,11 +33,14 @@
 									<button class="btn btn-default"
 										ng-show="ContributionModelForView.status == 'Open'"
 										ng:click='addBid()'>Backfeed</button>
-										<!--
+									<!-- 
 									<button class="btn btn-default"
 										ng-show="ContributionModelForView.status == 'Open'"
 										ng:click='closeContribution()'>Close</button>
-										-->
+									 -->	
+									 <button class="btn btn-default"
+										ng-show="ContributionModelForView.currentValuation == 0"
+										ng:click='deleteContribution()'>Delete</button>
 									<button class="btn btn-default"
 										ng-show="ContributionModelForView.bids.length > 0"
 										ng:click='showStatus()'>Status</button>
@@ -67,7 +70,7 @@
 									<td>{{collaborator.contributer_percentage}}</td>
 								</tr>
 							</table>
-
+						</div>
 			</form>
 		</div>
 	</div>

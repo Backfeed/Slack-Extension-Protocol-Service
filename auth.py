@@ -18,7 +18,7 @@ import classes as cls
 
 
 # TBD: move to settings 
-SLACK_SECRET = os.environ.get('SLACK_SECRET') or 'e7efc9a81d4043defb7b7e27816ae27e'
+SLACK_SECRET = os.environ.get('SLACK_SECRET') or '8b8d0ea7e6da2a88fb4d4cc77366fb4d'
 TOKEN_SECRET = os.environ.get('SECRET_KEY') or 'JWT Token Secret String'
 
 def login_required(f):
@@ -124,6 +124,119 @@ def signup():
     token = create_token(user)
     return jsonify(token=token)
 
+
+# Services Auth Routes:
+def ext_login():
+    users_api_url = 'https://slack.com/api/auth.test'
+
+    params = {
+        'access_token': request.form['token'],
+    }
+
+    access_token = params["access_token"]
+
+    headers = {'User-Agent': 'DEAP'}
+    print 'access_token:'+str(access_token)
+
+    # Step 2. Retrieve information about the current user.
+    r = requests.get(users_api_url, params={'token':access_token}, headers=headers)
+    profile = json.loads(r.text)
+    print 'slack profile:'+str(profile)   
+    # Step 3. (optional) Link accounts.
+    if request.headers.get('x-access-token'):        
+        #user = User.query.filter_by(slack=profile['user_id']).first()
+        user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
+
+        if user:
+
+            response = jsonify(message='There is already a Slack account that belongs to you')
+            response.status_code = 409
+            return response
+
+        payload = parse_token(request)
+
+        #user = User.query.filter_by(id=payload['sub']).first()
+        user = session.query(cls.User).filter(cls.User.id == payload['sub']).first()
+
+        if not user:
+            response = jsonify(message='User not found')
+            response.status_code = 400
+            return response
+
+        u = User(name=profile['user'])
+        org = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).first()
+        orgexists = "true"
+        if not org:
+            orgexists = "false"
+        else:
+            userOrg = session.query(cls.UserOrganization).filter(cls.UserOrganization.org_id == org.id).filter(cls.UserOrganization.user_id == user.id).first()
+            if not userOrg:
+                #associate user and org
+                jsonStr = {"user_id":user.id,
+                    "organization_id": org.id,
+                    "org_tokens":100,
+                    "org_reputation":100
+                    }     
+                userOrg = cls.UserOrganization(jsonStr,session)                
+                session.add(userOrg)
+                session.commit()
+
+        session.add(u)
+        session.commit()
+        token = create_token(u,profile['team_id'],profile['team'],orgexists)
+        return jsonify(token=token)
+
+    # Step 4. Create a new account or return an existing one.
+    #user = User.query.filter_by(slack=profile['user_id']).first()
+
+    org = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).first()
+    orgexists = "true"
+    if not org:
+        orgexists = "false"
+    if org:
+        syncUsers(org.id,access_token)
+    user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
+    if user:
+
+        if org:            
+            userOrg = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == org.id).filter(cls.UserOrganization.user_id == user.id).first()
+            if not userOrg:
+                #associate user and org
+                jsonStr = {"user_id":user.id,
+                    "organization_id": org.id,
+                    "org_tokens":0,
+                    "org_reputation":0
+                    }     
+                userOrg = cls.UserOrganization(jsonStr,session)
+                session.add(userOrg)
+                session.commit()           
+            token = create_token(user,profile['team_id'],profile['team'],orgexists,org.id,userOrg.id,access_token,profile['user_id'])
+            return jsonify(token=token)
+        token = create_token(user,profile['team_id'],profile['team'],orgexists,'','',access_token,profile['user_id'])
+        return jsonify(token=token)
+
+    print 'slack profile:'+str(profile)
+    #u = cls.User(slack_id=profile['user_id'], name=profile['user'])
+    jsonStr = {"name":profile['user']}
+    u = cls.User(jsonStr,session)
+    session.add(u)
+    session.commit()
+    if org:
+        userOrg = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == org.id).filter(cls.UserOrganization.user_id == u.id).first()
+        if not userOrg:
+            #associate user and org
+            userOrg = cls.UserOrganization()
+            userOrg.org_id = org.id
+            userOrg.user_id = u.id
+            userOrg.org_tokens = 0
+            userOrg.org_reputation = 0;
+            session.add(userOrg)
+            session.commit()        
+        token = create_token(user,profile['team_id'],profile['team'],orgexists,org.id,userOrg.id,access_token,profile['user_id'])
+        return jsonify(token=token)
+
+    token = create_token(u,profile['team_id'],profile['team'],orgexists,'','',access_token,profile['user_id'])
+    return jsonify(token=token)
 
 # Services Auth Routes:
 def slack():
