@@ -9,3 +9,4 @@ flask
 *.db
 resource.pyc
 Tester/protocols.log
+tester/protocol_function.log
