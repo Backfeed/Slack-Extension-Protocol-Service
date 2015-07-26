@@ -98,7 +98,7 @@ angular.module('MyApp', ['uiSlider','ngResource', 'ngMessages', 'ui.router', 'mg
     $urlRouterProvider.otherwise('/contributions');
 
 	$authProvider.slack({
-      clientId: '3655944058.8056068470'
+      clientId: '3655944058.8209971669'
     });
    
   });
