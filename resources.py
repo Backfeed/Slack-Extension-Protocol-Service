@@ -10,7 +10,7 @@ from auth import login_required
 import requests
 from flask import g,request
 
-import vdp
+from value_distributer import ValueDistributer 
 from datetime import datetime
 
 #from flask.ext.restful import Resource
@@ -218,8 +218,11 @@ class BidResource(Resource):
                     }
 
         bid = cls.Bid(jsonStr,session) 
-        bid = vdp.process_bid(bid,session)
-        if( not bid ):
+        vd = ValueDistributer()
+        vd.process_bid(bid,session)
+        if(vd.error_occured):
+            print vd.error_code
+            # ToDo :  pass correct error message to user
             abort(404, message="Failed to process bid".format(contributionid))
 
         return bid, 201

@@ -15,18 +15,18 @@ contributers =[
 bids =[
 	{
 		"tokens":60,
-		"reputation":40,
+		"reputation":100,
 		"owner":1,  
 		"contribution_id":1, 
-		"stake":10,
+		"stake":100,
 		"time_created":datetime.now()
 	},
 	{
 		"tokens":40,
-		"reputation":30,
+		"reputation":100,
 		"owner":2,  
 		"contribution_id":1, 
-		"stake":10,
+		"stake":100,
 		"time_created":datetime.now()
 	}
 ]

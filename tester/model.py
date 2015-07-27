@@ -21,6 +21,8 @@ user_table = schema.Table('user', metadata,
         schema.Sequence('user_seq_id', optional=True), primary_key=True),
 
     schema.Column('name', types.Unicode(255)),
+    schema.Column('real_name', types.Unicode(255)),
+    schema.Column('url', types.Unicode(255)),
 )
 
 """
@@ -33,11 +35,11 @@ bid_table = schema.Table('bid', metadata,
         schema.ForeignKey('user.id')),   
     schema.Column('contribution_id', types.Integer,
         schema.ForeignKey('contribution.id')),
-    schema.Column('tokens', types.Integer),
-    schema.Column('stake', types.Integer),
-    schema.Column('reputation',  types.Integer),
-    schema.Column('current_rep_to_return', types.Integer),
-    schema.Column('contribution_value_after_bid',  types.Integer),
+    schema.Column('tokens', types.Float),
+    schema.Column('stake', types.Float),
+    schema.Column('reputation',  types.Float),
+    schema.Column('current_rep_to_return', types.Float),
+    schema.Column('contribution_value_after_bid',  types.Float),
     schema.Column('time_created', types.DateTime(), default=now),
 
 )
@@ -57,7 +59,7 @@ contribution_table = schema.Table('contribution', metadata,
     schema.Column('time_created', types.DateTime(), default=now),
     schema.Column('file', types.Text()),
     schema.Column('title', types.Text()),
-    schema.Column('status', types.String,default='Open'),
+    schema.Column('status', types.String(100),default='Open'),
 )
 
 """
@@ -80,10 +82,10 @@ organization_table = schema.Table('organization', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('organization_seq_id', optional=True), primary_key=True),
 
-    schema.Column('token_name', types.Unicode(255)),
+    schema.Column('token_name', types.Unicode(255),nullable=False),
     schema.Column('slack_teamid', types.Unicode(255)),
-    schema.Column('intial_tokens', types.Integer),
-    schema.Column('name', types.Unicode(255)),
+    schema.Column('name', types.Unicode(255),nullable=False),
+    schema.Column('code', types.Unicode(255),nullable=False),
 )
 
 """
@@ -96,8 +98,8 @@ users_organizations_table = schema.Table('users_organizations', metadata,
         schema.ForeignKey('user.id')),
     schema.Column('organization_id', types.Integer,
         schema.ForeignKey('organization.id')),
-    schema.Column('org_tokens', types.Integer),
-    schema.Column('org_reputation',  types.Integer),   
+    schema.Column('org_tokens', types.Float),
+    schema.Column('org_reputation',  types.Float),   
 )
 
 
