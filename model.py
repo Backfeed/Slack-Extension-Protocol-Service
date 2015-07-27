@@ -35,11 +35,11 @@ bid_table = schema.Table('bid', metadata,
         schema.ForeignKey('user.id')),   
     schema.Column('contribution_id', types.Integer,
         schema.ForeignKey('contribution.id')),
-    schema.Column('tokens', types.Integer),
-    schema.Column('stake', types.Integer),
-    schema.Column('reputation',  types.Integer),
-    schema.Column('current_rep_to_return', types.Integer),
-    schema.Column('contribution_value_after_bid',  types.Integer),
+    schema.Column('tokens', types.Float),
+    schema.Column('stake', types.Float),
+    schema.Column('reputation',  types.Float),
+    schema.Column('current_rep_to_return', types.Float),
+    schema.Column('contribution_value_after_bid',  types.Float),
     schema.Column('time_created', types.DateTime(), default=now),
 
 )
@@ -98,8 +98,8 @@ users_organizations_table = schema.Table('users_organizations', metadata,
         schema.ForeignKey('user.id')),
     schema.Column('organization_id', types.Integer,
         schema.ForeignKey('organization.id')),
-    schema.Column('org_tokens', types.Integer),
-    schema.Column('org_reputation',  types.Integer),   
+    schema.Column('org_tokens', types.Float),
+    schema.Column('org_reputation',  types.Float),   
 )
 
 
