@@ -1,11 +1,10 @@
 import math
-from operator import attrgetter
 
 class BidInfo(object):
 	def __init__(self, tokens,reputation,stake,owner):
-		self.tokens = tokens
-		self.reputation = reputation
-		self.stake = stake	
+		self.tokens = float(tokens)
+		self.reputation = float(reputation)
+		self.stake = float(stake)	
 		self.owner = owner	
 
 	def debug(self,logger):
@@ -79,7 +78,7 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 		return True
 
 	def decay(self,vi, vn):
-		decay = math.atan(1 / abs(int(vi) - int(vn)+0.1))
+		decay = math.atan(1 / abs(vi - vn+0.1))
 		return decay
 	
 	def distribute_current_bid_rep(self,fIn,fout):
@@ -89,7 +88,7 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 
 		#calculate total sum of Weight * Decay
 		for bid in bids:
-			summ += float(bid.reputation) * self.decay(bid.tokens, current_bid.tokens)
+			summ += bid.reputation * self.decay(bid.tokens, current_bid.tokens)
 		
 		#self.log("sum of Weight * Decay = " + str(summ))
 
@@ -99,10 +98,10 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 		
 		for bid in bids:
 			current_decay = self.decay(bid.tokens, current_bid.tokens)
-			new_rep_weight = ( float(bid.reputation) * current_decay  ) / summ
+			new_rep_weight = ( bid.reputation * current_decay  ) / summ
 			# bug fix: we round up and thus create reputation from thin air
 			#bidders_rep_distribution =  math.ceil(float(current_bid.stake) * new_rep_weight ) 
-			bidders_rep_distribution =  float(current_bid.stake) * new_rep_weight 
+			bidders_rep_distribution =  current_bid.stake * new_rep_weight 
 			
 			fout.rep_distributions[str(bid.owner)] = bidders_rep_distribution
 			
@@ -117,12 +116,14 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 		return True
 
 	def calcCurrentEvaluation(self,fIn,fout):
+		self.log("calculating current evaluation:")
+		
 		bids = fIn.bids
 		
 		# get reputation on zero (un-invested reputation)
 		total_invested_rep = 0
 		for bid in bids:
-			total_invested_rep = total_invested_rep + int(bid.reputation)
+			total_invested_rep = total_invested_rep + bid.reputation
 
 		uninvested_rep =  fIn.total_system_reputation - total_invested_rep
 
@@ -131,22 +132,24 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 		#bids_sorted_by_tokens = sorted(bids, key=lambda bid: bid.tokens, reverse=False)
 
 		# check if we passed 50% of total rep in system if so we hit the median:
-		if( uninvested_rep > math.ceil(fIn.total_system_reputation/2) ):
+		if( uninvested_rep > fIn.total_system_reputation/2 ):
 
 			# we hit the median so update current bid with current evaluation:
+			self.log("uninvested_rep is greater than median - evaluation is 0.")
 			fout.evaluation = 0
 			return True
 
 		acumulated_rep = uninvested_rep	
 		for bid in bids:
-			acumulated_rep = acumulated_rep + int(bid.reputation)
+			acumulated_rep = acumulated_rep + bid.reputation
 
 			# check if we passed 50% of total rep in system if so we hit the median:
-			if( acumulated_rep > math.ceil(fIn.total_system_reputation/2) ):
-
+			if( acumulated_rep > fIn.total_system_reputation/2 ):				
 				# we hit the median so update current bid with current evaluation:
-				current_evaluation = int(bid.tokens)
+				current_evaluation = bid.tokens
 				fout.evaluation = current_evaluation
+				self.log("acumulated_rep is greater than median - evaluation is :"+str(fout.evaluation))
+				
 				return True
 
 		fout.evaluation = None

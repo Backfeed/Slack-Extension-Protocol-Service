@@ -9,15 +9,15 @@ logger = logging.getLogger("loading")
 
 bids = [{
 			'owner':1,
-			'reputation':4,
-			'tokens':10,
-			'stake':4
+			'reputation':'4.0',
+			'tokens':'10.0',
+			'stake':'4.0'
 		},
 		{
 			'owner':2,
-			'reputation':16,
-			'tokens':13,
-			'stake':16
+			'reputation':'16.0',
+			'tokens':'13.0',
+			'stake':'16.0'
 		}
 		]
 

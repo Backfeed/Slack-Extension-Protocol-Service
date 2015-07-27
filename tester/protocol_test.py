@@ -4,7 +4,8 @@ from datetime import datetime
 from sqlalchemy import orm
 from sqlalchemy import create_engine
 import model as model
-import vdp
+from value_distributer import ValueDistributer 
+
 DB_TEST_URI = 'sqlite:///./tester.db'
 import json 
 
@@ -20,7 +21,7 @@ from testData.data import contributers
 from testData.data import bids
 
 # Create an engine and create all the tables we need
-engine = create_engine(DB_TEST_URI,echo=False)
+engine = create_engine(DB_TEST_URI,echo=True)
 model.metadata.bind = engine
 model.metadata.create_all()
 sm = orm.sessionmaker(bind=engine, autoflush=False, autocommit=False,expire_on_commit=True)
@@ -148,7 +149,10 @@ def simulateBids():
 	
 	for bidData in bids:
 		curent_bid = cls.Bid(bidData,session)
-		vdp.process_bid(curent_bid,session,logger)
+		vd = ValueDistributer(logger)
+		vd.process_bid(curent_bid,session,logger)
+		if(vd.error_occured):
+			print vd.error_code
 
 
 loadData(params)
