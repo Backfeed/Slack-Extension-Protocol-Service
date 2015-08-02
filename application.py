@@ -2,7 +2,7 @@
 #!/usr/bin/env python
 """
 
-from flask import Flask
+from flask import Flask,json
 from flask.ext.restful import Api
 from flask import send_file
 import os
@@ -23,6 +23,7 @@ from resources import BidContributionResource
 from db import session,engine
 
 import auth
+import resources
 
 # Configuration
 current_path = os.path.dirname(__file__)
@@ -95,6 +96,10 @@ def signup():
 @application.route('/auth/slack', methods=['POST'])
 def slack():
 	return auth.slack()
+    
+@application.route('/allContributionsFromUser', methods=['POST'])
+def allContributionsFromUser():
+    return json.dumps(resources.allContributionsFromUser())
 
 @application.teardown_appcontext
 def shutdown_session(exception=None):

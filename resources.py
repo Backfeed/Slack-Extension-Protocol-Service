@@ -527,3 +527,35 @@ def createUserAndUserOrganizations(organizaionId,contributers,token):
     
   
     
+def allContributionsFromUser(): 
+    users_api_url = 'https://slack.com/api/auth.test'
+
+    params = {
+        'access_token': request.form['token'],
+    }
+
+    access_token = params["access_token"]
+
+    headers = {'User-Agent': 'DEAP'}
+    print 'access_token:'+str(access_token)
+
+    # Step 2. Retrieve information about the current user.
+    r = requests.get(users_api_url, params={'token':access_token}, headers=headers)
+    profile = json.loads(r.text)
+    print 'slack profile:'+str(profile)  
+    contribitions = [];
+    user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
+    if not user:
+        return []
+    org = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).first()
+    if not org:
+        return []
+    userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == user.id).filter(cls.UserOrganization.organization_id == org.id).first()
+    if not userOrgObj:
+        return []
+    bidsList = session.query(cls.Bid).filter(cls.Contribution.id == cls.Bid.contribution_id).filter(cls.Contribution.users_organizations_id == userOrgObj.id).all()
+    if not bidsList:
+        return []
+    for bid in bidsList:
+        contribitions.append(bid.contribution_id)
+    return contribitions
