@@ -64,9 +64,8 @@ class ValueDistributer(ValueDistributerBase):
 			self.log("bidder has no more reputation to spare for current bid. exit.")
 			return None;		
 
-		self.log("current_bid.stake = " + str(current_bid.stake) + " and current_bid.rep = " + str(current_bid.reputation))
-
-		if current_bid.stake > current_bid.reputation:
+		self.log("current_bid.stake = " + str(current_bid.stake) + " and current_bid.rep = " + str(current_bid.reputation))				
+		if float(current_bid.stake) > float(current_bid.reputation):
 			self.log("bidder has put more stake than he has reputation - reducing stake to bidder's reputation.")
 			current_bid.stake = current_bid.reputation
 
@@ -128,7 +127,7 @@ class ValueDistributer(ValueDistributerBase):
 			current_bid.stake = current_bid.reputation
 
 		#kill the stake of the current_bidder
-		current_bidder.org_reputation -= current_bid.stake
+		current_bidder.org_reputation = current_bidder.org_reputation - float(current_bid.stake)
 		session.add(current_bidder)	
 
 		#reallocate reputation
