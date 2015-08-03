@@ -124,7 +124,7 @@ class UserResource(Resource):
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).filter(cls.UserOrganization.user_id == id).first()
         print 'got Get for User fbid:'+id
         if not char:
-            abort(404, message="User {} doesn't exist".format(id))
+            abort(404, message="User {} doesn't exist".format(id))       
         return {"id": char.id,"name":char.name,"tokens": userOrgObj.org_tokens,"reputation": userOrgObj.org_reputation} 
     
     def delete(self, id):
@@ -200,7 +200,7 @@ class BidResource(Resource):
     @marshal_with(bid_fields)
     def post(self):
         parsed_args = bidParser.parse_args()
-        contributionid = parsed_args['contribution_id']
+        contributionid = parsed_args['contribution_id']        
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionid).first()
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(contributionid))
@@ -300,11 +300,11 @@ class ContributionResource(Resource):
             contributionContributer.contribution_id=contribution.id
             contributionContributer.name = userObj.name
             contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
-            if (firstContribution == True):
-                 userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
-                 if userOrgObject:
-                    userOrgObject.org_reputation = contributer.obj1['contributer_percentage']
-                    session.add(userOrgObject)                                               
+            #if (firstContribution == True):
+                 #userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
+                 #if userOrgObject:
+                    #userOrgObject.org_reputation = contributer.obj1['contributer_percentage']
+                    #session.add(userOrgObject)                                               
             contribution.contributionContributers.append(contributionContributer)  
         if(len(contribution.contributionContributers) == 0):
             contributionContributer = cls.ContributionContributer()
@@ -312,9 +312,9 @@ class ContributionResource(Resource):
             contributionContributer.contributer_percentage = '100'
             contributionContributer.name = userObj.name
             contribution.contributionContributers.append(contributionContributer)  
-            if (firstContribution == True):
-                userOrgObjectForOwner.org_reputation = 100
-                session.add(userOrgObjectForOwner) 
+            #if (firstContribution == True):
+                #userOrgObjectForOwner.org_reputation = 100
+                #session.add(userOrgObjectForOwner) 
                                 
         if((parsed_args['intialBid'].obj1['tokens'] != '') & (parsed_args['intialBid'].obj1['reputation'] != '')):      
                 jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
