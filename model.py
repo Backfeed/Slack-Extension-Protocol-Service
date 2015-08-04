@@ -39,6 +39,7 @@ bid_table = schema.Table('bid', metadata,
     schema.Column('stake', types.Float),
     schema.Column('reputation',  types.Float),
     schema.Column('current_rep_to_return', types.Float),
+    schema.Column('weight', types.Float),
     schema.Column('contribution_value_after_bid',  types.Float),
     schema.Column('time_created', types.DateTime(), default=now),
 
