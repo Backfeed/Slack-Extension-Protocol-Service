@@ -159,6 +159,7 @@ class ValueDistributer(ValueDistributerBase):
 
 		# validate Bid:
 		current_bid = self.validateBid(contributionObject.bids, current_bid)
+		current_bid.weight = (current_bid.reputation/self.total_system_reputation)*100
 		if(not current_bid):
 			self.set_error('bid not valid.')
 			return None

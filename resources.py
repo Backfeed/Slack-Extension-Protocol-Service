@@ -87,6 +87,12 @@ bid_nested_fields['reputation'] = fields.String
 bid_nested_fields['owner'] = fields.Integer
 bid_nested_fields['bidderName'] = fields.String
 
+bid_status_nested_fields = {}
+bid_status_nested_fields['time_created'] = fields.String
+bid_status_nested_fields['tokens'] = fields.String
+bid_status_nested_fields['reputation'] = fields.String
+bid_status_nested_fields['contribution_value_after_bid'] = fields.Integer
+
 contributer_nested_fields = {}
 contributer_nested_fields['contributer_id'] = fields.String
 contributer_nested_fields['contributer_percentage'] = fields.String
@@ -108,9 +114,13 @@ contribution_fields['contributionContributers'] = fields.Nested(contributer_nest
 
 contribution_status_fields ={}
 contribution_status_fields['currentValuation'] = fields.Integer
-contribution_status_fields['totalReputaion'] = fields.Integer
+contribution_status_fields['reputationDelta'] = fields.Integer
 contribution_status_fields['myValuation'] = fields.Integer
-contribution_status_fields['myReputaion'] = fields.Integer
+contribution_status_fields['myWeight'] = fields.Integer
+contribution_status_fields['groupWeight'] = fields.Integer
+contribution_status_fields['file'] = fields.String
+contribution_status_fields['title'] = fields.String
+contribution_status_fields['bids'] = fields.Nested(bid_status_nested_fields)
 
 
 def getUser(id):
@@ -383,27 +393,29 @@ class ContributionStatusResource(Resource):
         print 'got Get for Contribution fbid:'+id
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(id))
+        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
         currentValuation = 0
-        totalReputaion = 0
         myValuation = 0
-        myReputaion = 0
+        myWeight = 0
+        groupWeight = 0
+        reputationDelta = 0
         last_bid = None
         for bid in contributionObject.bids:
             last_bid = bid
-            totalReputaion = totalReputaion + bid.reputation
+            groupWeight = groupWeight + bid.weight
             if(str(bid.owner) == str(userId)):
-                myReputaion = myReputaion + bid.reputation 
-                myValuation = myValuation + bid.tokens*bid.reputation
+                myWeight = bid.weight 
+                reputationDelta = userOrgObj.org_reputation - bid.reputation
+                myValuation = bid.tokens
         if (last_bid):
             currentValuation = last_bid.contribution_value_after_bid
-        if(myValuation != 0 and myReputaion != 0):
-            myValuation = myValuation/myReputaion
-        jsonStr = {"currentValuation":currentValuation,
-                   "totalReputaion":totalReputaion,
-                   "myValuation":myValuation,
-                   "myReputaion":myReputaion
-                    }
-        return jsonStr
+        contributionObject.currentValuation = currentValuation
+        contributionObject.reputationDelta = reputationDelta
+        contributionObject.myValuation = myValuation
+        contributionObject.myWeight = myWeight
+        contributionObject.groupWeight = groupWeight
+        
+        return contributionObject
     
     
 class OrganizationTokenExistsResource(Resource):
