@@ -461,7 +461,7 @@ class MemberStatusResource(Resource):
             reputationDelta = 0
             for bid in contribution.bids:
                 last_bid = bid
-                if(str(bid.owner) == str(userId)):
+                if(str(bid.owner) == str(userOrgObj.user.id)):
                     myWeight = bid.weight 
                     reputationDelta = userOrgObj.org_reputation - bid.reputation
             if (last_bid):
