@@ -20,6 +20,7 @@ from resources import OrganizationCodeExistsResource
 from resources import getAllSlackUsersResource
 from resources import AllOrganizationResource
 from resources import BidContributionResource
+from resources import MemberStatusResource
 from db import session,engine
 
 import auth
@@ -68,6 +69,7 @@ api.add_resource(getAllSlackUsersResource, '/allSlackUsers', endpoint='slackUser
 api.add_resource(OrganizationResource, '/organization', endpoint='organization')
 
 api.add_resource(AllOrganizationResource, '/organization/all', endpoint='allOrganizations')
+api.add_resource(MemberStatusResource, '/member/status/<string:orgId>/<string:userId>', endpoint='memberStatus')
 
 
 # Navigation:

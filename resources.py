@@ -122,6 +122,24 @@ contribution_status_fields['file'] = fields.String
 contribution_status_fields['title'] = fields.String
 contribution_status_fields['bids'] = fields.Nested(bid_status_nested_fields)
 
+contribution_status_nested_fields ={}
+contribution_status_nested_fields['currentValuation'] = fields.Integer
+contribution_status_nested_fields['reputationDelta'] = fields.Integer
+contribution_status_nested_fields['myWeight'] = fields.Integer
+contribution_status_nested_fields['title'] = fields.String
+contribution_status_nested_fields['cTime'] = fields.String
+
+
+member_status_fields ={}
+member_status_fields['org_tokens'] = fields.String
+member_status_fields['org_reputation'] = fields.String
+member_status_fields['contributionLength'] = fields.String
+member_status_fields['url'] = fields.String
+member_status_fields['fullName'] = fields.String
+member_status_fields['name'] = fields.String
+member_status_fields['reputationPercentage'] = fields.String
+member_status_fields['contributions'] = fields.Nested(contribution_status_nested_fields)
+
 
 def getUser(id):
     user = session.query(cls.User).filter(cls.User.id == id).first()    
@@ -416,6 +434,44 @@ class ContributionStatusResource(Resource):
         contributionObject.groupWeight = groupWeight
         
         return contributionObject
+
+class MemberStatusResource(Resource):
+    @marshal_with(member_status_fields)
+    def get(self,orgId,userId):        
+        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).filter(cls.UserOrganization.organization_id == orgId).first()
+        userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).all()
+        totalReputation = 0;
+        for userOrgObjVar in userOrgObjs:
+            totalReputation = totalReputation + userOrgObjVar.org_reputation
+        currentValuation = 0
+        myWeight = 0
+        reputationDelta = 0
+        userOrgObj.name = userOrgObj.user.name
+        userOrgObj.fullName = userOrgObj.user.real_name
+        userOrgObj.url = userOrgObj.user.url
+        
+        userOrgObj.reputationPercentage = (userOrgObj.org_reputation / totalReputation)*100
+        last_bid = None
+        countOfContribution = 0
+        for contribution in userOrgObj.contributions:
+            countOfContribution = countOfContribution + 1
+            last_bid = None
+            currentValuation = 0
+            myWeight = 0
+            reputationDelta = 0
+            for bid in contribution.bids:
+                last_bid = bid
+                if(str(bid.owner) == str(userId)):
+                    myWeight = bid.weight 
+                    reputationDelta = userOrgObj.org_reputation - bid.reputation
+            if (last_bid):
+                currentValuation = last_bid.contribution_value_after_bid
+            contribution.currentValuation = currentValuation
+            contribution.reputationDelta = reputationDelta
+            contribution.myWeight = myWeight
+            contribution.cTime = contribution.time_created.date()
+        userOrgObj.contributionLength = countOfContribution
+        return userOrgObj
     
     
 class OrganizationTokenExistsResource(Resource):
@@ -521,9 +577,10 @@ def createUserAndUserOrganizations(organizaionId,contributers,token):
         if userId  == g.user_id :
             currentUser.url = user['profile']['image_24']
             currentUser.real_name = user['profile']['real_name']
+            currentUser.slackId = user['id']
             session.add(currentUser)
         if userId == '':            
-            jsonStr = {"name":user['name'],"url":user['profile']['image_24'],"real_name":user['profile']['real_name']}
+            jsonStr = {"name":user['name'],"slackId":user['id'],"url":user['profile']['image_24'],"real_name":user['profile']['real_name']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 
