@@ -16,6 +16,8 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column('user',sa.Column('slackId', sa.TEXT()))
     op.add_column('user',sa.Column('url72', sa.TEXT()))
+    op.add_column('organization',sa.Column('channelName', sa.TEXT()))
+    op.add_column('organization',sa.Column('channelId', sa.TEXT()))
 
 
 def downgrade():

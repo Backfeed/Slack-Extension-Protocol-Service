@@ -191,10 +191,13 @@ def ext_login():
 
     org = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).first()
     orgexists = "true"
+    orgChannelId = ''
     if not org:
         orgexists = "false"
     if org:
         syncUsers(org.id,access_token)
+        orgChannelId = org.channelId
+        
     user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
     if user:
 
@@ -211,9 +214,9 @@ def ext_login():
                 session.add(userOrg)
                 session.commit()           
             token = create_token(user,profile['team_id'],profile['team'],orgexists,org.id,userOrg.id,access_token,profile['user_id'])
-            return jsonify(token=token)
+            return jsonify(token=token,orgChannelId=orgChannelId)
         token = create_token(user,profile['team_id'],profile['team'],orgexists,'','',access_token,profile['user_id'])
-        return jsonify(token=token)
+        return jsonify(token=token,orgChannelId=orgChannelId)
 
     print 'slack profile:'+str(profile)
     #u = cls.User(slack_id=profile['user_id'], name=profile['user'])
@@ -233,10 +236,10 @@ def ext_login():
             session.add(userOrg)
             session.commit()        
         token = create_token(user,profile['team_id'],profile['team'],orgexists,org.id,userOrg.id,access_token,profile['user_id'])
-        return jsonify(token=token)
+        return jsonify(token=token,orgChannelId=orgChannelId)
 
     token = create_token(u,profile['team_id'],profile['team'],orgexists,'','',access_token,profile['user_id'])
-    return jsonify(token=token)
+    return jsonify(token=token,orgChannelId=orgChannelId)
 
 # Services Auth Routes:
 def slack():
