@@ -448,7 +448,7 @@ class MemberStatusResource(Resource):
         reputationDelta = 0
         userOrgObj.name = userOrgObj.user.name
         userOrgObj.fullName = userOrgObj.user.real_name
-        userOrgObj.url = userOrgObj.user.url
+        userOrgObj.url = userOrgObj.user.url72
         
         userOrgObj.reputationPercentage = (userOrgObj.org_reputation / totalReputation)*100
         last_bid = None
@@ -536,9 +536,18 @@ class getAllSlackUsersResource(Resource):
                 continue
             if user['is_bot'] == True :
                 continue
-            jsonStr = {"id":user['id'],"name":user['name'],"url":user['profile']['image_24'],"real_name":user['profile']['real_name']}
+            jsonStr = {"id":user['id'],"name":user['name'],"url":user['profile']['image_48'],"real_name":user['profile']['real_name']}
             usersJson.append(jsonStr)
         return usersJson
+    
+class SlackChannelResource(Resource):
+    def post(self,channelName):
+        team_users_api_url = 'https://slack.com/api/channels.create'
+        headers = {'User-Agent': 'DEAP'}
+        r = requests.post(team_users_api_url, params={'token':g.access_token,'name':channelName}, headers=headers)
+        channelObj = json.loads(r.text)
+        channelId = channelObj['channel']['id']
+        return {"id":channelId}       
         
     
 def createUserAndUserOrganizations(organizaionId,contributers,token):
@@ -575,12 +584,13 @@ def createUserAndUserOrganizations(organizaionId,contributers,token):
         except KeyError:
             userId = ''
         if userId  == g.user_id :
-            currentUser.url = user['profile']['image_24']
+            currentUser.url = user['profile']['image_48']
+            currentUser.url72 = user['profile']['image_72']
             currentUser.real_name = user['profile']['real_name']
             currentUser.slackId = user['id']
             session.add(currentUser)
         if userId == '':            
-            jsonStr = {"name":user['name'],"slackId":user['id'],"url":user['profile']['image_24'],"real_name":user['profile']['real_name']}
+            jsonStr = {"name":user['name'],"slackId":user['id'],"url":user['profile']['image_48'],"url72":user['profile']['image_72'],"real_name":user['profile']['real_name']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 

@@ -385,7 +385,7 @@ def syncUsers(orgId,access_token):
         try:
             userId = usersDic[slackUser['name']]
         except KeyError:
-            jsonStr = {"name":slackUser['name'],"url":slackUser['profile']['image_24'],"real_name":slackUser['profile']['real_name']}
+            jsonStr = {"name":slackUser['name'],"url":slackUser['profile']['image_48'],"url72":slackUser['profile']['image_72'],"real_name":slackUser['profile']['real_name']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 

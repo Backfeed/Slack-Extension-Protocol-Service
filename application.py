@@ -21,6 +21,7 @@ from resources import getAllSlackUsersResource
 from resources import AllOrganizationResource
 from resources import BidContributionResource
 from resources import MemberStatusResource
+from resources import SlackChannelResource
 from db import session,engine
 
 import auth
@@ -70,6 +71,8 @@ api.add_resource(OrganizationResource, '/organization', endpoint='organization')
 
 api.add_resource(AllOrganizationResource, '/organization/all', endpoint='allOrganizations')
 api.add_resource(MemberStatusResource, '/member/status/<string:orgId>/<string:userId>', endpoint='memberStatus')
+
+api.add_resource(SlackChannelResource, '/slackChannel/<string:channelName>', endpoint='slackChannelCreate')
 
 
 # Navigation:
