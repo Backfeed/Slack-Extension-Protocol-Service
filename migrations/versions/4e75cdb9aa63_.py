@@ -14,9 +14,8 @@ from alembic import op
 import sqlalchemy as sa
 
 def upgrade():
-    op.add_column('user',
-    sa.Column('slackId', sa.TEXT())
-)
+    op.add_column('user',sa.Column('slackId', sa.TEXT()))
+    op.add_column('user',sa.Column('url72', sa.TEXT()))
 
 
 def downgrade():

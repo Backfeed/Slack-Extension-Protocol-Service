@@ -23,6 +23,7 @@ user_table = schema.Table('user', metadata,
     schema.Column('name', types.Unicode(255)),
     schema.Column('real_name', types.Unicode(255)),
     schema.Column('url', types.Unicode(255)),
+    schema.Column('url72', types.Unicode(255)),
     schema.Column('slackId', types.Unicode(255)),
 )
 
