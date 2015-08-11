@@ -128,6 +128,7 @@ contribution_status_fields['bids'] = fields.Nested(bid_status_nested_fields)
 contribution_status_nested_fields ={}
 contribution_status_nested_fields['currentValuation'] = fields.Integer
 contribution_status_nested_fields['reputationDelta'] = fields.Integer
+contribution_status_nested_fields['id'] = fields.Integer
 contribution_status_nested_fields['myWeight'] = fields.Integer
 contribution_status_nested_fields['title'] = fields.String
 contribution_status_nested_fields['cTime'] = fields.String
