@@ -72,7 +72,9 @@ userOrganization_fields = {
     'user_id': fields.String,
     'organization_id': fields.String,
     'org_tokens': fields.String,
-    'org_reputation': fields.String
+    'org_reputation': fields.String,
+    'channelExists':fields.String,
+    'channelId':fields.String
 }
 
 bid_fields = {
@@ -108,6 +110,7 @@ contribution_fields['file'] = fields.String
 contribution_fields['title'] = fields.String
 contribution_fields['tokenName'] = fields.String
 contribution_fields['code'] = fields.String
+contribution_fields['channelId'] = fields.String
 contribution_fields['currentValuation'] = fields.Integer
 contribution_fields['bids'] = fields.Nested(bid_nested_fields)
 contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
@@ -283,7 +286,7 @@ class ContributionResource(Resource):
         contributionObject.tokenName = contributionObject.userOrganization.organization.token_name
         contributionObject.currentValuation = currentValuation
         contributionObject.code = contributionObject.userOrganization.organization.code
-        print 'tokenName'+contributionObject.tokenName
+
         return contributionObject
 
     def delete(self, id):
@@ -357,7 +360,7 @@ class ContributionResource(Resource):
         
         session.add(contribution)
         session.commit()        
-       
+        contribution.channelId = userOrgObjectForOwner.organization.channelId
         return contribution, 201
 
 
@@ -503,19 +506,25 @@ class OrganizationResource(Resource):
         if orgObj:
             return {"tokenExist":"true"}
         
+        
+        channelId = createChannel(json['channelName'])
         jsonStr = {"token_name":json['token_name'],
                     "slack_teamid":json['slack_teamid'],
-                    "name":json['name'],"code":json['code']
-                    }
-        organization = cls.Organization(jsonStr,session)
+                    "name":json['name'],"code":json['code'],"channelName":json['channelName'],"channelId":channelId}
+        userOrgObj = cls.UserOrganization(jsonStr,session)        
+        if channelId == 'name_taken':
+            userOrgObj.channelExists = "true"
+        else :
+            
+            organization = cls.Organization(jsonStr,session)
+            session.add(organization)
+            session.flush()            
+            createUserAndUserOrganizations(organization.id,json['contributers'],json['token'])
+            session.commit()        
+            userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).filter(cls.UserOrganization.organization_id == organization.id).first()
+            userOrgObj.channelExists = "false"
+            userOrgObj.channelId = channelId
 
-        session.add(organization)
-        session.flush()
-      
-        
-        createUserAndUserOrganizations(organization.id,json['contributers'],json['token'])
-        session.commit()
-        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).filter(cls.UserOrganization.organization_id == organization.id).first()
         return userOrgObj, 201
     
 def getSlackUsers():
@@ -540,14 +549,30 @@ class getAllSlackUsersResource(Resource):
             usersJson.append(jsonStr)
         return usersJson
     
-class SlackChannelResource(Resource):
-    def post(self,channelName):
+def createChannel(channelName):
         team_users_api_url = 'https://slack.com/api/channels.create'
         headers = {'User-Agent': 'DEAP'}
         r = requests.post(team_users_api_url, params={'token':g.access_token,'name':channelName}, headers=headers)
         channelObj = json.loads(r.text)
-        channelId = channelObj['channel']['id']
-        return {"id":channelId}       
+        print str(channelObj)
+        
+        channelId = ''
+        errorText = ''
+        try:
+            errorText = channelObj['error']
+        except KeyError:
+            errorText = ''   
+        if errorText == '' :
+            try:
+                channelId = channelObj['channel']['id']
+            except KeyError:
+                channelId = ''
+        else :
+            channelId = 'name_taken'
+        
+        print 'channelId is'+channelId
+        return channelId 
+        
         
     
 def createUserAndUserOrganizations(organizaionId,contributers,token):

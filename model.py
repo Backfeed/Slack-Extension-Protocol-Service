@@ -89,6 +89,8 @@ organization_table = schema.Table('organization', metadata,
     schema.Column('slack_teamid', types.Unicode(255)),
     schema.Column('name', types.Unicode(255),nullable=False),
     schema.Column('code', types.Unicode(255),nullable=False),
+    schema.Column('channelName', types.Unicode(255),nullable=False),
+    schema.Column('channelId', types.Unicode(255),nullable=False),
 )
 
 """
