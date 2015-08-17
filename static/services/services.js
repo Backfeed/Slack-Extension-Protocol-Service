@@ -112,6 +112,19 @@ bfAPIServices.factory('SaveOrg', [ '$resource', function($resource) {
 	});
 } ]);
 
+
+bfAPIServices.factory('OrgDelete', [ '$resource', function($resource) {
+	return $resource('organization/:OrgId', {}, {
+		delete : {
+			method : 'DELETE',
+			params : {},
+			isArray : false
+		}
+	});
+} ]);
+
+
+
 bfAPIServices.factory('CheckOrgTokenName', [ '$resource', function($resource) {
 	return $resource('organization/checkTokenName/:tokenName', {}, {
 		checkOrgTokenName : {
