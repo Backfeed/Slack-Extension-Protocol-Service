@@ -67,6 +67,7 @@ api.add_resource(OrganizationCodeExistsResource, '/organization/checkCode/<strin
 api.add_resource(getAllSlackUsersResource, '/allSlackUsers', endpoint='slackUsers')
 
 api.add_resource(OrganizationResource, '/organization', endpoint='organization')
+api.add_resource(OrganizationResource, '/organization/<string:id>', endpoint='organizations')
 
 api.add_resource(AllOrganizationResource, '/organization/all', endpoint='allOrganizations')
 api.add_resource(MemberStatusResource, '/member/status/<string:orgId>/<string:userId>', endpoint='memberStatus')

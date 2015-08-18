@@ -528,6 +528,23 @@ class OrganizationResource(Resource):
 
         return userOrgObj, 201
     
+    def delete(self, id):
+        orgObj = session.query(cls.Organization).filter(cls.Organization.id == id).first()
+        if orgObj :
+            userOrganizationObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == id).all()
+            for userOrganization in userOrganizationObjects :
+                contributionObjects = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == userOrganization.id).all()
+                for contributionObject in contributionObjects:                    
+                    for contributer in contributionObject.contributionContributers:
+                        session.delete(contributer)
+                    for bid in contributionObject.bids:
+                        session.delete(bid)
+                    session.delete(contributionObject)
+                session.delete(userOrganization)        
+            session.delete(orgObj)
+            session.commit()
+        return {}, 204
+    
 def getSlackUsers():
     team_users_api_url = 'https://slack.com/api/users.list'
     headers = {'User-Agent': 'DEAP'}
