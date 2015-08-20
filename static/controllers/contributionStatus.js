@@ -3,12 +3,30 @@ angular.module('MyApp').controller(
 		function($scope, $auth, $location, $stateParams, $alert, ContributionStatus,				
 				Account, Users) {			
 			$scope.cotributionStatusModel = {
+					file:'',
+					title:'',
 					currentValuation : '',
-					totalReputaion : '',
+					myWeight : '',
 					myValuation : '',
-					myReputaion : ''					
-
-				}
+					reputationDelta : '',
+					groupWeight : '',
+					bids : [ {
+						time_created : '',
+		                tokens:'',
+		                reputation: '',
+		                contribution_value_after_bid:''
+		            } ]
+				};
+			$scope.getContributionStatus = function(){
+	        	if ($scope.contributionId && $scope.contributionId != 0 && $scope.userId && $scope.userId != 0) {
+					$scope.contributionStatus = ContributionStatus.getDetail({
+						id : $scope.contributionId,userId : $scope.userId
+					});
+					$scope.contributionStatus.$promise.then(function(result) {
+						$scope.cotributionStatusModel = result;
+					});
+	        	}
+	        };
 			// if not authenticated return to splash:
 			if (!$auth.isAuthenticated()) {
 				$location.path('splash');
@@ -19,6 +37,7 @@ angular.module('MyApp').controller(
 					Account.getProfile().success(function(data) {
 						$scope.userId = data.userId;
 						Account.setUserData(data);
+						$scope.getContributionStatus();
 
 					}).error(function(error) {
 						$alert({
@@ -35,6 +54,7 @@ angular.module('MyApp').controller(
 					$scope.getProfile();
 				} else {
 					$scope.userId = userData.userId;
+					$scope.getContributionStatus();
 				}
 				if ($scope.contributionId && $scope.contributionId != 0 && $scope.userId && $scope.userId != 0) {
 					$scope.data1 = ContributionStatus.getDetail({

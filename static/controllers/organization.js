@@ -10,6 +10,7 @@ angular.module('MyApp')
 				name : '',
 				code : '',
 				token : '',
+				channelName :'',
 				contributers : [ {
 					contributer_id : '0',
 					contributer_percentage : '',
@@ -208,6 +209,10 @@ angular.module('MyApp')
 		console.log($scope.orgModel)
 		$scope.data = SaveOrg.save({},$scope.orgModel);
 		$scope.data.$promise.then(function (result) {
+			if(result.channelExists == 'true'){
+				alert('Channel '+$scope.orgModel.channelName+' already exists. Please choose another');
+				return;
+			}
 			if(result.id == 0){
 				alert('This code or name is already taken please use other')
 				return;
