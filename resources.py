@@ -99,6 +99,8 @@ contributer_nested_fields = {}
 contributer_nested_fields['contributer_id'] = fields.String
 contributer_nested_fields['contributer_percentage'] = fields.String
 contributer_nested_fields['name'] = fields.String
+contributer_nested_fields['real_name'] = fields.String
+contributer_nested_fields['url'] = fields.String
 
 contribution_fields = {}
 contribution_fields['id'] = fields.Integer
@@ -124,6 +126,7 @@ contribution_status_fields['groupWeight'] = fields.Integer
 contribution_status_fields['file'] = fields.String
 contribution_status_fields['title'] = fields.String
 contribution_status_fields['bids'] = fields.Nested(bid_status_nested_fields)
+contribution_status_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
 
 contribution_status_nested_fields ={}
 contribution_status_nested_fields['currentValuation'] = fields.Integer
@@ -422,6 +425,10 @@ class ContributionStatusResource(Resource):
         groupWeight = 0
         reputationDelta = 0
         last_bid = None
+        for contributer in contributionObject.contributionContributers:
+            contributer.name= getUser(contributer.contributer_id).name
+            contributer.url= getUser(contributer.contributer_id).url
+            contributer.real_name= getUser(contributer.contributer_id).real_name
         for bid in contributionObject.bids:
             last_bid = bid
             groupWeight = groupWeight + bid.weight
@@ -668,14 +675,8 @@ def allContributionsFromUser():
     contribitions = [];
     user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
     if not user:
-        return []
-    org = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).first()
-    if not org:
-        return []
-    userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == user.id).filter(cls.UserOrganization.organization_id == org.id).first()
-    if not userOrgObj:
-        return []
-    bidsList = session.query(cls.Bid).filter(cls.Contribution.id == cls.Bid.contribution_id).filter(cls.Contribution.users_organizations_id == userOrgObj.id).all()
+        return []    
+    bidsList = session.query(cls.Bid).filter(cls.Bid.owner == user.id).all()
     if not bidsList:
         return []
     for bid in bidsList:
