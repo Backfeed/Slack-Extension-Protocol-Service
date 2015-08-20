@@ -8,18 +8,38 @@
 			    <div class="panel-body">
 				  <div class="row">
 						<div class="col-sm-3">
+						<legend><i class="ion-person"></i> Title: {{cotributionStatusModel.title}}</legend>
 					  <legend><i class="ion-person"></i> Current Valuation: {{cotributionStatusModel.currentValuation}}</legend>
-					  <legend><i class="ion-aperture"></i> Total Reputation: {{cotributionStatusModel.totalReputaion}}</legend>
-					  <legend><i class="ion-ribbon-b"></i> My Valuation: {{cotributionStatusModel.myValuation}}</legend>
-				      <legend><i class="ion-clipboard"></i> My Reputation: {{cotributionStatusModel.myReputaion}}</legend>
+					  <legend><i class="ion-aperture"></i> My estimate: {{cotributionStatusModel.myValuation}}</legend>
+					  <legend><i class="ion-ribbon-b"></i> My Rep profit/loss: {{cotributionStatusModel.reputationDelta}}</legend>
+				      <legend><i class="ion-clipboard"></i> My weight in the holon: {{cotributionStatusModel.myWeight}}</legend>
+				       <legend><i class="ion-clipboard"></i> {{cotributionStatusModel.groupWeight}}% of the holon backfeeded this value</legend>
+				       <legend><i class="ion-clipboard"></i> File: {{cotributionStatusModel.file}}</legend>
 			  				</div>
 					<div class="col-sm-9">
-					<img src="/images/statPlaceHolder.png" class = "" ></img>
-				
-					</div>
+				<table class="table table-bordered table-hover">
+					<thead>
+						<tr>
+							<th>Timestamp&nbsp;<img tooltip="help message" /></th>
+							<th>Bid&nbsp;<img tooltip="help message" /></th>
+							<th>Reputation &nbsp;<img tooltip="User's reputation while bidding" /></th>
+							<th>Contribution Value&nbsp;<img tooltip="What was the value of this contribution after this bid"  /></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="bid in cotributionStatusModel.bids">
+							<td>{{bid.time_created | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+							<td>{{bid.tokens}}</td>
+							<td>{{bid.reputation}}</td>
+							<td>{{bid.contribution_value_after_bid}}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 				</div>
 			    </div>
 			  </div>
+			  
 			  </form>
 			</div>
 			
