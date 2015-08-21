@@ -58,7 +58,7 @@ def upgrade():
     sa.Column('id', sa.INTEGER(), nullable=False),
     sa.Column('contribution_id', sa.INTEGER(), nullable=True),
     sa.Column('contributer_id', sa.INTEGER(), nullable=True),
-    sa.Column('contributer_percentage', sa.INTEGER(), nullable=True),
+    sa.Column('contributer_percentage', sa.FLOAT(), nullable=True),
     sa.ForeignKeyConstraint(['contributer_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['contribution_id'], ['contribution.id'], ),
     sa.PrimaryKeyConstraint('id')

@@ -75,7 +75,7 @@ contribution_contributer_table = schema.Table('contribution_contributer', metada
         schema.ForeignKey('contribution.id')),
     schema.Column('contributer_id', types.Integer,
         schema.ForeignKey('user.id')),
-    schema.Column('contributer_percentage', types.INTEGER),   
+    schema.Column('contributer_percentage', types.FLOAT),   
 )
 
 """
