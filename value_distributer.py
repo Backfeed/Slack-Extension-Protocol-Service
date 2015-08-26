@@ -40,27 +40,34 @@ class ValueDistributer(ValueDistributerBase):
 	def validateBid(self,bids, current_bid):
 		self.log('\n\n *** validateBid: ***:\n')
 
-		Wi = 0;
+		Wi = 0.0
 		users = self.usersDict
 		current_bidder = users[current_bid.owner]
 		rep = current_bid.reputation
-
+		print 'rep is'+str(rep)
 		#check how much reputation has been engaged by current_bidder,
 		for bid in bids:
+			print 'comes here in bids'
 			if bid.owner == current_bidder.user_id:  
 				Wi += bid.reputation
 		self.log('amount of reputation which  has been engaged by the current_bidder:'+str(Wi))
-
+		print 'Wi is'+str(Wi)
+		print 'current_bidder.org_reputation is'+str(current_bidder.org_reputation)
+		print 'diffrence is'+str(float(current_bidder.org_reputation) - float(Wi))
+		print 'check is'+str(float(current_bidder.org_reputation) - float(Wi) < float(rep))
 		#check if something has to be trimmed
-		if current_bidder.org_reputation - Wi < rep:
-			if current_bidder.org_reputation > Wi:
-				current_bid.reputation = current_bidder.org_reputation - Wi
+		if float(current_bidder.org_reputation) - float(Wi) < float(rep):
+			print 'comes here in check1'
+			if float(current_bidder.org_reputation) > float(Wi):
+				current_bid.reputation = float(current_bidder.org_reputation) - float(Wi)
 				self.log("trimmed reputation to : "+str(current_bid.reputation))
 
 			else:
+				print 'comes here in check2'
 				self.log("bidder has no more reputation to spare for current bid. exit.")
 				return None;
 		elif(not current_bidder.org_reputation):
+			print 'comes here in check3'
 			self.log("bidder has no more reputation to spare for current bid. exit.")
 			return None;		
 
@@ -146,6 +153,7 @@ class ValueDistributer(ValueDistributerBase):
 		self.error_code = message	
 
 	def process_bid(self,current_bid,session,logger = None):
+		print 'comes here 1'
 		self.debug_bid(current_bid)
 		
 		# get current state data:
@@ -159,7 +167,7 @@ class ValueDistributer(ValueDistributerBase):
 
 		# validate Bid:
 		current_bid = self.validateBid(contributionObject.bids, current_bid)
-		current_bid.weight = (current_bid.reputation/self.total_system_reputation)*100
+		current_bid.weight = (float(current_bid.reputation)/float(self.total_system_reputation))*100
 		if(not current_bid):
 			self.set_error('bid not valid.')
 			return None
