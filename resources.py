@@ -121,8 +121,8 @@ contribution_status_fields ={}
 contribution_status_fields['currentValuation'] = fields.Integer
 contribution_status_fields['reputationDelta'] = fields.Integer
 contribution_status_fields['myValuation'] = fields.Integer
-contribution_status_fields['myWeight'] = fields.Integer
-contribution_status_fields['groupWeight'] = fields.Integer
+contribution_status_fields['myWeight'] = fields.Float
+contribution_status_fields['groupWeight'] = fields.Float
 contribution_status_fields['file'] = fields.String
 contribution_status_fields['title'] = fields.String
 contribution_status_fields['bids'] = fields.Nested(bid_status_nested_fields)
@@ -132,7 +132,7 @@ contribution_status_nested_fields ={}
 contribution_status_nested_fields['currentValuation'] = fields.Integer
 contribution_status_nested_fields['reputationDelta'] = fields.Integer
 contribution_status_nested_fields['id'] = fields.Integer
-contribution_status_nested_fields['myWeight'] = fields.Integer
+contribution_status_nested_fields['myWeight'] = fields.Float
 contribution_status_nested_fields['title'] = fields.String
 contribution_status_nested_fields['cTime'] = fields.String
 
@@ -333,7 +333,7 @@ class ContributionResource(Resource):
             if not userObj:
                 abort(404, message="Contributer {} doesn't exist".format(contributionContributer.contributer_id))
             contributionContributer.contribution_id=contribution.id
-            contributionContributer.name = userObj.name
+            contributionContributer.name = userObj.name          
             contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
             #if (firstContribution == True):
                  #userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
