@@ -21,6 +21,9 @@ from resources import getAllSlackUsersResource
 from resources import AllOrganizationResource
 from resources import BidContributionResource
 from resources import MemberStatusResource
+from resources import ChannelOrganizationExistsResource
+from resources import MemberOranizationsResource
+from resources import MemberStatusAllOrgsResource
 from db import session,engine
 
 import auth
@@ -64,13 +67,16 @@ api.add_resource(AllContributionResource, '/contribution/all/<string:organizatio
 api.add_resource(ContributionStatusResource, '/contribution/status/<string:id>/<string:userId>', endpoint='contributionStatus')
 api.add_resource(OrganizationTokenExistsResource, '/organization/checkTokenName/<string:tokenName>', endpoint='checkOrgToken')
 api.add_resource(OrganizationCodeExistsResource, '/organization/checkCode/<string:code>', endpoint='checkCode')
+api.add_resource(MemberOranizationsResource, '/organization/member/<string:slackTeamId>', endpoint='memberOrganizations')
 api.add_resource(getAllSlackUsersResource, '/allSlackUsers', endpoint='slackUsers')
 
 api.add_resource(OrganizationResource, '/organization', endpoint='organization')
 api.add_resource(OrganizationResource, '/organization/<string:id>', endpoint='organizations')
+api.add_resource(ChannelOrganizationExistsResource, '/organization/channel/<string:channelId>/<string:slackTeamId>/<string:userId>', endpoint='channelOrgExists')
 
 api.add_resource(AllOrganizationResource, '/organization/all', endpoint='allOrganizations')
 api.add_resource(MemberStatusResource, '/member/status/<string:orgId>/<string:userId>', endpoint='memberStatus')
+api.add_resource(MemberStatusAllOrgsResource, '/member/statusallOrgs/<string:slackTeamId>/<string:userId>', endpoint='memberStatusAllOrgs')
 
 
 

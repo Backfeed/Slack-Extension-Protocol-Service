@@ -64,7 +64,8 @@ user_org_fields = {
 org_fields = {
     'id': fields.Integer,
     'name': fields.String, 
-    'token_name': fields.String,      
+    'token_name': fields.String,
+    'channelName': fields.String,      
 }
 
 userOrganization_fields = {
@@ -73,7 +74,6 @@ userOrganization_fields = {
     'organization_id': fields.String,
     'org_tokens': fields.String,
     'org_reputation': fields.String,
-    'channelExists':fields.String,
     'channelId':fields.String
 }
 
@@ -264,9 +264,10 @@ class BidResource(Resource):
     
 class BidContributionResource(Resource):
     def get(self, contributionId,userId):
-        char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.owner == userId).first()        
+        char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.owner == userId).first()   
+        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()     
         if not char:
-            return {"bidExists":"false"}
+            return {"bidExists":"false","organizationId":contributionObject.userOrganization.organization_id}
         else:
             return {"bidExists":"true"}        
 
@@ -445,6 +446,47 @@ class ContributionStatusResource(Resource):
         contributionObject.groupWeight = groupWeight
         
         return contributionObject
+    
+class MemberStatusAllOrgsResource(Resource):
+    @marshal_with(member_status_fields)
+    def get(self,slackTeamId,userId):        
+        userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).filter(cls.UserOrganization.organization_id == cls.Organization.id).filter(cls.Organization.slack_teamid == slackTeamId).all()
+        userOrgObj = userOrgObjs[0]
+       
+        currentValuation = 0
+        myWeight = 0
+        reputationDelta = 0
+        userOrgObj.name = userOrgObj.user.name
+        userOrgObj.fullName = userOrgObj.user.real_name
+        userOrgObj.url = userOrgObj.user.url72
+        
+        userOrgObj.reputationPercentage = 'N/A'
+        
+        last_bid = None
+        for userOrgObjVar in userOrgObjs:
+            for contribution in userOrgObjVar.contributions:
+                last_bid = None
+                currentValuation = 0
+                myWeight = 0
+                reputationDelta = 0
+                for bid in contribution.bids:
+                    last_bid = bid
+                    if(str(bid.owner) == str(userOrgObjVar.user.id)):
+                        myWeight = bid.weight 
+                        reputationDelta = userOrgObj.org_reputation - bid.reputation
+                if (last_bid):
+                    currentValuation = last_bid.contribution_value_after_bid
+                contribution.currentValuation = currentValuation
+                contribution.reputationDelta = reputationDelta
+                contribution.myWeight = myWeight
+                contribution.cTime = contribution.time_created.date()
+                if userOrgObj.id != userOrgObjVar.id :
+                    userOrgObj.contributions.append(contribution)
+        userOrgObj.contributionLength = 'N/A'
+        userOrgObj.org_tokens = 'N/A'
+        userOrgObj.org_reputation = 'N/A'
+        return userOrgObj    
+
 
 class MemberStatusResource(Resource):
     @marshal_with(member_status_fields)
@@ -491,7 +533,16 @@ class OrganizationTokenExistsResource(Resource):
         if not orgObj:
             return {"tokenAlreadyExist":"false"}
         else:
-             return {"tokenAlreadyExist":"true"}    
+             return {"tokenAlreadyExist":"true"}
+         
+class ChannelOrganizationExistsResource(Resource):
+    def get(self,channelId,slackTeamId,userId):
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.channelId == channelId).first()
+        if not orgObj:
+            return {"channleOrgExists":"false"}
+        else:
+            userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == orgObj.id).first()
+            return {"channleOrgExists":"true","userOrgId":userOrgObj.id,"orgId":orgObj.id}    
          
 class OrganizationCodeExistsResource(Resource):
     def get(self,code):
@@ -499,7 +550,14 @@ class OrganizationCodeExistsResource(Resource):
         if not orgObj:
             return {"codeAlreadyExist":"false"}
         else:
-             return {"codeAlreadyExist":"true"}      
+             return {"codeAlreadyExist":"true"} 
+         
+class MemberOranizationsResource(Resource):
+    @marshal_with(org_fields)
+    def get(self,slackTeamId):
+        orgObjs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).all()
+        return  orgObjs
+              
     
 class OrganizationResource(Resource):
     
@@ -515,23 +573,26 @@ class OrganizationResource(Resource):
             return {"tokenExist":"true"}
         
         
-        channelId = createChannel(json['channelName'])
+        #channelId = createChannel(json['channelName'])
         jsonStr = {"token_name":json['token_name'],
                     "slack_teamid":json['slack_teamid'],
-                    "name":json['name'],"code":json['code'],"channelName":json['channelName'],"channelId":channelId}
+                    "name":json['name'],"code":json['code'],"channelName":json['channelName'],"channelId":json['channelId']}
         userOrgObj = cls.UserOrganization(jsonStr,session)        
-        if channelId == 'name_taken':
-            userOrgObj.channelExists = "true"
-        else :
-            
-            organization = cls.Organization(jsonStr,session)
-            session.add(organization)
-            session.flush()            
-            createUserAndUserOrganizations(organization.id,json['contributers'],json['token'])
-            session.commit()        
-            userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == g.user_id).filter(cls.UserOrganization.organization_id == organization.id).first()
-            userOrgObj.channelExists = "false"
-            userOrgObj.channelId = channelId
+        organization = cls.Organization(jsonStr,session)
+        session.add(organization)
+        session.flush()            
+        createUserAndUserOrganizations(organization.id,json['contributers'],json['token'])
+        session.commit()        
+        orgs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == organization.slack_teamid).all()
+        orgChannelId = ''
+        count = 1
+        for org in orgs:
+            if count == 1:
+                orgChannelId = org.channelId
+            else:
+                orgChannelId = orgChannelId + ','+ org.channelId
+            count = count + 1;
+        userOrgObj.channelId = orgChannelId
 
         return userOrgObj, 201
     
