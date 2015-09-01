@@ -16,10 +16,11 @@ class BidInfo(object):
 			
 
 class FIn(object):
-	def __init__(self, bids,current_bid,total_rep):
+	def __init__(self, bids,current_bid,total_rep,a):
 		self.bids = bids
 		self.current_bid = current_bid
 		self.total_system_reputation = total_rep
+		self.a = a
 		
 	def isValid(self):
 		if (not self.bids or
@@ -77,8 +78,10 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 			self.logger.info(messsage)
 		return True
 
-	def decay(self,vi, vn):
-		decay = math.atan(1 / abs(vi - vn+0.1))
+	def decay(self,vi, vn,a):
+		
+		#decay = math.atan(1 / abs(vi - vn+0.1))
+		decay = math.atan(1/(pow(10,(int(a)/50))*abs(vi-vn)/(min(vi,vn)+0.00001)+0.0001))/1.57
 		return decay
 	
 	def distribute_current_bid_rep(self,fIn,fout):
@@ -88,7 +91,7 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 
 		#calculate total sum of Weight * Decay
 		for bid in bids:
-			summ += bid.reputation * self.decay(bid.tokens, current_bid.tokens)
+			summ += bid.reputation * self.decay(bid.tokens, current_bid.tokens,fIn.a)
 		
 		#self.log("sum of Weight * Decay = " + str(summ))
 
@@ -97,7 +100,7 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 		self.log(" ---- total rep to be distributed  (current_bid.stake) === " + str(current_bid.stake))
 		
 		for bid in bids:
-			current_decay = self.decay(bid.tokens, current_bid.tokens)
+			current_decay = self.decay(bid.tokens, current_bid.tokens,fIn.a)
 			new_rep_weight = ( bid.reputation * current_decay  ) / summ
 			# bug fix: we round up and thus create reputation from thin air
 			#bidders_rep_distribution =  math.ceil(float(current_bid.stake) * new_rep_weight ) 

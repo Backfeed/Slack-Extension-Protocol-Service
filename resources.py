@@ -575,13 +575,13 @@ class OrganizationResource(Resource):
         
         #channelId = createChannel(json['channelName'])
         jsonStr = {"token_name":json['token_name'],
-                    "slack_teamid":json['slack_teamid'],
+                    "slack_teamid":json['slack_teamid'],"a":json['a'],"b":json['b'],
                     "name":json['name'],"code":json['code'],"channelName":json['channelName'],"channelId":json['channelId']}
         userOrgObj = cls.UserOrganization(jsonStr,session)        
         organization = cls.Organization(jsonStr,session)
         session.add(organization)
         session.flush()            
-        createUserAndUserOrganizations(organization.id,json['contributers'],json['token'])
+        createUserAndUserOrganizations(organization.id,json['contributers'],json['token'],json['b'])
         session.commit()        
         orgs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == organization.slack_teamid).all()
         orgChannelId = ''
@@ -661,7 +661,7 @@ def createChannel(channelName):
         
         
     
-def createUserAndUserOrganizations(organizaionId,contributers,token):
+def createUserAndUserOrganizations(organizaionId,contributers,token,b):
     
     usersInSystem = session.query(cls.User).all()
     contributionDic = {}
@@ -681,7 +681,7 @@ def createUserAndUserOrganizations(organizaionId,contributers,token):
         repuation = 0
         try:
             token = contributionDic[user['id']]
-            repuation = token
+            repuation = (int(token))*10/pow(10,(int(b)/50)) 
         except KeyError:
             token = 0
             repuation = 0

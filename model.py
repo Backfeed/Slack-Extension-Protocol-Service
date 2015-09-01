@@ -91,6 +91,8 @@ organization_table = schema.Table('organization', metadata,
     schema.Column('code', types.Unicode(255),nullable=False),
     schema.Column('channelName', types.Unicode(255),nullable=False),
     schema.Column('channelId', types.Unicode(255),nullable=False),
+    schema.Column('a', types.Integer),
+    schema.Column('b', types.Integer),
 )
 
 """

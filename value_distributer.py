@@ -93,6 +93,7 @@ class ValueDistributer(ValueDistributerBase):
 
 		# get users:
 		user_org = contributionObject.userOrganization
+		org = user_org.organization
 		userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == user_org.organization_id).all()
 
 		for userOrg in userOrgObjects:
@@ -104,6 +105,7 @@ class ValueDistributer(ValueDistributerBase):
 			self.highest_eval = self.getHighestEval(contributionObject.bids)
 
 		self.total_system_reputation = total_system_reputation
+		self.a = org.a
 		self.usersDict = usersDict
 		self.debug_state()
 
@@ -158,6 +160,7 @@ class ValueDistributer(ValueDistributerBase):
 		
 		# get current state data:
 		contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == current_bid.contribution_id).first()
+		#orgObject = session.query(cls.Organization).filter(cls.Organization.id == cls.UserOrganization.organization_id).filter(cls.UserOrganization.id == cls.Contribution.users_organizations_id).first()
 		self.getCurrentState(contributionObject,session)
 
 		# validate is First Bid:
@@ -182,7 +185,7 @@ class ValueDistributer(ValueDistributerBase):
 			bidsInfo.append( BidInfo(bid.tokens,bid.reputation,bid.stake,bid.owner) )
 
 		current_bid_info = bidsInfo[-1]
-		fin = FIn(bidsInfo,current_bid_info,self.total_system_reputation)
+		fin = FIn(bidsInfo,current_bid_info,self.total_system_reputation,self.a)
 
 		# protocol function calc:
 		f = ProtocolFunctionV1(logger)
