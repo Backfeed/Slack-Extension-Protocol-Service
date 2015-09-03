@@ -93,7 +93,9 @@ bid_status_nested_fields = {}
 bid_status_nested_fields['time_created'] = fields.String
 bid_status_nested_fields['tokens'] = fields.String
 bid_status_nested_fields['reputation'] = fields.String
-bid_status_nested_fields['contribution_value_after_bid'] = fields.Integer
+bid_status_nested_fields['contribution_value_after_bid'] = fields.Float
+bid_status_nested_fields['stake'] = fields.Float
+bid_status_nested_fields['owner'] = fields.Integer
 
 contributer_nested_fields = {}
 contributer_nested_fields['contributer_id'] = fields.String
