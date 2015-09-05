@@ -137,6 +137,7 @@ contribution_status_nested_fields['id'] = fields.Integer
 contribution_status_nested_fields['myWeight'] = fields.Float
 contribution_status_nested_fields['title'] = fields.String
 contribution_status_nested_fields['cTime'] = fields.String
+contribution_status_nested_fields['tokenName'] = fields.String
 
 
 member_status_fields ={}
@@ -481,6 +482,7 @@ class MemberStatusAllOrgsResource(Resource):
                 contribution.currentValuation = currentValuation
                 contribution.reputationDelta = reputationDelta
                 contribution.myWeight = myWeight
+                contribution.tokenName= contribution.userOrganization.organization.token_name
                 contribution.cTime = contribution.time_created.date()
                 if userOrgObj.id != userOrgObjVar.id :
                     userOrgObj.contributions.append(contribution)
@@ -525,6 +527,7 @@ class MemberStatusResource(Resource):
             contribution.reputationDelta = reputationDelta
             contribution.myWeight = myWeight
             contribution.cTime = contribution.time_created.date()
+            contribution.tokenName= contribution.userOrganization.organization.token_name
         userOrgObj.contributionLength = countOfContribution
         return userOrgObj
     
