@@ -26,7 +26,6 @@ bidParser = reqparse.RequestParser()
 closeContributionParser = reqparse.RequestParser()
 
 contributionParser.add_argument('contributers', type=cls.Contributer, action='append')
-contributionParser.add_argument('intialBid', type=cls.IntialBid)
 contributionParser.add_argument('owner', type=int,required=True)
 contributionParser.add_argument('users_organizations_id', type=int,required=True)
 contributionParser.add_argument('min_reputation_to_close', type=str)
@@ -355,14 +354,14 @@ class ContributionResource(Resource):
                 #userOrgObjectForOwner.org_reputation = 100
                 #session.add(userOrgObjectForOwner) 
                                 
-        if((parsed_args['intialBid'].obj1['tokens'] != '') & (parsed_args['intialBid'].obj1['reputation'] != '')):      
-                jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
-                   "reputation":parsed_args['intialBid'].obj1['reputation'],
-                   "owner":contribution.owner,
-                   "contribution_id":contribution.id
-                    }
-                intialBidObj = cls.Bid(jsonStr,session)        
-                contribution.bids.append(intialBidObj)
+        #if((parsed_args['intialBid'].obj1['tokens'] != '') & (parsed_args['intialBid'].obj1['reputation'] != '')):      
+                #jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
+                   #"reputation":parsed_args['intialBid'].obj1['reputation'],
+                   #"owner":contribution.owner,
+                   #"contribution_id":contribution.id
+                    #}
+                #intialBidObj = cls.Bid(jsonStr,session)        
+                #contribution.bids.append(intialBidObj)
         
         
         
