@@ -102,6 +102,7 @@ contributer_nested_fields['contributer_percentage'] = fields.String
 contributer_nested_fields['name'] = fields.String
 contributer_nested_fields['real_name'] = fields.String
 contributer_nested_fields['url'] = fields.String
+contributer_nested_fields['org_reputation'] = fields.String
 
 contribution_fields = {}
 contribution_fields['id'] = fields.Integer
@@ -140,8 +141,8 @@ contribution_status_nested_fields['tokenName'] = fields.String
 
 
 member_status_fields ={}
-member_status_fields['org_tokens'] = fields.String
-member_status_fields['org_reputation'] = fields.String
+member_status_fields['project_tokens'] = fields.String
+member_status_fields['project_reputation'] = fields.String
 member_status_fields['contributionLength'] = fields.String
 member_status_fields['url'] = fields.String
 member_status_fields['fullName'] = fields.String
@@ -432,6 +433,8 @@ class ContributionStatusResource(Resource):
             contributer.name= getUser(contributer.contributer_id).name
             contributer.url= getUser(contributer.contributer_id).url
             contributer.real_name= getUser(contributer.contributer_id).real_name
+            contributerUserOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == contributer.contributer_id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
+            contributer.org_reputation = contributerUserOrgObj.org_reputation
         for bid in contributionObject.bids:
             last_bid = bid
             groupWeight = groupWeight + bid.weight
@@ -507,6 +510,8 @@ class MemberStatusResource(Resource):
         userOrgObj.url = userOrgObj.user.url72
         
         userOrgObj.reputationPercentage = (userOrgObj.org_reputation / totalReputation)*100
+        userOrgObj.project_tokens = userOrgObj.org_tokens
+        userOrgObj.project_reputation = userOrgObj.org_reputation
         last_bid = None
         countOfContribution = 0
         for contribution in userOrgObj.contributions:
