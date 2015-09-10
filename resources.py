@@ -138,6 +138,7 @@ contribution_status_nested_fields['myWeight'] = fields.Float
 contribution_status_nested_fields['title'] = fields.String
 contribution_status_nested_fields['cTime'] = fields.String
 contribution_status_nested_fields['tokenName'] = fields.String
+contribution_status_nested_fields['owner'] = fields.String
 
 
 member_status_fields ={}
@@ -457,26 +458,35 @@ class MemberStatusAllOrgsResource(Resource):
     def get(self,slackTeamId,userId):        
         userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).filter(cls.UserOrganization.organization_id == cls.Organization.id).filter(cls.Organization.slack_teamid == slackTeamId).all()
         userOrgObj = userOrgObjs[0]
-       
+        allContributions = session.query(cls.Contribution).all()
         currentValuation = 0
         myWeight = 0
         reputationDelta = 0
         userOrgObj.name = userOrgObj.user.name
         userOrgObj.fullName = userOrgObj.user.real_name
         userOrgObj.url = userOrgObj.user.url72
-        
+        countOfContribution = 0  
         userOrgObj.reputationPercentage = 'N/A'
         
         last_bid = None
-        for userOrgObjVar in userOrgObjs:
-            for contribution in userOrgObjVar.contributions:
+        for contribution in allContributions:
+            contributedCounted = False
+            if(str(contribution.owner) == str(userOrgObj.user.id)):
+                countOfContribution = countOfContribution + 1
+                contributedCounted = True
+            if contributedCounted == False:
+                for contributionContributer in contribution.contributionContributers :
+                    if(str(contributionContributer.contributer_id) == str(userOrgObj.user.id)):
+                        countOfContribution = countOfContribution + 1
+                        contributedCounted = True
+            if contributedCounted == True:
                 last_bid = None
                 currentValuation = 0
                 myWeight = 0
                 reputationDelta = 0
                 for bid in contribution.bids:
                     last_bid = bid
-                    if(str(bid.owner) == str(userOrgObjVar.user.id)):
+                    if(str(bid.owner) == str(userOrgObj.user.id)):
                         myWeight = bid.weight 
                         reputationDelta = userOrgObj.org_reputation - bid.reputation
                 if (last_bid):
@@ -486,9 +496,9 @@ class MemberStatusAllOrgsResource(Resource):
                 contribution.myWeight = myWeight
                 contribution.tokenName= contribution.userOrganization.organization.token_name
                 contribution.cTime = contribution.time_created.date()
-                if userOrgObj.id != userOrgObjVar.id :
+                if userOrgObj.id != contribution.userOrganization.id :
                     userOrgObj.contributions.append(contribution)
-        userOrgObj.contributionLength = 'N/A'
+        userOrgObj.contributionLength = countOfContribution
         userOrgObj.org_tokens = 'N/A'
         userOrgObj.org_reputation = 'N/A'
         return userOrgObj    
@@ -499,6 +509,7 @@ class MemberStatusResource(Resource):
     def get(self,orgId,userId):        
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).filter(cls.UserOrganization.organization_id == orgId).first()
         userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).all()
+        allContributions = session.query(cls.Contribution).filter(cls.UserOrganization.id == cls.Contribution.users_organizations_id).filter(cls.UserOrganization.organization_id == orgId).all()
         totalReputation = 0;
         for userOrgObjVar in userOrgObjs:
             totalReputation = totalReputation + userOrgObjVar.org_reputation
@@ -513,26 +524,39 @@ class MemberStatusResource(Resource):
         userOrgObj.project_tokens = userOrgObj.org_tokens
         userOrgObj.project_reputation = userOrgObj.org_reputation
         last_bid = None
-        countOfContribution = 0
-        for contribution in userOrgObj.contributions:
-            countOfContribution = countOfContribution + 1
-            last_bid = None
-            currentValuation = 0
-            myWeight = 0
-            reputationDelta = 0
-            for bid in contribution.bids:
-                last_bid = bid
-                if(str(bid.owner) == str(userOrgObj.user.id)):
-                    myWeight = bid.weight 
-                    reputationDelta = userOrgObj.org_reputation - bid.reputation
-            if (last_bid):
-                currentValuation = last_bid.contribution_value_after_bid
-            contribution.currentValuation = currentValuation
-            contribution.reputationDelta = reputationDelta
-            contribution.myWeight = myWeight
-            contribution.cTime = contribution.time_created.date()
-            contribution.tokenName= contribution.userOrganization.organization.token_name
+        countOfContribution = 0       
+        for contribution in allContributions:
+            contributedCounted = False
+            if(str(contribution.owner) == str(userOrgObj.user.id)):
+                countOfContribution = countOfContribution + 1
+                contributedCounted = True
+            if contributedCounted == False:
+                for contributionContributer in contribution.contributionContributers :
+                    if(str(contributionContributer.contributer_id) == str(userOrgObj.user.id)):
+                        countOfContribution = countOfContribution + 1
+                        contributedCounted = True
+            if contributedCounted == True:
+                last_bid = None
+                currentValuation = 0
+                myWeight = 0
+                reputationDelta = 0
+                for bid in contribution.bids:
+                    last_bid = bid
+                    if(str(bid.owner) == str(userOrgObj.user.id)):
+                        myWeight = bid.weight 
+                        reputationDelta = userOrgObj.org_reputation - bid.reputation
+                if (last_bid):
+                    currentValuation = last_bid.contribution_value_after_bid
+                contribution.currentValuation = currentValuation
+                contribution.reputationDelta = reputationDelta
+                contribution.myWeight = myWeight
+                contribution.cTime = contribution.time_created.date()
+                contribution.tokenName= contribution.userOrganization.organization.token_name
+                if(str(contribution.owner) != str(userOrgObj.user.id)):
+                    userOrgObj.contributions.append(contribution)
         userOrgObj.contributionLength = countOfContribution
+        for contribution in userOrgObj.contributions:
+            print 'contribution.myWeight'+str(contribution.myWeight)
         return userOrgObj
     
     
