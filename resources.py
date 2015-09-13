@@ -102,7 +102,7 @@ contributer_nested_fields['contributer_percentage'] = fields.String
 contributer_nested_fields['name'] = fields.String
 contributer_nested_fields['real_name'] = fields.String
 contributer_nested_fields['url'] = fields.String
-contributer_nested_fields['org_reputation'] = fields.String
+contributer_nested_fields['project_reputation'] = fields.String
 
 contribution_fields = {}
 contribution_fields['id'] = fields.Integer
@@ -435,7 +435,7 @@ class ContributionStatusResource(Resource):
             contributer.url= getUser(contributer.contributer_id).url
             contributer.real_name= getUser(contributer.contributer_id).real_name
             contributerUserOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == contributer.contributer_id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
-            contributer.org_reputation = contributerUserOrgObj.org_reputation
+            contributer.project_reputation = contributerUserOrgObj.org_reputation
         for bid in contributionObject.bids:
             last_bid = bid
             groupWeight = groupWeight + bid.weight
