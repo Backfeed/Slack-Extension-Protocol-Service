@@ -82,7 +82,7 @@ def me():
     if(not user):
         print 'User Not Logged In.',404
         return 'User Not Logged In.',404	  
-    return jsonify(dict(displayName=user.name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,access_token=g.access_token,slackUserId=g.slackUserId))
+    return jsonify(dict(displayName=user.name,user_realname=user.real_name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,access_token=g.access_token,slackUserId=g.slackUserId))
 
 def create_token(user,slackTeamId,slackTeamName,access_token,slackUserId):    
     payload = {

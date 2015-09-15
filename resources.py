@@ -125,6 +125,8 @@ contribution_status_fields['reputationDelta'] = fields.Integer
 contribution_status_fields['myValuation'] = fields.Integer
 contribution_status_fields['myWeight'] = fields.Float
 contribution_status_fields['groupWeight'] = fields.Float
+contribution_status_fields['project_reputation'] = fields.Float
+contribution_status_fields['totalSystemReputation'] = fields.Float
 contribution_status_fields['file'] = fields.String
 contribution_status_fields['title'] = fields.String
 contribution_status_fields['bids'] = fields.Nested(bid_status_nested_fields)
@@ -424,6 +426,11 @@ class ContributionStatusResource(Resource):
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(id))
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
+        userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).all()
+        totalSystemReputation = 0
+        for userOrgObjVar in userOrgObjs :
+            totalSystemReputation = totalSystemReputation + userOrgObjVar.org_reputation
+        contributionObject.totalSystemReputation = totalSystemReputation
         currentValuation = 0
         myValuation = 0
         myWeight = 0
@@ -450,7 +457,7 @@ class ContributionStatusResource(Resource):
         contributionObject.myValuation = myValuation
         contributionObject.myWeight = myWeight
         contributionObject.groupWeight = groupWeight
-        
+        contributionObject.project_reputation = userOrgObj.org_reputation
         return contributionObject
     
 class MemberStatusAllOrgsResource(Resource):
