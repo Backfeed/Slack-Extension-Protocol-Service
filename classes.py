@@ -73,6 +73,18 @@ class UserOrganization(BaseObject):
 class ContributionContributer(object):
 	pass
 
+class MileStone(object):
+	pass
+
+class MileStoneBid(BaseObject):
+	pass
+
+class MileStoneContributer(object):
+	pass
+
+class MileStoneContribution(object):
+	pass
+
 class Contributer(object):
      def __init__(self, contributerId, contributerPercentage):
         self.obj1 = contributerId

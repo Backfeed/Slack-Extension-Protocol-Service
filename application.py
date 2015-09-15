@@ -24,6 +24,10 @@ from resources import MemberStatusResource
 from resources import ChannelOrganizationExistsResource
 from resources import MemberOranizationsResource
 from resources import MemberStatusAllOrgsResource
+from resources import MileStoneResource
+from resources import OrganizationCurrentStatusResource
+from resources import AllMileStonesForOrgResource
+from resources import AllOrganizationForCurrentTeamResource
 from db import session,engine
 
 import auth
@@ -75,8 +79,14 @@ api.add_resource(OrganizationResource, '/organization/<string:id>', endpoint='or
 api.add_resource(ChannelOrganizationExistsResource, '/organization/channel/<string:channelId>/<string:slackTeamId>/<string:userId>', endpoint='channelOrgExists')
 
 api.add_resource(AllOrganizationResource, '/organization/all', endpoint='allOrganizations')
+api.add_resource(AllOrganizationForCurrentTeamResource, '/organization/all/team/<string:slackTeamId>', endpoint='allOrganizationsForCurrentTeam')
 api.add_resource(MemberStatusResource, '/member/status/<string:orgId>/<string:userId>', endpoint='memberStatus')
 api.add_resource(MemberStatusAllOrgsResource, '/member/statusallOrgs/<string:slackTeamId>/<string:userId>', endpoint='memberStatusAllOrgs')
+api.add_resource(OrganizationCurrentStatusResource, '/organization/currentStatus/<string:orgId>', endpoint='organizationCurrentStatus')
+
+api.add_resource(MileStoneResource, '/milestone', endpoint='milestone')
+api.add_resource(MileStoneResource, '/milestone/<string:id>', endpoint='milestones')
+api.add_resource(AllMileStonesForOrgResource, '/milestone/all/<string:id>', endpoint='allMilestonesForOrg')
 
 
 
