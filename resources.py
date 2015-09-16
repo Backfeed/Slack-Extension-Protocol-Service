@@ -319,11 +319,13 @@ class BidResource(Resource):
 class BidContributionResource(Resource):
     def get(self, contributionId,userId):
         char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.owner == userId).first()   
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()     
+        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first() 
+        if contributionObject.status == 'Closed':
+            return {"contributionClose":"true"}  
         if not char:
-            return {"bidExists":"false","organizationId":contributionObject.userOrganization.organization_id}
+            return {"contributionClose":"false","bidExists":"false","organizationId":contributionObject.userOrganization.organization_id}
         else:
-            return {"bidExists":"true"}        
+            return {"contributionClose":"false","bidExists":"true"}        
 
 class ContributionResource(Resource):
     @marshal_with(contribution_fields)
