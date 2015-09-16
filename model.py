@@ -187,9 +187,7 @@ orm.mapper(cls.UserOrganization, users_organizations_table, properties={
           'contributions':orm.relation(cls.Contribution),                                                              
                                                                         })
 
-orm.mapper(cls.UserOrganization, users_organizations_table, properties={
-          'milestones':orm.relation(cls.MileStone),                                                              
-                                                                        })
+
 
 orm.mapper(cls.MileStone, milestone_table, properties={
     'milestone_owner':orm.relation(cls.User, backref='milestone'),

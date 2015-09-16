@@ -669,7 +669,7 @@ class OrganizationResource(Resource):
         organization = cls.Organization(jsonStr,session)
         session.add(organization)
         session.flush()            
-        createUserAndUserOrganizations(organization.id,json['contributers'],json['token'],json['b'])
+        createUserAndUserOrganizations(organization.id,json['contributers'],json['token'],json['b'],json['access_token'])
         session.commit()        
         orgs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == organization.slack_teamid).all()
         orgChannelId = ''
@@ -701,18 +701,19 @@ class OrganizationResource(Resource):
             session.commit()
         return {}, 204
     
-def getSlackUsers():
+def getSlackUsers(access_token):
+    print 'access_token'+access_token
     team_users_api_url = 'https://slack.com/api/users.list'
     headers = {'User-Agent': 'DEAP'}
-    r = requests.get(team_users_api_url, params={'token':g.access_token}, headers=headers)
+    r = requests.get(team_users_api_url, params={'token':access_token}, headers=headers)
     users = json.loads(r.text)['members']
     print 'slack users:'+str(users)
     return users
 
     
 class getAllSlackUsersResource(Resource):
-    def get(self):
-        users = getSlackUsers()
+    def get(self,access_token):
+        users = getSlackUsers(access_token)
         usersJson = []
         for user in users :
             if user['deleted'] == True :
@@ -749,7 +750,7 @@ def createChannel(channelName):
         
         
     
-def createUserAndUserOrganizations(organizaionId,contributers,token,b):
+def createUserAndUserOrganizations(organizaionId,contributers,token,b,access_token):
     
     usersInSystem = session.query(cls.User).all()
     contributionDic = {}
@@ -762,7 +763,7 @@ def createUserAndUserOrganizations(organizaionId,contributers,token,b):
             currentUser = u
         usersDic[u.name] = u.id
     # parse response:
-    users = getSlackUsers()
+    users = getSlackUsers(access_token)
     print 'slack users:'+str(users)
     for user in users :
         token = 0
@@ -890,6 +891,9 @@ class MileStoneResource(Resource):
         userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).all()
         for userOrgObject in userOrgObjects:
             totalTokens = totalTokens + userOrgObject.org_tokens
+            userOrgObject.org_tokens = 0
+            session.add(userOrgObject)
+            
         milestone.tokens = totalTokens
         userObj = getUser(milestone.owner) 
                
@@ -919,6 +923,8 @@ class MileStoneResource(Resource):
             mileStoneContribution.contribution_id = contribution.id
             mileStoneContribution.milestone_id = milestone.id
             milestone.milestoneContributions.append(mileStoneContribution) 
+            contribution.status='Closed'
+            session.add(contribution)
          
         milestone.contributions =  totalContributions
         milestone.totalValue =  totalValue
@@ -926,7 +932,7 @@ class MileStoneResource(Resource):
             mileStoneContributer = cls.MileStoneContributer()
             mileStoneContributer.milestone_id = milestone.id
             mileStoneContributer.contributer_id = key
-            mileStoneContributer.contributer_percentage = elem
+            mileStoneContributer.contributer_percentage = elem/totalContributions
             milestone.milestoneContributers.append(mileStoneContributer)
                     
         session.commit()        
