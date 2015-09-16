@@ -948,9 +948,12 @@ class OrganizationCurrentStatusResource(Resource):
         milestone = cls.MileStone()
         totalTokens = 0
         userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).all()
+        orgObject = session.query(cls.Organization).filter(cls.Organization.id == orgId).first()
         for userOrgObject in userOrgObjects:
             totalTokens = totalTokens + userOrgObject.org_tokens
         milestone.tokens = totalTokens
+        milestone.code = orgObject.code
+        milestone.tokenName = orgObject.token_name
         allContributionObjects = session.query(cls.Contribution).filter(cls.Contribution.status == 'Open').filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == orgId).all()
         contributersDic = {}
         totalContributions = 0
