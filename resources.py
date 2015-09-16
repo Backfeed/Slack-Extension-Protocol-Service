@@ -851,7 +851,7 @@ class MileStoneResource(Resource):
         milestoneObject.tokenName = milestoneObject.userOrganization.organization.token_name
         for milestoneContribution in milestoneObject.milestoneContributions:
             milestoneContribution.title= milestoneContribution.milestoneContribution.title
-            milestoneContributer.date= getUser(milestoneContributer.contributer_id).time_created
+            milestoneContribution.date= milestoneContribution.milestoneContribution.time_created
             currentValuation = 0
             last_bid = None
             for bid in milestoneContribution.milestoneContribution.bids:
@@ -924,6 +924,7 @@ class MileStoneResource(Resource):
                 contributersDic[contributionContributersObj.contributer_id] = contributerPercentage
             mileStoneContribution.contribution_id = contribution.id
             mileStoneContribution.milestone_id = milestone.id
+            
             milestone.milestoneContributions.append(mileStoneContribution) 
             contribution.status='Closed'
             session.add(contribution)
@@ -935,7 +936,8 @@ class MileStoneResource(Resource):
             mileStoneContributer.milestone_id = milestone.id
             mileStoneContributer.contributer_id = key
             mileStoneContributer.contributer_percentage = elem/totalContributions
-            milestone.milestoneContributers.append(mileStoneContributer)
+            
+            milestone.mileStoneContributer.append(mileStoneContributer)
                     
         session.commit()        
         return milestone, 201
@@ -966,8 +968,10 @@ class OrganizationCurrentStatusResource(Resource):
                 last_bid = bid
             if (last_bid):
                 currentValuation = last_bid.contribution_value_after_bid
+            
             totalValue = totalValue + currentValuation             
             mileStoneContribution = cls.MileStoneContribution()
+            mileStoneContribution.valuation = currentValuation
             contributionContributersObjs = contribution.contributionContributers
             for contributionContributersObj in contributionContributersObjs:
                 try:
@@ -977,6 +981,8 @@ class OrganizationCurrentStatusResource(Resource):
                 contributerPercentage = contributerPercentage + contributionContributersObj.contributer_percentage
                 contributersDic[contributionContributersObj.contributer_id] = contributerPercentage
             mileStoneContribution.contribution_id = contribution.id
+            mileStoneContribution.title= contribution.title
+            mileStoneContribution.date= contribution.time_created
             milestone.milestoneContributions.append(mileStoneContribution) 
          
         milestone.contributions =  totalContributions
@@ -985,6 +991,9 @@ class OrganizationCurrentStatusResource(Resource):
             mileStoneContributer = cls.MileStoneContributer()
             mileStoneContributer.contributer_id = key
             mileStoneContributer.contributer_percentage = elem
+            mileStoneContributer.name= getUser(mileStoneContributer.contributer_id).name
+            mileStoneContributer.real_name= getUser(mileStoneContributer.contributer_id).real_name
+            mileStoneContributer.url= getUser(mileStoneContributer.contributer_id).url
             milestone.milestoneContributers.append(mileStoneContributer)
 
         return milestone
