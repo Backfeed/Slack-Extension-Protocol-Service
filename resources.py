@@ -187,6 +187,7 @@ milestone_fields['description'] = fields.String
 milestone_fields['tokens'] = fields.Float
 milestone_fields['totalValue'] = fields.Float
 milestone_fields['contributions'] = fields.Integer
+milestone_fields['contributers'] = fields.Integer
 milestone_fields['title'] = fields.String
 milestone_fields['tokenName'] = fields.String
 milestone_fields['code'] = fields.String
@@ -632,7 +633,7 @@ class ChannelOrganizationExistsResource(Resource):
             return {"channleOrgExists":"false"}
         else:
             userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == orgObj.id).first()
-            return {"channleOrgExists":"true","userOrgId":userOrgObj.id,"orgId":orgObj.id}    
+            return {"channleOrgExists":"true","userOrgId":userOrgObj.id,"orgId":orgObj.id,"channelName":orgObj.channelName}    
          
 class OrganizationCodeExistsResource(Resource):
     def get(self,code):
@@ -855,16 +856,20 @@ class MileStoneResource(Resource):
     @marshal_with(milestone_fields)
     def get(self, id):
         milestoneObject = session.query(cls.MileStone).filter(cls.MileStone.id == id).first()
+        totalContributions = 0
+        totalContributers = 0
         print 'got Get for MileStone fbid:'+id
         if not milestoneObject:
             abort(404, message="MileStone {} doesn't exist".format(id))
         for milestoneContributer in milestoneObject.milestoneContributers:
+            totalContributers = totalContributers + 1 
             milestoneContributer.name= getUser(milestoneContributer.contributer_id).name
             milestoneContributer.real_name= getUser(milestoneContributer.contributer_id).real_name
             milestoneContributer.url= getUser(milestoneContributer.contributer_id).url
         milestoneObject.code = milestoneObject.userOrganization.organization.code
         milestoneObject.tokenName = milestoneObject.userOrganization.organization.token_name
         for milestoneContribution in milestoneObject.milestoneContributions:
+            totalContributions = totalContributions + 1 
             milestoneContribution.title= milestoneContribution.milestoneContribution.title
             milestoneContribution.date= milestoneContribution.milestoneContribution.time_created
             currentValuation = 0
@@ -874,6 +879,8 @@ class MileStoneResource(Resource):
             if (last_bid):
                 currentValuation = last_bid.contribution_value_after_bid
             milestoneContributer.valuation = currentValuation
+        milestoneObject.contributions = totalContributions
+        milestoneObject.contributers = totalContributers
         return milestoneObject
 
     def delete(self, id):
@@ -974,6 +981,7 @@ class OrganizationCurrentStatusResource(Resource):
         allContributionObjects = session.query(cls.Contribution).filter(cls.Contribution.status == 'Open').filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == orgId).all()
         contributersDic = {}
         totalContributions = 0
+        totalContributers = 0
         totalValue = 0
         for contribution in allContributionObjects:
             totalContributions = totalContributions + 1 
@@ -1003,6 +1011,7 @@ class OrganizationCurrentStatusResource(Resource):
         milestone.contributions =  totalContributions
         milestone.totalValue =  totalValue
         for key, elem in contributersDic.items():
+            totalContributers = totalContributers + 1
             mileStoneContributer = cls.MileStoneContributer()
             mileStoneContributer.contributer_id = key
             mileStoneContributer.contributer_percentage = elem
@@ -1010,7 +1019,7 @@ class OrganizationCurrentStatusResource(Resource):
             mileStoneContributer.real_name= getUser(mileStoneContributer.contributer_id).real_name
             mileStoneContributer.url= getUser(mileStoneContributer.contributer_id).url
             milestone.milestoneContributers.append(mileStoneContributer)
-
+        milestone.contributers = totalContributers
         return milestone
 
 
