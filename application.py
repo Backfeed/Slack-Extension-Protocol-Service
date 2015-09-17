@@ -121,6 +121,10 @@ def slack():
 def allContributionsFromUser():
     return json.dumps(resources.allContributionsFromUser())
 
+@application.route('/allChannelIdsForTeam', methods=['POST'])
+def allChannelIdsForTeam():
+    return json.dumps(resources.allChannelIdsForTeam())
+
 @application.teardown_appcontext
 def shutdown_session(exception=None):
     session.remove()

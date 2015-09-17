@@ -836,6 +836,21 @@ def allContributionsFromUser():
     return contribitions
 
 
+def allChannelIdsForTeam(): 
+    slackTeamId = request.form['team']
+    orgs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).all()
+    orgChannelId = ''
+    count = 1
+    for org in orgs:
+            if count == 1:
+                orgChannelId = org.channelId
+            else:
+                orgChannelId = orgChannelId + ','+ org.channelId
+            count = count + 1;
+    return orgChannelId
+
+
+
 class MileStoneResource(Resource):
     @marshal_with(milestone_fields)
     def get(self, id):
