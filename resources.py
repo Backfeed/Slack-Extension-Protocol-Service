@@ -175,6 +175,7 @@ contribution_contributer_nested_fields['url'] = fields.String
 
 milestoneContribution_nested_fields = {}
 milestoneContribution_nested_fields['title'] = fields.String
+milestoneContribution_nested_fields['description'] = fields.String
 milestoneContribution_nested_fields['date'] = fields.String
 milestoneContribution_nested_fields['valuation'] = fields.String
 milestoneContribution_nested_fields['contribution_id'] = fields.Integer
@@ -879,6 +880,17 @@ class MileStoneResource(Resource):
         milestoneObject.code = milestoneObject.userOrganization.organization.code
         milestoneObject.tokenName = milestoneObject.userOrganization.organization.token_name
         for milestoneContribution in milestoneObject.milestoneContributions:
+            countOfLines = 0
+            shortDescription = '';
+            for line in milestoneContribution.milestoneContribution.file.splitlines():
+                countOfLines = countOfLines + 1
+                if(shortDescription != ''):
+                    shortDescription = shortDescription  + '\n'
+                shortDescription = shortDescription + line
+                if countOfLines == 3 :
+                    shortDescription = shortDescription + '....'
+                    break    
+                   
             totalContributions = totalContributions + 1 
             contributionContributersObjs = milestoneContribution.milestoneContribution.contributionContributers
             finalCountOfContribures = 0
@@ -899,6 +911,7 @@ class MileStoneResource(Resource):
             milestoneContribution.remainingContributers = finalCountOfContribures - totalCountOfContrbuters
             milestoneContribution.title= milestoneContribution.milestoneContribution.title
             milestoneContribution.date= milestoneContribution.milestoneContribution.time_created
+            milestoneContribution.description = shortDescription
             currentValuation = 0
             last_bid = None
             for bid in milestoneContribution.milestoneContribution.bids:
@@ -1013,6 +1026,16 @@ class OrganizationCurrentStatusResource(Resource):
         totalContributers = 0
         totalValue = 0
         for contribution in allContributionObjects:
+            shortDescription = ''
+            countOfLines = 0
+            for line in contribution.file.splitlines():
+                countOfLines = countOfLines + 1
+                if(shortDescription != ''):
+                    shortDescription = shortDescription  + '\n'
+                shortDescription = shortDescription + line
+                if countOfLines == 3 :
+                    shortDescription = shortDescription + '....'
+                    break
             totalContributions = totalContributions + 1 
             last_bid = None
             currentValuation = 0
@@ -1024,6 +1047,7 @@ class OrganizationCurrentStatusResource(Resource):
             totalValue = totalValue + currentValuation             
             mileStoneContribution = cls.MileStoneContribution()
             mileStoneContribution.valuation = currentValuation
+            mileStoneContribution.description = shortDescription
             contributionContributersObjs = contribution.contributionContributers
             finalCountOfContribures = 0
             for contributionContributersObj in contributionContributersObjs:
