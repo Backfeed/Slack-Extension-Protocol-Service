@@ -169,11 +169,17 @@ milestoneContributer_nested_fields['name'] = fields.String
 milestoneContributer_nested_fields['real_name'] = fields.String
 milestoneContributer_nested_fields['url'] = fields.String
 
+contribution_contributer_nested_fields = {}
+contribution_contributer_nested_fields['memberId'] = fields.String
+contribution_contributer_nested_fields['url'] = fields.String
+
 milestoneContribution_nested_fields = {}
 milestoneContribution_nested_fields['title'] = fields.String
 milestoneContribution_nested_fields['date'] = fields.String
 milestoneContribution_nested_fields['valuation'] = fields.String
 milestoneContribution_nested_fields['contribution_id'] = fields.Integer
+milestoneContribution_nested_fields['remainingContributers'] = fields.Integer
+milestoneContribution_nested_fields['contributers'] = fields.Nested(contribution_contributer_nested_fields)
 
 
 
@@ -856,11 +862,15 @@ class MileStoneResource(Resource):
     @marshal_with(milestone_fields)
     def get(self, id):
         milestoneObject = session.query(cls.MileStone).filter(cls.MileStone.id == id).first()
-        totalContributions = 0
-        totalContributers = 0
         print 'got Get for MileStone fbid:'+id
         if not milestoneObject:
             abort(404, message="MileStone {} doesn't exist".format(id))
+        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == milestoneObject.userOrganization.organization_id).all()
+        usersReputationDic = {}
+        for userOrgObject in userOrgObjects:
+            usersReputationDic[userOrgObject.user_id]=userOrgObject.org_reputation
+        totalContributions = 0
+        totalContributers = 0
         for milestoneContributer in milestoneObject.milestoneContributers:
             totalContributers = totalContributers + 1 
             milestoneContributer.name= getUser(milestoneContributer.contributer_id).name
@@ -870,6 +880,23 @@ class MileStoneResource(Resource):
         milestoneObject.tokenName = milestoneObject.userOrganization.organization.token_name
         for milestoneContribution in milestoneObject.milestoneContributions:
             totalContributions = totalContributions + 1 
+            contributionContributersObjs = milestoneContribution.milestoneContribution.contributionContributers
+            finalCountOfContribures = 0
+            for contributionContributersObj in contributionContributersObjs:
+                finalCountOfContribures = finalCountOfContribures + 1
+                contributionContributersObj.reputation = usersReputationDic[contributionContributersObj.contributer_id]                
+            contributionContributersObjs.sort(key=lambda x: x.reputation, reverse=True)
+            totalCountOfContrbuters = 0
+            milestoneContribution.contributers = []
+            for contributionContributersObj in contributionContributersObjs:
+                totalCountOfContrbuters = totalCountOfContrbuters +1
+                contributionContributersObj.memberId = getUser(contributionContributersObj.contributer_id).slackId
+                contributionContributersObj.url = getUser(contributionContributersObj.contributer_id).url
+                milestoneContribution.contributers.append(contributionContributersObj)
+                print 'contributionContributersObj.reputation'+str(contributionContributersObj.reputation)
+                if totalCountOfContrbuters == 8 :
+                    break
+            milestoneContribution.remainingContributers = finalCountOfContribures - totalCountOfContrbuters
             milestoneContribution.title= milestoneContribution.milestoneContribution.title
             milestoneContribution.date= milestoneContribution.milestoneContribution.time_created
             currentValuation = 0
@@ -972,9 +999,11 @@ class OrganizationCurrentStatusResource(Resource):
         milestone = cls.MileStone()
         totalTokens = 0
         userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).all()
+        usersReputationDic = {}
         orgObject = session.query(cls.Organization).filter(cls.Organization.id == orgId).first()
         for userOrgObject in userOrgObjects:
             totalTokens = totalTokens + userOrgObject.org_tokens
+            usersReputationDic[userOrgObject.user_id]=userOrgObject.org_reputation
         milestone.tokens = totalTokens
         milestone.code = orgObject.code
         milestone.tokenName = orgObject.token_name
@@ -996,13 +1025,28 @@ class OrganizationCurrentStatusResource(Resource):
             mileStoneContribution = cls.MileStoneContribution()
             mileStoneContribution.valuation = currentValuation
             contributionContributersObjs = contribution.contributionContributers
+            finalCountOfContribures = 0
             for contributionContributersObj in contributionContributersObjs:
+                finalCountOfContribures = finalCountOfContribures + 1
+                contributionContributersObj.reputation = usersReputationDic[contributionContributersObj.contributer_id]
                 try:
                     contributerPercentage = contributersDic[contributionContributersObj.contributer_id]
                 except KeyError:
                     contributerPercentage = 0
                 contributerPercentage = contributerPercentage + contributionContributersObj.contributer_percentage
                 contributersDic[contributionContributersObj.contributer_id] = contributerPercentage
+            contributionContributersObjs.sort(key=lambda x: x.reputation, reverse=True)
+            totalCountOfContrbuters = 0
+            mileStoneContribution.contributers = []
+            for contributionContributersObj in contributionContributersObjs:
+                totalCountOfContrbuters = totalCountOfContrbuters +1
+                contributionContributersObj.memberId = getUser(contributionContributersObj.contributer_id).slackId
+                contributionContributersObj.url = getUser(contributionContributersObj.contributer_id).url
+                mileStoneContribution.contributers.append(contributionContributersObj)
+                print 'contributionContributersObj.reputation'+str(contributionContributersObj.reputation)
+                if totalCountOfContrbuters == 8 :
+                    break
+            mileStoneContribution.remainingContributers = finalCountOfContribures - totalCountOfContrbuters
             mileStoneContribution.contribution_id = contribution.id
             mileStoneContribution.title= contribution.title
             mileStoneContribution.date= contribution.time_created
