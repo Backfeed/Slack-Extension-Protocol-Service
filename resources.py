@@ -882,7 +882,8 @@ class MileStoneResource(Resource):
         for milestoneContribution in milestoneObject.milestoneContributions:
             countOfLines = 0
             shortDescription = '';
-            for line in milestoneContribution.milestoneContribution.file.splitlines():
+            milestoneContributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == milestoneContribution.contribution_id).first()
+            for line in milestoneContributionObject.file.splitlines():
                 countOfLines = countOfLines + 1
                 if(shortDescription != ''):
                     shortDescription = shortDescription  + '\n'
@@ -892,7 +893,7 @@ class MileStoneResource(Resource):
                     break    
                    
             totalContributions = totalContributions + 1 
-            contributionContributersObjs = milestoneContribution.milestoneContribution.contributionContributers
+            contributionContributersObjs =milestoneContributionObject.contributionContributers
             finalCountOfContribures = 0
             for contributionContributersObj in contributionContributersObjs:
                 finalCountOfContribures = finalCountOfContribures + 1
@@ -909,16 +910,16 @@ class MileStoneResource(Resource):
                 if totalCountOfContrbuters == 8 :
                     break
             milestoneContribution.remainingContributers = finalCountOfContribures - totalCountOfContrbuters
-            milestoneContribution.title= milestoneContribution.milestoneContribution.title
-            milestoneContribution.date= milestoneContribution.milestoneContribution.time_created
+            milestoneContribution.title= milestoneContributionObject.title
+            milestoneContribution.date= milestoneContributionObject.time_created
             milestoneContribution.description = shortDescription
             currentValuation = 0
             last_bid = None
-            for bid in milestoneContribution.milestoneContribution.bids:
+            for bid in milestoneContributionObject.bids:
                 last_bid = bid
             if (last_bid):
                 currentValuation = last_bid.contribution_value_after_bid
-            milestoneContributer.valuation = currentValuation
+            milestoneContribution.valuation = currentValuation
         milestoneObject.contributions = totalContributions
         milestoneObject.contributers = totalContributers
         return milestoneObject
@@ -938,7 +939,7 @@ class MileStoneResource(Resource):
         return {}, 204
     
     @marshal_with(milestone_fields)   
-    def post(self):        
+    def post(self):          
         parsed_args = milestoneParser.parse_args()  
         milestone = cls.MileStone()
         milestone.owner = parsed_args['owner']
@@ -999,7 +1000,7 @@ class MileStoneResource(Resource):
             mileStoneContributer.contributer_id = key
             mileStoneContributer.contributer_percentage = elem/totalContributions
             
-            milestone.mileStoneContributer.append(mileStoneContributer)
+            milestone.milestoneContributers.append(mileStoneContributer)
                     
         session.commit()        
         return milestone, 201
