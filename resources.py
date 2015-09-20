@@ -472,7 +472,7 @@ class AllContributionResource(Resource):
     @marshal_with(contribution_fields)
     def get(self,organizationId):
         if organizationId == 'notintialized':
-            organizationId = g.orgId
+            organizationId = 1
         contributionObject = session.query(cls.Contribution).filter(cls.UserOrganization.organization_id == organizationId).filter(cls.Contribution.users_organizations_id ==cls.UserOrganization.id).all()
         return contributionObject
     
@@ -1083,7 +1083,7 @@ class OrganizationCurrentStatusResource(Resource):
             totalContributers = totalContributers + 1
             mileStoneContributer = cls.MileStoneContributer()
             mileStoneContributer.contributer_id = key
-            mileStoneContributer.contributer_percentage = elem
+            mileStoneContributer.contributer_percentage = elem/totalContributions
             mileStoneContributer.name= getUser(mileStoneContributer.contributer_id).name
             mileStoneContributer.real_name= getUser(mileStoneContributer.contributer_id).real_name
             mileStoneContributer.url= getUser(mileStoneContributer.contributer_id).url
