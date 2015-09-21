@@ -116,14 +116,18 @@ class ValueDistributer(ValueDistributerBase):
 		self.log('reputation (weight):'+str(current_bid.reputation))	
 		self.log('tokens (eval):'+str(current_bid.tokens))
 
-	def process_current_evaluation(self,current_eval,contributers,session,slackTeamId):
+	def process_current_evaluation(self,current_eval,contributers,session,slackTeamId,organization):
 		eval_delta = current_eval - self.highest_eval
 		#hardcoding for Lazzoz for right now making it 90% T03K9TS1Q
 		#if (slackTeamId == 'T02UHLXM9') :
 		print 'before eval_delta is'+str(eval_delta)
 		print 'slack team id'+str(slackTeamId)
 		if (slackTeamId == 'T02UHLXM9') :
-			eval_delta = eval_delta * 90/100
+		#if (slackTeamId == 'T03K9TS1Q') :
+			restData = float(eval_delta * 90/100)
+			organization.reserveTokens = organization.reserveTokens + (float(eval_delta) - restData)
+			session.add(organization)
+			eval_delta = restData
 			print 'after eval_delta is' + str(eval_delta)
 		if (eval_delta > 0):
 			# Issue tokens and reputation to collaborators:
@@ -203,7 +207,7 @@ class ValueDistributer(ValueDistributerBase):
 		
 		# success: handle result:	
 		self.distribute_rep(result.rep_distributions, current_bid,session)
-		self.process_current_evaluation(result.evaluation, contributionObject.contributionContributers,session,contributionObject.userOrganization.organization.slack_teamid)
+		self.process_current_evaluation(result.evaluation, contributionObject.contributionContributers,session,contributionObject.userOrganization.organization.slack_teamid,contributionObject.userOrganization.organization)
 
 		# add current bid and commit DB session:
 		current_bid.contribution_value_after_bid = result.evaluation

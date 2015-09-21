@@ -121,6 +121,10 @@ def slack():
 def allContributionsFromUser():
     return json.dumps(resources.allContributionsFromUser())
 
+@application.route('/showreservetokens', methods=['POST'])
+def showreservetokens():
+    return resources.showreservetokens()
+
 @application.route('/allChannelIdsForTeam', methods=['POST'])
 def allChannelIdsForTeam():
     return json.dumps(resources.allChannelIdsForTeam())

@@ -563,6 +563,8 @@ class MemberStatusAllOrgsResource(Resource):
                 contribution.cTime = contribution.time_created.date()
                 if userOrgObj.id != contribution.userOrganization.id :
                     userOrgObj.contributions.append(contribution)
+        for contribution in userOrgObj.contributions:
+            print 'contribution.myWeight'+str(contribution.myWeight)
         userOrgObj.contributionLength = countOfContribution
         userOrgObj.org_tokens = 'N/A'
         userOrgObj.org_reputation = 'N/A'
@@ -856,6 +858,19 @@ def allChannelIdsForTeam():
                 orgChannelId = orgChannelId + ','+ org.channelId
             count = count + 1;
     return orgChannelId
+
+def showreservetokens(): 
+    slackTeamId = request.form['team_id']
+    channelId = request.form['channel_id']
+    print 'slackTeamId is'+str(slackTeamId)
+    print 'channelId is'+str(channelId)
+    if(slackTeamId != '' and  channelId != ''):
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.channelId == channelId).first()
+    if not orgObj:
+            return "No Project Exists"
+    else:
+           return 'Reserved Token for this channel is: '+str(orgObj.reserveTokens)
+    
 
 
 
