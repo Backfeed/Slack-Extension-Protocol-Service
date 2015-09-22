@@ -160,6 +160,8 @@ contribution_status_nested_fields['owner'] = fields.String
 
 member_status_fields ={}
 member_status_fields['project_tokens'] = fields.String
+member_status_fields['tokenName'] = fields.String
+member_status_fields['code'] = fields.String
 member_status_fields['project_reputation'] = fields.String
 member_status_fields['contributionLength'] = fields.String
 member_status_fields['url'] = fields.String
@@ -656,6 +658,8 @@ class MemberStatusResource(Resource):
         userOrgObj.reputationPercentage = (userOrgObj.org_reputation / totalReputation)*100
         userOrgObj.project_tokens = userOrgObj.org_tokens
         userOrgObj.project_reputation = userOrgObj.org_reputation
+        userOrgObj.tokenName = userOrgObj.organization.token_name
+        userOrgObj.code = userOrgObj.organization.code
         last_bid = None
         countOfContribution = 0       
         for contribution in allContributions:
