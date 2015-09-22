@@ -7,7 +7,7 @@ from flask.ext.restful import Api
 from flask import send_file
 import os
 
-from resources import UserResource
+from resources import UserResource, MileStoneBidResource
 from resources import BidResource
 from resources import ContributionResource
 from resources import CloseContributionResource
@@ -20,6 +20,7 @@ from resources import OrganizationCodeExistsResource
 from resources import getAllSlackUsersResource
 from resources import AllOrganizationResource
 from resources import BidContributionResource
+from resources import MileStoneBidContributionResource
 from resources import MemberStatusResource
 from resources import ChannelOrganizationExistsResource
 from resources import MemberOranizationsResource
@@ -87,6 +88,8 @@ api.add_resource(OrganizationCurrentStatusResource, '/organization/currentStatus
 api.add_resource(MileStoneResource, '/milestone', endpoint='milestone')
 api.add_resource(MileStoneResource, '/milestone/<string:id>', endpoint='milestones')
 api.add_resource(AllMileStonesForOrgResource, '/milestone/all/<string:id>', endpoint='allMilestonesForOrg')
+api.add_resource(MileStoneBidContributionResource, '/mileStonebid/<string:mileStoneId>/<string:userId>', endpoint='mileStonebids')
+api.add_resource(MileStoneBidResource, '/mileStoneBids', endpoint='mileStoneBid')
 
 
 

@@ -16,6 +16,7 @@ import sqlalchemy as sa
 
 def upgrade():
     op.add_column('organization',sa.Column('reserveTokens', sa.FLOAT()))
+    op.add_column('milestone_bid',sa.Column('weight', sa.FLOAT()))
     pass
 
 

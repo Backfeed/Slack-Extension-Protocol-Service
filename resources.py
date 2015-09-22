@@ -16,6 +16,7 @@ from datetime import datetime
 #from flask.ext.restful import Resource
 #Add Authentication required to all resources:
 from flask.ext.restful import Resource as FlaskResource
+from milestone_value_distributer import MileStoneValueDistributer
 class Resource(FlaskResource):
    method_decorators = [login_required]   # applies to all inherited resources
 
@@ -24,6 +25,7 @@ userOrganizationParser = reqparse.RequestParser()
 contributionParser = reqparse.RequestParser()
 milestoneParser = reqparse.RequestParser()
 bidParser = reqparse.RequestParser()
+mileStonebidParser = reqparse.RequestParser()
 closeContributionParser = reqparse.RequestParser()
 
 contributionParser.add_argument('contributers', type=cls.Contributer, action='append')
@@ -49,6 +51,12 @@ bidParser.add_argument('tokens', type=str,required=True)
 bidParser.add_argument('reputation', type=str,required=True)    
 bidParser.add_argument('contribution_id', type=str,required=True)
 bidParser.add_argument('owner', type=int,required=True)
+
+mileStonebidParser.add_argument('stake', type=str,required=True)
+mileStonebidParser.add_argument('tokens', type=str,required=True)
+mileStonebidParser.add_argument('reputation', type=str,required=True)    
+mileStonebidParser.add_argument('milestone_id', type=str,required=True)
+mileStonebidParser.add_argument('owner', type=int,required=True)
 
 closeContributionParser.add_argument('owner', type=int,required=True)
 closeContributionParser.add_argument('id', type=int,required=True)
@@ -186,6 +194,7 @@ milestoneContribution_nested_fields['contributers'] = fields.Nested(contribution
 
 milestone_fields = {}
 milestone_fields['id'] = fields.Integer
+milestone_fields['current_org_id'] = fields.Integer
 milestone_fields['start_date'] = fields.DateTime
 milestone_fields['end_date'] = fields.DateTime
 milestone_fields['users_organizations_id'] = fields.Integer
@@ -197,6 +206,7 @@ milestone_fields['contributions'] = fields.Integer
 milestone_fields['contributers'] = fields.Integer
 milestone_fields['title'] = fields.String
 milestone_fields['tokenName'] = fields.String
+milestone_fields['channelName'] = fields.String
 milestone_fields['code'] = fields.String
 milestone_fields['destination_org_id'] = fields.Integer
 milestone_fields['milestoneContributers'] = fields.Nested(milestoneContributer_nested_fields)
@@ -324,6 +334,52 @@ class BidResource(Resource):
 
         return bid, 201
     
+class MileStoneBidResource(Resource):
+    @marshal_with(bid_fields)
+    def get(self, id):
+        char = session.query(cls.MileStoneBid).filter(cls.MileStoneBid.id == id).first()
+        print 'got Get for MileStoneBid fbid:'+id
+        if not char:
+            abort(404, message="MileStoneBid {} doesn't exist".format(id))
+        return char
+
+    def delete(self, id):
+        char = session.query(cls.MileStoneBid).filter(cls.MileStoneBid.id == id).first()
+        if not char:
+            abort(404, message="MileStoneBid {} doesn't exist".format(id))
+        session.delete(char)
+        session.commit()
+        return {}, 204
+    
+
+    @marshal_with(bid_fields)
+    def post(self):
+        parsed_args = mileStonebidParser.parse_args()
+        mileStoneId = parsed_args['milestone_id']        
+        mileStoneObject = session.query(cls.MileStone).filter(cls.MileStone.id == mileStoneId).first()
+        if not mileStoneObject:
+            abort(404, message="MileStone {} doesn't exist".format(mileStoneId))        
+        userObj = getUser(parsed_args['owner'])        
+        if not userObj:
+            abort(404, message="User {} who is creating bid  doesn't exist".format(parsed_args['owner']))     
+        jsonStr = {"tokens":parsed_args['tokens'],
+                   "reputation":parsed_args['reputation'],
+                   "owner":parsed_args['owner'],
+                   "milestone_id":parsed_args['milestone_id'],
+                   "stake":parsed_args['stake'], 
+                   "time_created":datetime.now()
+                    }
+
+        bid = cls.MileStoneBid(jsonStr,session) 
+        vd = MileStoneValueDistributer()
+        vd.process_bid(bid,session)
+        if(vd.error_occured):
+            print vd.error_code
+            # ToDo :  pass correct error message to user
+            abort(404, message="Failed to process bid".format(mileStoneId))
+
+        return bid, 201
+    
 class BidContributionResource(Resource):
     def get(self, contributionId,userId):
         char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.owner == userId).first()   
@@ -333,7 +389,17 @@ class BidContributionResource(Resource):
         if not char:
             return {"contributionClose":"false","bidExists":"false","organizationId":contributionObject.userOrganization.organization_id}
         else:
-            return {"contributionClose":"false","bidExists":"true"}        
+            return {"contributionClose":"false","bidExists":"true"} 
+        
+        
+class MileStoneBidContributionResource(Resource):
+    def get(self, mileStoneId,userId):
+        char = session.query(cls.MileStoneBid).filter(cls.MileStoneBid.milestone_id == mileStoneId).filter(cls.MileStoneBid.owner == userId).first()   
+        mileStoneObject = session.query(cls.MileStone).filter(cls.MileStone.id == mileStoneId).first()        
+        if not char:
+            return {"bidExists":"false","organizationId":mileStoneObject.userOrganization.organization_id}
+        else:
+            return {"bidExists":"true"}       
 
 class ContributionResource(Resource):
     @marshal_with(contribution_fields)
@@ -835,15 +901,18 @@ def allContributionsFromUser():
     profile = json.loads(r.text)
     print 'slack profile:'+str(profile)  
     contribitions = [];
+    milestones = [];
     user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
     if not user:
         return []    
     bidsList = session.query(cls.Bid).filter(cls.Bid.owner == user.id).all()
-    if not bidsList:
-        return []
+    mileStonebidsList = session.query(cls.MileStoneBid).filter(cls.MileStoneBid.owner == user.id).all()    
     for bid in bidsList:
         contribitions.append(bid.contribution_id)
-    return contribitions
+    for bid in mileStonebidsList:
+        milestones.append(bid.milestone_id)
+    jsonString = {'contribitions':contribitions,'milestones':milestones}
+    return jsonString
 
 
 def allChannelIdsForTeam(): 
@@ -892,6 +961,8 @@ class MileStoneResource(Resource):
             milestoneContributer.name= getUser(milestoneContributer.contributer_id).name
             milestoneContributer.real_name= getUser(milestoneContributer.contributer_id).real_name
             milestoneContributer.url= getUser(milestoneContributer.contributer_id).url
+        milestoneObject.current_org_id = milestoneObject.userOrganization.organization_id
+        milestoneObject.channelName = milestoneObject.userOrganization.organization.channelName
         milestoneObject.code = milestoneObject.userOrganization.organization.code
         milestoneObject.tokenName = milestoneObject.userOrganization.organization.token_name
         for milestoneContribution in milestoneObject.milestoneContributions:
@@ -1036,6 +1107,7 @@ class OrganizationCurrentStatusResource(Resource):
         milestone.tokens = totalTokens
         milestone.code = orgObject.code
         milestone.tokenName = orgObject.token_name
+        milestone.channelName = orgObject.channelName
         allContributionObjects = session.query(cls.Contribution).filter(cls.Contribution.status == 'Open').filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == orgId).all()
         contributersDic = {}
         totalContributions = 0
