@@ -73,7 +73,7 @@ api.add_resource(ContributionStatusResource, '/contribution/status/<string:id>/<
 api.add_resource(OrganizationTokenExistsResource, '/organization/checkTokenName/<string:tokenName>', endpoint='checkOrgToken')
 api.add_resource(OrganizationCodeExistsResource, '/organization/checkCode/<string:code>', endpoint='checkCode')
 api.add_resource(MemberOranizationsResource, '/organization/member/<string:slackTeamId>', endpoint='memberOrganizations')
-api.add_resource(getAllSlackUsersResource, '/allSlackUsers/<string:access_token>', endpoint='slackUsers')
+api.add_resource(getAllSlackUsersResource, '/allSlackUsers', endpoint='slackUsers')
 
 api.add_resource(OrganizationResource, '/organization', endpoint='organization')
 api.add_resource(OrganizationResource, '/organization/<string:id>', endpoint='organizations')

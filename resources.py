@@ -794,14 +794,33 @@ def getSlackUsers(access_token):
 
     
 class getAllSlackUsersResource(Resource):
-    def get(self,access_token):
+    def post(self):
+        print 'comes here'
+        json = request.json
+        access_token = json['access_token']
+        userIds = json['userIds']
+        searchString = json['searchString']
+        
         users = getSlackUsers(access_token)
         usersJson = []
+        userIdsList = []
+        if userIds != '':
+            userIdsList = userIds.split(",")
+        
         for user in users :
+            realName = user['profile']['real_name']
+            slackUserId = user['id']
+            userName= user['name']
             if user['deleted'] == True :
                 continue
             if user['is_bot'] == True :
                 continue
+            if searchString != '':
+                if  searchString  not in realName and searchString  not in userName:
+                    continue
+            if len(userIdsList) > 0 :
+                if slackUserId in userIdsList:   
+                    continue
             jsonStr = {"id":user['id'],"name":user['name'],"url":user['profile']['image_48'],"real_name":user['profile']['real_name']}
             usersJson.append(jsonStr)
         return usersJson
