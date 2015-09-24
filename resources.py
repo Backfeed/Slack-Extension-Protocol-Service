@@ -578,7 +578,11 @@ class ContributionStatusResource(Resource):
                 myWeight = bid.weight 
                 reputationDelta = userOrgObj.org_reputation - bid.reputation
                 myValuation = bid.tokens
-        
+            if (last_bid):
+                currentValuation = last_bid.contribution_value_after_bid
+                if contributionObject.currentValuation == 0 and currentValuation != 0 :
+                    contributionObject.currentValuation = currentValuation
+                    contributionObject.valueIndic = 1
         contributionObject.reputationDelta = reputationDelta
         contributionObject.myValuation = myValuation
         contributionObject.myWeight = myWeight
