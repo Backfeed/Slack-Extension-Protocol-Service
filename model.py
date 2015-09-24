@@ -63,6 +63,8 @@ contribution_table = schema.Table('contribution', metadata,
     schema.Column('file', types.Text()),
     schema.Column('title', types.Text()),
     schema.Column('status', types.String(100),default='Open'),
+    schema.Column('currentValuation',  types.Float,default=0),
+    schema.Column('valueIndic',  types.Integer,default=0),
 )
 
 """
@@ -157,6 +159,7 @@ organization_table = schema.Table('organization', metadata,
     schema.Column('code', types.Unicode(255),nullable=False),
     schema.Column('channelName', types.Unicode(255),nullable=False),
     schema.Column('channelId', types.Unicode(255),nullable=False),
+    schema.Column('reserveTokens', types.Float),
     schema.Column('a', types.Integer),
     schema.Column('b', types.Integer),
 )

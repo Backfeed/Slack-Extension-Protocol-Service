@@ -2,13 +2,13 @@ from protocol_function import BidInfo,FIn,ProtocolFunctionV1
 import classes as cls
 from operator import attrgetter
 
-class ValueDistributerBase(object):
+class MileStoneValueDistributerBase(object):
 	
 	def process_bid(self,current_bid,session,logger = None):
 		pass
 
 
-class ValueDistributer(ValueDistributerBase):
+class MileStoneValueDistributer(MileStoneValueDistributerBase):
 	
 	def __init__(self,logger = None):
 		self.logger = logger
@@ -21,14 +21,14 @@ class ValueDistributer(ValueDistributerBase):
 			self.logger.info(messsage)
 		return True
 
-	def getHighestEval(self,bids):
-		maxValue = max(bids, key=attrgetter('contribution_value_after_bid')).contribution_value_after_bid
+	def getHighestEval(self,mileStoneBids):
+		maxValue = max(mileStoneBids, key=attrgetter('milestone_value_after_bid')).milestone_value_after_bid
 		return maxValue
 
 
-	def isBidderFirstBid(self,bids, current_bid):
+	def isBidderFirstBid(self,mileStoneBids, current_bid):
 		self.log('\n\n *** isBidderFirstBid: ***:\n')
-		for bid in bids:
+		for bid in mileStoneBids:
 			if bid.owner == current_bid.owner:
 				self.log('is not  bidders first bid.')
 				return False
@@ -37,7 +37,7 @@ class ValueDistributer(ValueDistributerBase):
 		return True
 
 
-	def validateBid(self,bids, current_bid):
+	def validateBid(self,mileStoneBids, current_bid):
 		self.log('\n\n *** validateBid: ***:\n')
 
 		Wi = 0.0
@@ -46,7 +46,7 @@ class ValueDistributer(ValueDistributerBase):
 		rep = current_bid.reputation
 		print 'rep is'+str(rep)
 		#check how much reputation has been engaged by current_bidder,
-		for bid in bids:
+		for bid in mileStoneBids:
 			print 'comes here in bids'
 			if bid.owner == current_bidder.user_id:  
 				Wi += bid.reputation
@@ -87,12 +87,12 @@ class ValueDistributer(ValueDistributerBase):
 		self.log('total system reputation:'+str(self.total_system_reputation))	
 
 	# get state : users Dict which is a dict of (key : value) userId:userOrgenization object  ,also calc total_system_reputation and highest_eval:
-	def getCurrentState(self,contributionObject,session):
+	def getCurrentState(self,milestoneObject,session):
 		usersDict = {}
 		total_system_reputation = 0
 
 		# get users:
-		user_org = contributionObject.userOrganization
+		user_org = milestoneObject.userOrganization
 		org = user_org.organization
 		userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == user_org.organization_id).all()
 
@@ -101,8 +101,8 @@ class ValueDistributer(ValueDistributerBase):
 			total_system_reputation = total_system_reputation + userOrg.org_reputation
 
 		self.highest_eval =  0 
-		if(contributionObject.bids and len(contributionObject.bids)):
-			self.highest_eval = self.getHighestEval(contributionObject.bids)
+		if(milestoneObject.milestoneBids and len(milestoneObject.milestoneBids)):
+			self.highest_eval = self.getHighestEval(milestoneObject.milestoneBids)
 
 		self.total_system_reputation = total_system_reputation
 		self.a = org.a
@@ -170,24 +170,24 @@ class ValueDistributer(ValueDistributerBase):
 		self.debug_bid(current_bid)
 		
 		# get current state data:
-		contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == current_bid.contribution_id).first()
+		mileStoneObject = session.query(cls.MileStone).filter(cls.MileStone.id == current_bid.milestone_id).first()
 		#orgObject = session.query(cls.Organization).filter(cls.Organization.id == cls.UserOrganization.organization_id).filter(cls.UserOrganization.id == cls.Contribution.users_organizations_id).first()
-		self.getCurrentState(contributionObject,session)
+		self.getCurrentState(mileStoneObject,session)
 
 		# validate is First Bid:
-		if(not self.isBidderFirstBid(contributionObject.bids, current_bid)):
-			self.set_error('is Not bidders first bid, (we currently do not allow several bids per contribution.)')
+		if(not self.isBidderFirstBid(mileStoneObject.milestoneBids, current_bid)):
+			self.set_error('is Not bidders first bid, (we currently do not allow several bids per milestone.)')
 			return None
 
 		# validate Bid:
-		current_bid = self.validateBid(contributionObject.bids, current_bid)
+		current_bid = self.validateBid(mileStoneObject.milestoneBids, current_bid)
 		current_bid.weight = (float(current_bid.reputation)/float(self.total_system_reputation))*100
 		if(not current_bid):
 			self.set_error('bid not valid.')
 			return None
 
 		# add current bid to bids:
-		bids = contributionObject.bids
+		bids = mileStoneObject.milestoneBids
 		bids.append(current_bid);
 
 		# prepare protocol function Input:
@@ -207,19 +207,11 @@ class ValueDistributer(ValueDistributerBase):
 		
 		# success: handle result:	
 		self.distribute_rep(result.rep_distributions, current_bid,session)
-		self.process_current_evaluation(result.evaluation, contributionObject.contributionContributers,session,contributionObject.userOrganization.organization.slack_teamid,contributionObject.userOrganization.organization)
+		self.process_current_evaluation(result.evaluation, mileStoneObject.milestoneContributers,session,mileStoneObject.userOrganization.organization.slack_teamid,mileStoneObject.userOrganization.organization)
 
 		# add current bid and commit DB session:
-		current_bid.contribution_value_after_bid = result.evaluation
-		if result.evaluation > contributionObject.currentValuation :
-			contributionObject.valueIndic = 1
-		elif result.evaluation < contributionObject.currentValuation :
-			contributionObject.valueIndic = -1
-		else :
-			contributionObject.valueIndic = 0
-		contributionObject.currentValuation = result.evaluation
+		current_bid.milestone_value_after_bid = result.evaluation
 		session.add(current_bid)
-		session.add(contributionObject)
 		session.commit()
 		return current_bid
 
