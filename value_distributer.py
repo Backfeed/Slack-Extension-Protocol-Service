@@ -211,7 +211,15 @@ class ValueDistributer(ValueDistributerBase):
 
 		# add current bid and commit DB session:
 		current_bid.contribution_value_after_bid = result.evaluation
+		if result.evaluation > contributionObject.currentValuation :
+			contributionObject.valueIndic = 1
+		elif result.evaluation < contributionObject.currentValuation :
+			contributionObject.valueIndic = -1
+		else :
+			contributionObject.valueIndic = 0
+		contributionObject.currentValuation = result.evaluation
 		session.add(current_bid)
+		session.add(contributionObject)
 		session.commit()
 		return current_bid
 

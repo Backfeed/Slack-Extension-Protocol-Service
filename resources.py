@@ -136,7 +136,8 @@ contribution_fields['bids'] = fields.Nested(bid_nested_fields)
 contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
 
 contribution_status_fields ={}
-contribution_status_fields['currentValuation'] = fields.Integer
+contribution_status_fields['currentValuation'] = fields.Float
+contribution_status_fields['valueIndic'] = fields.Integer
 contribution_status_fields['reputationDelta'] = fields.Integer
 contribution_status_fields['myValuation'] = fields.Integer
 contribution_status_fields['myWeight'] = fields.Float
@@ -577,9 +578,7 @@ class ContributionStatusResource(Resource):
                 myWeight = bid.weight 
                 reputationDelta = userOrgObj.org_reputation - bid.reputation
                 myValuation = bid.tokens
-        if (last_bid):
-            currentValuation = last_bid.contribution_value_after_bid
-        contributionObject.currentValuation = currentValuation
+        
         contributionObject.reputationDelta = reputationDelta
         contributionObject.myValuation = myValuation
         contributionObject.myWeight = myWeight

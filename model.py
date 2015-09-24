@@ -63,6 +63,8 @@ contribution_table = schema.Table('contribution', metadata,
     schema.Column('file', types.Text()),
     schema.Column('title', types.Text()),
     schema.Column('status', types.String(100),default='Open'),
+    schema.Column('currentValuation',  types.Float,default=0),
+    schema.Column('valueIndic',  types.Integer,default=0),
 )
 
 """
