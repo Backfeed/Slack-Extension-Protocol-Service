@@ -79,7 +79,8 @@ org_fields = {
     'id': fields.Integer,
     'name': fields.String, 
     'token_name': fields.String,
-    'channelName': fields.String,      
+    'channelName': fields.String,
+    'channelId': fields.String,       
 }
 
 userOrganization_fields = {
@@ -1020,7 +1021,7 @@ class MileStoneResource(Resource):
                     break
             milestoneContribution.remainingContributers = finalCountOfContribures - totalCountOfContrbuters
             milestoneContribution.title= milestoneContributionObject.title
-            milestoneContribution.date= milestoneContributionObject.time_created
+            milestoneContribution.date= milestoneContributionObject.time_created.date()
             milestoneContribution.description = shortDescription
             currentValuation = 0
             last_bid = None
@@ -1184,7 +1185,7 @@ class OrganizationCurrentStatusResource(Resource):
             mileStoneContribution.remainingContributers = finalCountOfContribures - totalCountOfContrbuters
             mileStoneContribution.contribution_id = contribution.id
             mileStoneContribution.title= contribution.title
-            mileStoneContribution.date= contribution.time_created
+            mileStoneContribution.date= contribution.time_created.date()
             milestone.milestoneContributions.append(mileStoneContribution) 
          
         milestone.contributions =  totalContributions
