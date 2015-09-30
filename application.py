@@ -33,6 +33,7 @@ from db import session,engine
 
 import auth
 import resources
+from flask  import request
 
 # Configuration
 current_path = os.path.dirname(__file__)
@@ -127,6 +128,7 @@ def allContributionsFromUser():
 @application.route('/showreservetokens', methods=['POST'])
 def showreservetokens():
     return resources.showreservetokens()
+
 
 @application.route('/allChannelIdsForTeam', methods=['POST'])
 def allChannelIdsForTeam():

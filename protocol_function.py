@@ -1,11 +1,12 @@
 import math
 
 class BidInfo(object):
-	def __init__(self, tokens,reputation,stake,owner):
+	def __init__(self, tokens,reputation,stake,owner,contributionsSize):
 		self.tokens = float(tokens)
 		self.reputation = float(reputation)
 		self.stake = float(stake)	
 		self.owner = owner	
+		self.contributionsSize = contributionsSize
 
 	def debug(self,logger):
 		if(logger):
@@ -16,16 +17,17 @@ class BidInfo(object):
 			
 
 class FIn(object):
-	def __init__(self, bids,current_bid,total_rep,a):
+	def __init__(self, bids,current_bid,total_rep,a,contributionsSize):
 		self.bids = bids
 		self.current_bid = current_bid
 		self.total_system_reputation = total_rep
 		self.a = a
+		self.contributionsSize = contributionsSize
 		
 	def isValid(self):
 		if (not self.bids or
 			not self.total_system_reputation or
-			not self):
+			not self) and (self.contributionsSize > 1):
 			return False
 		return True
 		
@@ -101,7 +103,10 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 		
 		for bid in bids:
 			current_decay = self.decay(bid.tokens, current_bid.tokens,fIn.a)
-			new_rep_weight = ( bid.reputation * current_decay  ) / summ
+			if fIn.contributionsSize > 1 :
+				new_rep_weight = ( bid.reputation * current_decay  ) / summ
+			else:
+				new_rep_weight = 0
 			# bug fix: we round up and thus create reputation from thin air
 			#bidders_rep_distribution =  math.ceil(float(current_bid.stake) * new_rep_weight ) 
 			bidders_rep_distribution =  current_bid.stake * new_rep_weight 
@@ -122,6 +127,14 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 		self.log("calculating current evaluation:")
 		
 		bids = fIn.bids
+		
+		if fIn.contributionsSize == 1 :
+			for bid in bids:
+				current_evaluation = bid.tokens
+				fout.evaluation = current_evaluation
+				return True
+		
+		
 		
 		# get reputation on zero (un-invested reputation)
 		total_invested_rep = 0

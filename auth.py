@@ -195,7 +195,7 @@ def ext_login():
     #    syncUsers(org.id,access_token)
     #    orgChannelId = org.channelId
         
-    user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
+    user = session.query(cls.User).filter(cls.User.slackId == profile['user_id']).first()
     orgs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).all()
     orgChannelId = ''
     count = 1
@@ -228,7 +228,7 @@ def ext_login():
 
     print 'slack profile:'+str(profile)
     #u = cls.User(slack_id=profile['user_id'], name=profile['user'])
-    jsonStr = {"name":profile['user']}
+    jsonStr = {"slackId":profile['user_id'],"name":profile['user']}
     u = cls.User(jsonStr,session)
     session.add(u)
     session.commit()
@@ -329,7 +329,7 @@ def slack():
     #    orgexists = "false"
     #if org:
     #    syncUsers(org.id,access_token)
-    user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
+    user = session.query(cls.User).filter(cls.User.slackId == profile['user_id']).first()
     orgs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).all()   
     for org in orgs:
             syncUsers(org.id,access_token)            
@@ -354,7 +354,7 @@ def slack():
 
     print 'slack profile:'+str(profile)
     #u = cls.User(slack_id=profile['user_id'], name=profile['user'])
-    jsonStr = {"name":profile['user']}
+    jsonStr = {"slackId":profile['user_id'],"name":profile['user']}
     u = cls.User(jsonStr,session)
     session.add(u)
     session.commit()
@@ -390,16 +390,16 @@ def syncUsers(orgId,access_token):
     slackUsers = json.loads(r.text)['members']
     usersDic = {}
     for user in usersInSystem:                
-        usersDic[user.name] = user.id
+        usersDic[user.slackId] = user.id
     for slackUser in slackUsers :
         if slackUser['deleted'] == True :
             continue
         if slackUser['is_bot'] == True :
             continue
         try:
-            userId = usersDic[slackUser['name']]
+            userId = usersDic[slackUser['id']]
         except KeyError:
-            jsonStr = {"name":slackUser['name'],"url":slackUser['profile']['image_48'],"url72":slackUser['profile']['image_72'],"real_name":slackUser['profile']['real_name']}
+            jsonStr = {"slackId":slackUser['id'],"name":slackUser['name'],"url":slackUser['profile']['image_48'],"url72":slackUser['profile']['image_72'],"real_name":slackUser['profile']['real_name']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 

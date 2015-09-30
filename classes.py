@@ -85,6 +85,9 @@ class MileStoneContributer(object):
 class MileStoneContribution(object):
 	pass
 
+class ContributionValue(object):
+	pass
+
 class Contributer(object):
      def __init__(self, contributerId, contributerPercentage):
         self.obj1 = contributerId

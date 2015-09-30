@@ -111,6 +111,7 @@ milestone_table = schema.Table('milestone', metadata,
         schema.ForeignKey('user.id')),
     schema.Column('users_organizations_id', types.Integer,
         schema.ForeignKey('users_organizations.id')),
+    schema.Column('contribution_id', types.Integer),
     schema.Column('start_date', types.DateTime(), default=now),
     schema.Column('end_date', types.DateTime(), default=now),
     schema.Column('description', types.Text()),
@@ -180,6 +181,22 @@ users_organizations_table = schema.Table('users_organizations', metadata,
 
 
 """
+Contribution value- schema definition:
+"""
+contribution_value_table = schema.Table('contributionValue', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('contribution_value_seq_id', optional=True), primary_key=True),
+    schema.Column('user_id', types.Integer,
+        schema.ForeignKey('user.id')),
+    schema.Column('users_organizations_id', types.Integer,
+        schema.ForeignKey('users_organizations.id')),
+    schema.Column('contribution_id', types.Integer,
+        schema.ForeignKey('contribution.id')),
+    schema.Column('reputationGain',  types.Float,default=0),
+    schema.Column('reputation',  types.Float,default=0),
+)
+
+"""
 Relationships - definitions
 """
 orm.mapper(cls.User, user_table, properties={
@@ -189,7 +206,6 @@ orm.mapper(cls.User, user_table, properties={
 orm.mapper(cls.UserOrganization, users_organizations_table, properties={
           'contributions':orm.relation(cls.Contribution),                                                              
                                                                         })
-
 
 
 orm.mapper(cls.MileStone, milestone_table, properties={
@@ -232,7 +248,7 @@ orm.mapper(cls.Organization, organization_table, properties={
     'userOrganizations':orm.relation(cls.UserOrganization, backref='organization'),                                                  
 })
 
-
+orm.mapper(cls.ContributionValue, contribution_value_table)
 
 """
 # BELOW is an example of relations between objects, (for when you dont have just a simple object that holds data)
