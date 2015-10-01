@@ -137,7 +137,7 @@ def allChannelIdsForTeam():
 @application.teardown_appcontext
 def shutdown_session(exception=None):
     session.remove()
-    
+    Refactor
     
 @application.before_request
 def db_connect():
@@ -147,6 +147,8 @@ def db_connect():
     if envType == 'Prod' :
         engine.execute("USE ebdb")
     if envType == 'Stage' :
+        engine.execute("USE ebdb")
+    if envType == 'Refactor' :
         engine.execute("USE ebdb")        
   
 	
