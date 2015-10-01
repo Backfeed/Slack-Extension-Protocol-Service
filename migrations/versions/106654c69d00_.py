@@ -30,6 +30,13 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     
+    op.drop_table('milestone_bid')
+    
+    op.rename_table('contribution_contributer', 'contribution_contributor')
+    
+    op.rename_table('milestone_contributer', 'milestone_contributor')
+    
+     
     pass
 
 

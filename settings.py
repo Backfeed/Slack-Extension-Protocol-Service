@@ -9,7 +9,8 @@ if envType == 'Prod' :
 if envType == 'Stage':
     DB_URI = 'mysql+pymysql://backfeed:backfeed@aa1g5dhpz9ey233.cb6pht5ogo4h.us-east-1.rds.amazonaws.com/'
 if envType == 'Refactor':
-    DB_URI = 'mysql+pymysql://backfeed:backfeed@aa1vms3iw8o83xh.cb6pht5ogo4h.us-east-1.rds.amazonaws.com/' 
+    print 'comes here: '+envType
+    DB_URI = 'mysql+pymysql://backfeed:backfeed@aa1vms3iw8o83xh.cb6pht5ogo4h.us-east-1.rds.amazonaws.com/'
 
 #DB_URI = 'sqlite:///modules/SparkWorldEng/Tester/spark_tester.db'
 print 'DB_URI is:'+DB_URI

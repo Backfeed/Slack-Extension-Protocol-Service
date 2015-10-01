@@ -16,7 +16,6 @@ from datetime import datetime
 #from flask.ext.restful import Resource
 #Add Authentication required to all resources:
 from flask.ext.restful import Resource as FlaskResource
-from milestone_value_distributer import MileStoneValueDistributer
 class Resource(FlaskResource):
    method_decorators = [login_required]   # applies to all inherited resources
 
@@ -28,14 +27,13 @@ bidParser = reqparse.RequestParser()
 mileStonebidParser = reqparse.RequestParser()
 closeContributionParser = reqparse.RequestParser()
 
-contributionParser.add_argument('contributers', type=cls.Contributer, action='append')
-contributionParser.add_argument('owner', type=int,required=True)
+contributionParser.add_argument('contributors', type=cls.Contributor, action='append')
+contributionParser.add_argument('ownerId', type=int,required=True)
 contributionParser.add_argument('users_organizations_id', type=int,required=True)
 contributionParser.add_argument('min_reputation_to_close', type=str)
 contributionParser.add_argument('file', type=str,required=True)
 contributionParser.add_argument('title', type=str)
 
-milestoneParser.add_argument('owner', type=int,required=True)
 milestoneParser.add_argument('users_organizations_id', type=int,required=True)
 milestoneParser.add_argument('description', type=str,required=True)
 milestoneParser.add_argument('title', type=str)
@@ -48,15 +46,15 @@ userParser.add_argument('slack_id', type=str)
 
 bidParser.add_argument('tokens', type=str,required=True)
 bidParser.add_argument('contribution_id', type=str,required=True)
-bidParser.add_argument('owner', type=int,required=True)
+bidParser.add_argument('ownerId', type=int,required=True)
 
 mileStonebidParser.add_argument('stake', type=str,required=True)
 mileStonebidParser.add_argument('tokens', type=str,required=True)
 mileStonebidParser.add_argument('reputation', type=str,required=True)    
 mileStonebidParser.add_argument('milestone_id', type=str,required=True)
-mileStonebidParser.add_argument('owner', type=int,required=True)
+mileStonebidParser.add_argument('ownerId', type=int,required=True)
 
-closeContributionParser.add_argument('owner', type=int,required=True)
+closeContributionParser.add_argument('ownerId', type=int,required=True)
 closeContributionParser.add_argument('id', type=int,required=True)
 
 user_fields = {
@@ -99,7 +97,7 @@ bid_nested_fields = {}
 bid_nested_fields['stake'] = fields.String
 bid_nested_fields['tokens'] = fields.String
 bid_nested_fields['reputation'] = fields.String
-bid_nested_fields['owner'] = fields.Integer
+bid_nested_fields['ownerId'] = fields.Integer
 bid_nested_fields['bidderName'] = fields.String
 
 bid_status_nested_fields = {}
@@ -108,22 +106,22 @@ bid_status_nested_fields['tokens'] = fields.String
 bid_status_nested_fields['reputation'] = fields.String
 bid_status_nested_fields['contribution_value_after_bid'] = fields.Float
 bid_status_nested_fields['stake'] = fields.Float
-bid_status_nested_fields['owner'] = fields.Integer
+bid_status_nested_fields['ownerId'] = fields.Integer
 
-contributer_nested_fields = {}
-contributer_nested_fields['contributer_id'] = fields.String
-contributer_nested_fields['contributer_percentage'] = fields.String
-contributer_nested_fields['name'] = fields.String
-contributer_nested_fields['real_name'] = fields.String
-contributer_nested_fields['url'] = fields.String
-contributer_nested_fields['project_reputation'] = fields.String
+contributor_nested_fields = {}
+contributor_nested_fields['id'] = fields.String
+contributor_nested_fields['percentage'] = fields.String
+contributor_nested_fields['name'] = fields.String
+contributor_nested_fields['real_name'] = fields.String
+contributor_nested_fields['url'] = fields.String
+contributor_nested_fields['project_reputation'] = fields.String
 
 contribution_fields = {}
 contribution_fields['id'] = fields.Integer
 contribution_fields['time_created'] = fields.DateTime
 contribution_fields['users_organizations_id'] = fields.Integer
 contribution_fields['status'] = fields.String
-contribution_fields['owner'] = fields.String
+contribution_fields['ownerId'] = fields.String
 contribution_fields['file'] = fields.String
 contribution_fields['title'] = fields.String
 contribution_fields['tokenName'] = fields.String
@@ -131,7 +129,7 @@ contribution_fields['code'] = fields.String
 contribution_fields['channelId'] = fields.String
 contribution_fields['currentValuation'] = fields.Integer
 contribution_fields['bids'] = fields.Nested(bid_nested_fields)
-contribution_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
+contribution_fields['contributionContributors'] = fields.Nested(contributor_nested_fields)
 
 contribution_status_fields ={}
 contribution_status_fields['currentValuation'] = fields.Float
@@ -145,7 +143,7 @@ contribution_status_fields['totalSystemReputation'] = fields.Float
 contribution_status_fields['file'] = fields.String
 contribution_status_fields['title'] = fields.String
 contribution_status_fields['bids'] = fields.Nested(bid_status_nested_fields)
-contribution_status_fields['contributionContributers'] = fields.Nested(contributer_nested_fields)
+contribution_status_fields['contributionContributors'] = fields.Nested(contributor_nested_fields)
 
 contribution_status_nested_fields ={}
 contribution_status_nested_fields['currentValuation'] = fields.Integer
@@ -155,7 +153,7 @@ contribution_status_nested_fields['myWeight'] = fields.Float
 contribution_status_nested_fields['title'] = fields.String
 contribution_status_nested_fields['cTime'] = fields.String
 contribution_status_nested_fields['tokenName'] = fields.String
-contribution_status_nested_fields['owner'] = fields.String
+contribution_status_nested_fields['ownerId'] = fields.String
 
 
 member_status_fields ={}
@@ -172,16 +170,16 @@ member_status_fields['contributions'] = fields.Nested(contribution_status_nested
 
 
 
-milestoneContributer_nested_fields = {}
-milestoneContributer_nested_fields['contributer_id'] = fields.String
-milestoneContributer_nested_fields['contributer_percentage'] = fields.String
-milestoneContributer_nested_fields['name'] = fields.String
-milestoneContributer_nested_fields['real_name'] = fields.String
-milestoneContributer_nested_fields['url'] = fields.String
+milestoneContributor_nested_fields = {}
+milestoneContributor_nested_fields['id'] = fields.String
+milestoneContributor_nested_fields['percentage'] = fields.String
+milestoneContributor_nested_fields['name'] = fields.String
+milestoneContributor_nested_fields['real_name'] = fields.String
+milestoneContributor_nested_fields['url'] = fields.String
 
-contribution_contributer_nested_fields = {}
-contribution_contributer_nested_fields['memberId'] = fields.String
-contribution_contributer_nested_fields['url'] = fields.String
+contribution_contributor_nested_fields = {}
+contribution_contributor_nested_fields['memberId'] = fields.String
+contribution_contributor_nested_fields['url'] = fields.String
 
 milestoneContribution_nested_fields = {}
 milestoneContribution_nested_fields['title'] = fields.String
@@ -189,8 +187,8 @@ milestoneContribution_nested_fields['description'] = fields.String
 milestoneContribution_nested_fields['date'] = fields.String
 milestoneContribution_nested_fields['valuation'] = fields.String
 milestoneContribution_nested_fields['contribution_id'] = fields.Integer
-milestoneContribution_nested_fields['remainingContributers'] = fields.Integer
-milestoneContribution_nested_fields['contributers'] = fields.Nested(contribution_contributer_nested_fields)
+milestoneContribution_nested_fields['remainingContributors'] = fields.Integer
+milestoneContribution_nested_fields['contributors'] = fields.Nested(contribution_contributor_nested_fields)
 
 
 
@@ -201,18 +199,18 @@ milestone_fields['contribution_id'] = fields.Integer
 milestone_fields['start_date'] = fields.DateTime
 milestone_fields['end_date'] = fields.DateTime
 milestone_fields['users_organizations_id'] = fields.Integer
-milestone_fields['owner'] = fields.String
+milestone_fields['ownerId'] = fields.String
 milestone_fields['description'] = fields.String
 milestone_fields['tokens'] = fields.Float
 milestone_fields['totalValue'] = fields.Float
 milestone_fields['contributions'] = fields.Integer
-milestone_fields['contributers'] = fields.Integer
+milestone_fields['contributors'] = fields.Integer
 milestone_fields['title'] = fields.String
 milestone_fields['tokenName'] = fields.String
 milestone_fields['channelName'] = fields.String
 milestone_fields['code'] = fields.String
 milestone_fields['destination_org_id'] = fields.Integer
-milestone_fields['milestoneContributers'] = fields.Nested(milestoneContributer_nested_fields)
+milestone_fields['milestoneContributors'] = fields.Nested(milestoneContributor_nested_fields)
 milestone_fields['milestoneContributions'] = fields.Nested(milestoneContribution_nested_fields)
 
 
@@ -316,13 +314,13 @@ class BidResource(Resource):
             abort(404, message="Contribution {} doesn't exist".format(contributionid))
         if contributionObject.status != 'Open':
             abort(404, message="Contribution {} is not Open".format(contributionid))
-        userObj = getUser(parsed_args['owner'])        
+        userObj = getUser(parsed_args['ownerId'])        
         if not userObj:
-            abort(404, message="User {} who is creating bid  doesn't exist".format(parsed_args['owner']))
+            abort(404, message="User {} who is creating bid  doesn't exist".format(parsed_args['ownerId']))
         contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == userObj.id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()  
         jsonStr = {"tokens":parsed_args['tokens'],
                    "reputation":contributionValues.reputation,
-                   "owner":parsed_args['owner'],
+                   "ownerId":parsed_args['ownerId'],
                    "contribution_id":parsed_args['contribution_id'],
                    "stake":contributionValues.reputation*5/100, 
                    "time_created":datetime.now()
@@ -369,12 +367,12 @@ class MileStoneBidResource(Resource):
             abort(404, message="Contribution {} doesn't exist".format(contributionid))
         if contributionObject.status != 'Open':
             abort(404, message="Contribution {} is not Open".format(contributionid))
-        userObj = getUser(parsed_args['owner'])        
+        userObj = getUser(parsed_args['ownerId'])        
         if not userObj:
-            abort(404, message="User {} who is creating bid  doesn't exist".format(parsed_args['owner']))     
+            abort(404, message="User {} who is creating bid  doesn't exist".format(parsed_args['ownerId']))     
         jsonStr = {"tokens":parsed_args['tokens'],
                    "reputation":parsed_args['reputation'],
-                   "owner":parsed_args['owner'],
+                   "ownerId":parsed_args['ownerId'],
                    "contribution_id":contributionid,
                    "stake":parsed_args['stake'], 
                    "time_created":datetime.now()
@@ -391,7 +389,7 @@ class MileStoneBidResource(Resource):
     
 class BidContributionResource(Resource):
     def get(self, contributionId,userId):
-        char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.owner == userId).first()   
+        char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.ownerId == userId).first()   
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first() 
         if contributionObject.status == 'Closed':
             return {"contributionClose":"true"}  
@@ -406,7 +404,7 @@ class MileStoneBidContributionResource(Resource):
         milestoneObj = session.query(cls.MileStone).filter(cls.MileStone.id == mileStoneId).first()
         contributionId = milestoneObj.contribution_id
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()
-        char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.owner == userId).first()
+        char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.ownerId == userId).first()
         if contributionObject.status == 'Closed':   
              return {"contributionClose":"true",'contributionId':contributionId} 
         if not char:
@@ -421,14 +419,16 @@ class ContributionResource(Resource):
         print 'got Get for Contribution fbid:'+id
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(id))
-        for contributer in contributionObject.contributionContributers:
-            contributer.name= getUser(contributer.contributer_id).name
+        for contributor in contributionObject.contributionContributors:
+            contributor.name= getUser(contributor.contributor_id).name
+            contributor.id = contributor.contributor_id
+            
         last_bid = None 
         currentValuation = 0  
         bids = contributionObject.bids
         bids.sort(key=lambda x: x.time_created, reverse=False)    
         for bid in bids:
-            bid.bidderName = getUser(bid.owner).name
+            bid.bidderName = getUser(bid.ownerId).name
             last_bid = bid
             
         if (last_bid):
@@ -443,8 +443,8 @@ class ContributionResource(Resource):
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(id))
-        for contributer in contributionObject.contributionContributers:
-            session.delete(contributer)
+        for contributor in contributionObject.contributionContributors:
+            session.delete(contributor)
         for bid in contributionObject.bids:
             session.delete(bid)
         session.delete(contributionObject)
@@ -455,46 +455,46 @@ class ContributionResource(Resource):
     def post(self):        
         parsed_args = contributionParser.parse_args()  
         contribution = cls.Contribution()
-        contribution.owner = parsed_args['owner']
+        contribution.ownerId = parsed_args['ownerId']
         contribution.min_reputation_to_close = parsed_args['min_reputation_to_close']
         contribution.file = parsed_args['file']
-        contribution.owner = parsed_args['owner']
+        contribution.ownerId = parsed_args['ownerId']
         contribution.title = parsed_args['title']
         contribution.users_organizations_id = parsed_args['users_organizations_id']
         session.add(contribution) 
         session.flush()  
         userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == parsed_args['users_organizations_id']).first()
-        userObj = getUser(contribution.owner) 
+        userObj = getUser(contribution.ownerId) 
                
         if not userObj:
-            abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.owner))    
+            abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.ownerId))    
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == parsed_args['users_organizations_id']).first()
         firstContribution = False
         if (not contributionObject ):
             firstContribution = True
-        for contributer in parsed_args['contributers']:             
-            contributionContributer = cls.ContributionContributer()
-            contributionContributer.contributer_id = contributer.obj1['contributer_id']
-            if contributionContributer.contributer_id == '':
+        for contributor in parsed_args['contributors']:             
+            contributionContributor = cls.ContributionContributor()
+            contributionContributor.contributor_id = contributor.obj1['id']
+            if contributionContributor.contributor_id == '':
                 continue
-            userObj = getUser(contributionContributer.contributer_id)        
+            userObj = getUser(contributionContributor.contributor_id)        
             if not userObj:
-                abort(404, message="Contributer {} doesn't exist".format(contributionContributer.contributer_id))
-            contributionContributer.contribution_id=contribution.id
-            contributionContributer.name = userObj.name          
-            contributionContributer.contributer_percentage=contributer.obj1['contributer_percentage']
+                abort(404, message="Contributor {} doesn't exist".format(contributionContributor.contributor_id))
+            contributionContributor.contribution_id=contribution.id
+            contributionContributor.name = userObj.name          
+            contributionContributor.percentage=contributor.obj1['percentage']
             #if (firstContribution == True):
                  #userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
                  #if userOrgObject:
-                    #userOrgObject.org_reputation = contributer.obj1['contributer_percentage']
+                    #userOrgObject.org_reputation = contributor.obj1['contributor_percentage']
                     #session.add(userOrgObject)                                               
-            contribution.contributionContributers.append(contributionContributer)  
-        if(len(contribution.contributionContributers) == 0):
-            contributionContributer = cls.ContributionContributer()
-            contributionContributer.contributer_id = contribution.owner
-            contributionContributer.contributer_percentage = '100'
-            contributionContributer.name = userObj.name
-            contribution.contributionContributers.append(contributionContributer)  
+            contribution.contributionContributors.append(contributionContributor)  
+        if(len(contribution.contributionContributor) == 0):
+            contributionContributor = cls.ContributionContributor()
+            contributionContributor.contributor_id = contribution.ownerId
+            contributionContributor.percentage = '100'
+            contributionContributor.name = userObj.name
+            contribution.contributionContributor.append(contributionContributor)  
             #if (firstContribution == True):
                 #userOrgObjectForOwner.org_reputation = 100
                 #session.add(userOrgObjectForOwner) 
@@ -502,7 +502,7 @@ class ContributionResource(Resource):
         #if((parsed_args['intialBid'].obj1['tokens'] != '') & (parsed_args['intialBid'].obj1['reputation'] != '')):      
                 #jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
                    #"reputation":parsed_args['intialBid'].obj1['reputation'],
-                   #"owner":contribution.owner,
+                   #"ownerId":contribution.ownerId,
                    #"contribution_id":contribution.id
                     #}
                 #intialBidObj = cls.Bid(jsonStr,session)        
@@ -531,7 +531,7 @@ class CloseContributionResource(Resource):
     @marshal_with(contribution_fields)   
     def post(self):      
         parsed_args = closeContributionParser.parse_args()   
-        ownerId = parsed_args['owner'] 
+        ownerId = parsed_args['ownerId'] 
         contributionId = parsed_args['id'] 
         userObj = getUser(ownerId)  
         if not userObj:
@@ -541,8 +541,8 @@ class CloseContributionResource(Resource):
             abort(404, message="Contribution {} doesn't exist".format(contributionId))
         if contributionObject.status != 'Open':
             abort(404, message="Contribution {} is already closed".format(contributionId))        
-        if userObj.id != contributionObject.owner:
-            abort(404, message="Only contribution owner can close this contribution".format(ownerId)) 
+        if userObj.id != contributionObject.ownerId:
+            abort(404, message="Only contribution ownerId can close this contribution".format(ownerId)) 
         
         # process contribution:
         if( not self.process_contribution(contributionObject) ):
@@ -590,18 +590,18 @@ class ContributionStatusResource(Resource):
         groupWeight = 0
         reputationDelta = 0
         last_bid = None
-        for contributer in contributionObject.contributionContributers:
-            contributer.name= getUser(contributer.contributer_id).name
-            contributer.url= getUser(contributer.contributer_id).url
-            contributer.real_name= getUser(contributer.contributer_id).real_name
-            contributerUserOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == contributer.contributer_id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
-            contributer.project_reputation = contributerUserOrgObj.org_reputation
+        for contributor in contributionObject.contributionContributors:
+            contributor.name= getUser(contributor.contributor_id).name
+            contributor.url= getUser(contributor.contributor_id).url
+            contributor.real_name= getUser(contributor.contributor_id).real_name
+            contributorUserOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == contributor.contributor_id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
+            contributor.project_reputation = contributorUserOrgObj.org_reputation
         bids = contributionObject.bids
         bids.sort(key=lambda x: x.time_created, reverse=False)
         for bid in bids:
             last_bid = bid
             groupWeight = groupWeight + bid.weight
-            if(str(bid.owner) == str(userId)):
+            if(str(bid.ownerId) == str(userId)):
                 myWeight = bid.weight 
                 #reputationDelta = userOrgObj.org_reputation - bid.reputation
                 myValuation = bid.tokens
@@ -640,12 +640,12 @@ class MemberStatusAllOrgsResource(Resource):
         last_bid = None
         for contribution in allContributions:
             contributedCounted = False
-            if(str(contribution.owner) == str(userOrgObj.user.id)):
+            if(str(contribution.ownerId) == str(userOrgObj.user.id)):
                 countOfContribution = countOfContribution + 1
                 contributedCounted = True
             if contributedCounted == False:
-                for contributionContributer in contribution.contributionContributers :
-                    if(str(contributionContributer.contributer_id) == str(userOrgObj.user.id)):
+                for contributionContributor in contribution.contributionContributors :
+                    if(str(contributionContributor.contributor_id) == str(userOrgObj.user.id)):
                         countOfContribution = countOfContribution + 1
                         contributedCounted = True
             if contributedCounted == True:
@@ -658,7 +658,7 @@ class MemberStatusAllOrgsResource(Resource):
                 bids.sort(key=lambda x: x.time_created, reverse=False)
                 for bid in bids:
                     last_bid = bid
-                    if(str(bid.owner) == str(userOrgObj.user.id)):
+                    if(str(bid.ownerId) == str(userOrgObj.user.id)):
                         myWeight = bid.weight 
                         #reputationDelta = userOrgObj.org_reputation - bid.reputation
                 if (last_bid):
@@ -708,12 +708,12 @@ class MemberStatusResource(Resource):
         countOfContribution = 0       
         for contribution in allContributions:
             contributedCounted = False
-            if(str(contribution.owner) == str(userOrgObj.user.id)):
+            if(str(contribution.ownerId) == str(userOrgObj.user.id)):
                 countOfContribution = countOfContribution + 1
                 contributedCounted = True
             if contributedCounted == False:
-                for contributionContributer in contribution.contributionContributers :
-                    if(str(contributionContributer.contributer_id) == str(userOrgObj.user.id)):
+                for contributionContributor in contribution.contributionContributors :
+                    if(str(contributionContributor.contributor_id) == str(userOrgObj.user.id)):
                         countOfContribution = countOfContribution + 1
                         contributedCounted = True
             if contributedCounted == True:
@@ -725,7 +725,7 @@ class MemberStatusResource(Resource):
                 bids.sort(key=lambda x: x.time_created, reverse=False)
                 for bid in bids:
                     last_bid = bid
-                    if(str(bid.owner) == str(userOrgObj.user.id)):
+                    if(str(bid.ownerId) == str(userOrgObj.user.id)):
                         myWeight = bid.weight 
                         #reputationDelta = userOrgObj.org_reputation - bid.reputation
                 if (last_bid):
@@ -735,7 +735,7 @@ class MemberStatusResource(Resource):
                 contribution.myWeight = myWeight
                 contribution.cTime = contribution.time_created.date()
                 contribution.tokenName= contribution.userOrganization.organization.token_name
-                if(str(contribution.owner) != str(userOrgObj.user.id)):
+                if(str(contribution.ownerId) != str(userOrgObj.user.id)):
                     userOrgObj.contributions.append(contribution)
         userOrgObj.contributionLength = countOfContribution
         for contribution in userOrgObj.contributions:
@@ -797,12 +797,10 @@ class OrganizationResource(Resource):
         organization = cls.Organization(jsonStr,session)
         session.add(organization)
         session.flush()            
-        usersDic = createUserAndUserOrganizations(organization.id,json['contributers'],json['token'],json['b'],json['access_token'],json['slack_user_id'])
+        usersDic = createUserAndUserOrganizations(organization.id,json['contributors'],json['token'],json['b'],json['access_token'])
         
-        userObj = session.query(cls.User).filter(cls.User.slackId == json['slack_user_id']).first()
         
         contribution = cls.Contribution()
-        contribution.owner = userObj.id
         contribution.min_reputation_to_close = 0
         #contribution.file = 'Founding Contribution'
         contribution.title = 'Founding Contribution'
@@ -810,16 +808,16 @@ class OrganizationResource(Resource):
         session.add(contribution)    
         session.flush()
         perc = 0
-        for contributer in json['contributers']:
-            contributionContributer = cls.ContributionContributer()
-            contributionContributer.contributer_id = usersDic[contributer['contributer_id']]
-            contributionContributer.contribution_id=contribution.id
-            contributionContributer.contributer_percentage=contributer['contributer_percentage']
-            if float(contributer['contributer_percentage']) > perc :
-                perc = float(contributer['contributer_percentage'])
-                contribution.owner = contributionContributer.contributer_id
-            contribution.contributionContributers.append(contributionContributer)  
-        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == contribution.owner).filter(cls.UserOrganization.organization_id == organization.id).first()
+        for contributor in json['contributors']:
+            contributionContributor = cls.ContributionContributor()
+            contributionContributor.contributor_id = usersDic[contributor['id']]
+            contributionContributor.contribution_id=contribution.id
+            contributionContributor.percentage=contributor['percentage']
+            if float(contributor['percentage']) > perc :
+                perc = float(contributor['percentage'])
+                contribution.ownerId = contributionContributor.contributor_id
+            contribution.contributionContributors.append(contributionContributor)  
+        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == contribution.ownerId).filter(cls.UserOrganization.organization_id == organization.id).first()
         userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == organization.id).all()
         contribution.users_organizations_id = userOrgObjectForOwner.id
         for userOrgObject in userOrgObjects :
@@ -834,7 +832,7 @@ class OrganizationResource(Resource):
               session.flush()
         jsonStr = {"tokens":json['token'],
                    "reputation":userOrgObjectForOwner.org_reputation,
-                   "owner":contribution.owner,
+                   "ownerId":contribution.ownerId,
                    "contribution_id":contribution.id,
                    "stake":userOrgObjectForOwner.org_reputation*5/100, 
                    "time_created":datetime.now()
@@ -870,8 +868,8 @@ class OrganizationResource(Resource):
             for userOrganization in userOrganizationObjects :
                 contributionObjects = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == userOrganization.id).all()
                 for contributionObject in contributionObjects:                    
-                    for contributer in contributionObject.contributionContributers:
-                        session.delete(contributer)
+                    for contributor in contributionObject.contributionContributors:
+                        session.delete(contributor)
                     for bid in contributionObject.bids:
                         session.delete(bid)
                     session.delete(contributionObject)
@@ -948,17 +946,14 @@ def createChannel(channelName):
         
         
     
-def createUserAndUserOrganizations(organizaionId,contributers,token,b,access_token,slack_user_id):
+def createUserAndUserOrganizations(organizaionId,contributors,token,b,access_token):
     
     usersInSystem = session.query(cls.User).all()
     contributionDic = {}
-    for contributer in contributers :
-        contributionDic[contributer['contributer_id']] = (float(token)/100)*float(contributer['contributer_percentage'])
+    for contributor in contributors :
+        contributionDic[contributor['id']] = (float(token)/100)*float(contributor['percentage'])
     usersDic = {}
-    currentUser = None;
     for u in usersInSystem:
-        if u.slackId == slack_user_id:
-            currentUser = u
         usersDic[u.slackId] = u.id
     # parse response:
     users = getSlackUsers(access_token)
@@ -983,12 +978,6 @@ def createUserAndUserOrganizations(organizaionId,contributers,token,b,access_tok
             userId = usersDic[user['id']]
         except KeyError:
             userId = ''
-        if currentUser and userId  == currentUser.id :
-            currentUser.url = user['profile']['image_48']
-            currentUser.url72 = user['profile']['image_72']
-            currentUser.real_name = user['profile']['real_name']
-            currentUser.slackId = user['id']
-            session.add(currentUser)
         if userId == '':            
             jsonStr = {"name":user['name'],"slackId":user['id'],"url":user['profile']['image_48'],"url72":user['profile']['image_72'],"real_name":user['profile']['real_name']}
             u = cls.User(jsonStr,session)
@@ -1030,7 +1019,7 @@ def allContributionsFromUser():
     user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
     if not user:
         return []    
-    bidsList = session.query(cls.Bid).filter(cls.Bid.owner == user.id).all()
+    bidsList = session.query(cls.Bid).filter(cls.Bid.ownerId == user.id).all()
     for bid in bidsList:        
         mileStoneObj = session.query(cls.MileStone).filter(cls.MileStone.contribution_id == bid.contribution_id).first()
         if mileStoneObj :
@@ -1082,12 +1071,12 @@ class MileStoneResource(Resource):
         for userOrgObject in userOrgObjects:
             usersReputationDic[userOrgObject.user_id]=userOrgObject.org_reputation
         totalContributions = 0
-        totalContributers = 0
-        for milestoneContributer in milestoneObject.milestoneContributers:
-            totalContributers = totalContributers + 1 
-            milestoneContributer.name= getUser(milestoneContributer.contributer_id).name
-            milestoneContributer.real_name= getUser(milestoneContributer.contributer_id).real_name
-            milestoneContributer.url= getUser(milestoneContributer.contributer_id).url
+        totalContributors = 0
+        for milestoneContributor in milestoneObject.milestoneContributors:
+            totalContributors = totalContributors + 1 
+            milestoneContributor.name= getUser(milestoneContributor.contributor_id).name
+            milestoneContributor.real_name= getUser(milestoneContributor.contributor_id).real_name
+            milestoneContributor.url= getUser(milestoneContributor.contributor_id).url
         milestoneObject.current_org_id = milestoneObject.userOrganization.organization_id
         milestoneObject.channelName = milestoneObject.userOrganization.organization.channelName
         milestoneObject.code = milestoneObject.userOrganization.organization.code
@@ -1108,23 +1097,24 @@ class MileStoneResource(Resource):
             
                    
             totalContributions = totalContributions + 1 
-            contributionContributersObjs =milestoneContributionObject.contributionContributers
-            finalCountOfContribures = 0
-            for contributionContributersObj in contributionContributersObjs:
-                finalCountOfContribures = finalCountOfContribures + 1
-                contributionContributersObj.reputation = usersReputationDic[contributionContributersObj.contributer_id]                
-            contributionContributersObjs.sort(key=lambda x: x.reputation, reverse=True)
-            totalCountOfContrbuters = 0
-            milestoneContribution.contributers = []
-            for contributionContributersObj in contributionContributersObjs:
-                totalCountOfContrbuters = totalCountOfContrbuters +1
-                contributionContributersObj.memberId = getUser(contributionContributersObj.contributer_id).slackId
-                contributionContributersObj.url = getUser(contributionContributersObj.contributer_id).url
-                milestoneContribution.contributers.append(contributionContributersObj)
-                print 'contributionContributersObj.reputation'+str(contributionContributersObj.reputation)
-                if totalCountOfContrbuters == 8 :
+            contributionContributorsObjs =milestoneContributionObject.contributionContributors
+            finalCountOfContributors = 0
+            for contributionContributorsObj in contributionContributorsObjs:
+                finalCountOfContributors = finalCountOfContributors + 1
+                contributionContributorsObj.reputation = usersReputationDic[contributionContributorsObj.contributor_id]                
+            contributionContributorsObjs.sort(key=lambda x: x.reputation, reverse=True)
+            totalCountOfContrbutors = 0
+            milestoneContribution.contributors = []
+            for contributionContributorsObj in contributionContributorsObjs:
+                totalCountOfContrbutors = totalCountOfContrbutors +1
+                contributionContributorsObj.memberId = getUser(contributionContributorsObj.contributor_id).slackId
+                contributionContributorsObj.url = getUser(contributionContributorsObj.contributor_id).url
+                contributionContributorsObj.id = contributionContributorsObj.contributor_id
+                milestoneContribution.contributors.append(contributionContributorsObj)
+                print 'contributionContributorsObj.reputation'+str(contributionContributorsObj.reputation)
+                if totalCountOfContrbutors == 8 :
                     break
-            milestoneContribution.remainingContributers = finalCountOfContribures - totalCountOfContrbuters
+            milestoneContribution.remainingContributors = finalCountOfContributors - totalCountOfContrbutors
             milestoneContribution.title= milestoneContributionObject.title
             milestoneContribution.date= milestoneContributionObject.time_created.date()
             milestoneContribution.description = shortDescription
@@ -1138,15 +1128,15 @@ class MileStoneResource(Resource):
                 currentValuation = last_bid.contribution_value_after_bid
             milestoneContribution.valuation = currentValuation
         milestoneObject.contributions = totalContributions
-        milestoneObject.contributers = totalContributers
+        milestoneObject.contributors = totalContributors
         return milestoneObject
 
     def delete(self, id):
         milestoneObject = session.query(cls.MileStone).filter(cls.MileStone.id == id).first()
         if not milestoneObject:
             abort(404, message="MileStone {} doesn't exist".format(id))
-        for milestoneContributer in milestoneObject.milestoneContributers:
-            session.delete(milestoneContributer)
+        for milestoneContributor in milestoneObject.milestoneContributors:
+            session.delete(milestoneContributor)
         for milestoneBid in milestoneObject.milestoneBids:
             session.delete(milestoneBid)
         for milestoneContribution in milestoneObject.milestoneContributions:
@@ -1159,7 +1149,6 @@ class MileStoneResource(Resource):
     def post(self):          
         parsed_args = milestoneParser.parse_args()  
         milestone = cls.MileStone()
-        milestone.owner = parsed_args['owner']
         milestone.description = parsed_args['description']
         milestone.title = parsed_args['title']
         milestone.users_organizations_id = parsed_args['users_organizations_id']
@@ -1177,12 +1166,8 @@ class MileStoneResource(Resource):
             session.add(userOrgObject)
             
         milestone.tokens = totalTokens
-        userObj = getUser(milestone.owner) 
-               
-        if not userObj:
-            abort(404, message="User who is creating milestone {} doesn't exist".format(milestone.owner))    
         allContributionObjects = session.query(cls.Contribution).filter(cls.Contribution.status == 'Open').filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).all()
-        contributersDic = {}
+        contributorsDic = {}
         
         for contribution in allContributionObjects:
             totalContributions = totalContributions + 1 
@@ -1196,14 +1181,14 @@ class MileStoneResource(Resource):
                 currentValuation = last_bid.contribution_value_after_bid
             totalValue = totalValue + currentValuation             
             mileStoneContribution = cls.MileStoneContribution()
-            contributionContributersObjs = contribution.contributionContributers
-            for contributionContributersObj in contributionContributersObjs:
+            contributionContributorsObjs = contribution.contributionContributors
+            for contributionContributorsObj in contributionContributorsObjs:
                 try:
-                    contributerPercentage = contributersDic[contributionContributersObj.contributer_id]
+                    contributorPercentage = contributorsDic[contributionContributorsObj.contributor_id]
                 except KeyError:
-                    contributerPercentage = 0
-                contributerPercentage = contributerPercentage + contributionContributersObj.contributer_percentage
-                contributersDic[contributionContributersObj.contributer_id] = contributerPercentage
+                    contributorPercentage = 0
+                contributorPercentage = contributorPercentage + contributionContributorsObj.percentage
+                contributorsDic[contributionContributorsObj.contributor_id] = contributorPercentage
             mileStoneContribution.contribution_id = contribution.id
             mileStoneContribution.milestone_id = milestone.id
             
@@ -1214,31 +1199,32 @@ class MileStoneResource(Resource):
         milestone.contributions =  totalContributions
         milestone.totalValue =  totalValue
         perc = 0
-        ownerId = parsed_args['owner']
-        for key, elem in contributersDic.items():
-            mileStoneContributer = cls.MileStoneContributer()
-            mileStoneContributer.milestone_id = milestone.id
-            mileStoneContributer.contributer_id = key
-            mileStoneContributer.contributer_percentage = elem/totalContributions
-            if float(mileStoneContributer.contributer_percentage) > perc:
-                perc = float(mileStoneContributer.contributer_percentage)
-                ownerId = mileStoneContributer.contributer_id
-            milestone.milestoneContributers.append(mileStoneContributer)
-        userOrgObjectForTargetOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == parsed_args['owner']).filter(cls.UserOrganization.organization_id == parsed_args['evaluatingTeam']).first()
+        ownerId = ''
+        for key, elem in contributorsDic.items():
+            mileStoneContributor = cls.MileStoneContributor()
+            mileStoneContributor.milestone_id = milestone.id
+            mileStoneContributor.contributor_id = key
+            mileStoneContributor.percentage = elem/totalContributions
+            if float(mileStoneContributor.percentage) > perc:
+                perc = float(mileStoneContributor.percentage)
+                ownerId = mileStoneContributor.contributor_id
+            milestone.milestoneContributors.append(mileStoneContributor)
+        userOrgObjectForTargetOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == ownerId).filter(cls.UserOrganization.organization_id == parsed_args['evaluatingTeam']).first()
         contribution = cls.Contribution()
-        contribution.owner = ownerId
+        contribution.ownerId = ownerId
+        milestone.ownerId = ownerId
         contribution.min_reputation_to_close = 0
         contribution.file = parsed_args['description']
         contribution.title = parsed_args['title']
         contribution.users_organizations_id = userOrgObjectForTargetOwner.id
         session.add(contribution)
         session.flush()
-        for contributer in milestone.milestoneContributers:             
-            contributionContributer = cls.ContributionContributer()
-            contributionContributer.contributer_id = contributer.contributer_id
-            contributionContributer.contribution_id=contribution.id
-            contributionContributer.contributer_percentage=contributer.contributer_percentage
-            contribution.contributionContributers.append(contributionContributer)  
+        for contributor in milestone.milestoneContributors:             
+            contributionContributor = cls.ContributionContributor()
+            contributionContributor.contributor_id = contributor.contributor_id
+            contributionContributor.contribution_id=contribution.id
+            contributionContributor.percentage=contributor.percentage
+            contribution.contributionContributors.append(contributionContributor)  
         
         session.add(contribution)
         milestone.contribution_id =  contribution.id 
@@ -1277,9 +1263,9 @@ class OrganizationCurrentStatusResource(Resource):
         milestone.tokenName = orgObject.token_name
         milestone.channelName = orgObject.channelName
         allContributionObjects = session.query(cls.Contribution).filter(cls.Contribution.status == 'Open').filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == orgId).all()
-        contributersDic = {}
+        contributorsDic = {}
         totalContributions = 0
-        totalContributers = 0
+        totalContributors = 0
         totalValue = 0
         for contribution in allContributionObjects:
             shortDescription = ''
@@ -1308,29 +1294,29 @@ class OrganizationCurrentStatusResource(Resource):
             mileStoneContribution = cls.MileStoneContribution()
             mileStoneContribution.valuation = currentValuation
             mileStoneContribution.description = shortDescription
-            contributionContributersObjs = contribution.contributionContributers
-            finalCountOfContribures = 0
-            for contributionContributersObj in contributionContributersObjs:
-                finalCountOfContribures = finalCountOfContribures + 1
-                contributionContributersObj.reputation = usersReputationDic[contributionContributersObj.contributer_id]
+            contributionContributorsObjs = contribution.contributionContributors
+            finalCountOfContributors = 0
+            for contributionContributorsObj in contributionContributorsObjs:
+                finalCountOfContributors = finalCountOfContributors + 1
+                contributionContributorsObj.reputation = usersReputationDic[contributionContributorsObj.contributor_id]
                 try:
-                    contributerPercentage = contributersDic[contributionContributersObj.contributer_id]
+                    contributorPercentage = contributorsDic[contributionContributorsObj.contributor_id]
                 except KeyError:
-                    contributerPercentage = 0
-                contributerPercentage = contributerPercentage + contributionContributersObj.contributer_percentage
-                contributersDic[contributionContributersObj.contributer_id] = contributerPercentage
-            contributionContributersObjs.sort(key=lambda x: x.reputation, reverse=True)
-            totalCountOfContrbuters = 0
-            mileStoneContribution.contributers = []
-            for contributionContributersObj in contributionContributersObjs:
-                totalCountOfContrbuters = totalCountOfContrbuters +1
-                contributionContributersObj.memberId = getUser(contributionContributersObj.contributer_id).slackId
-                contributionContributersObj.url = getUser(contributionContributersObj.contributer_id).url
-                mileStoneContribution.contributers.append(contributionContributersObj)
-                print 'contributionContributersObj.reputation'+str(contributionContributersObj.reputation)
-                if totalCountOfContrbuters == 8 :
+                    contributorPercentage = 0
+                contributorPercentage = contributorPercentage + contributionContributorsObj.percentage
+                contributorsDic[contributionContributorsObj.contributor_id] = contributorPercentage
+            contributionContributorsObjs.sort(key=lambda x: x.reputation, reverse=True)
+            totalCountOfContrbutors = 0
+            mileStoneContribution.contributors = []
+            for contributionContributorsObj in contributionContributorsObjs:
+                totalCountOfContrbutors = totalCountOfContrbutors +1
+                contributionContributorsObj.memberId = getUser(contributionContributorsObj.contributor_id).slackId
+                contributionContributorsObj.url = getUser(contributionContributorsObj.contributor_id).url
+                mileStoneContribution.contributors.append(contributionContributorsObj)
+                print 'contributionContributorsObj.reputation'+str(contributionContributorsObj.reputation)
+                if totalCountOfContrbutors == 8 :
                     break
-            mileStoneContribution.remainingContributers = finalCountOfContribures - totalCountOfContrbuters
+            mileStoneContribution.remainingContributors = finalCountOfContributors - totalCountOfContrbutors
             mileStoneContribution.contribution_id = contribution.id
             mileStoneContribution.title= contribution.title
             mileStoneContribution.date= contribution.time_created.date()
@@ -1338,16 +1324,16 @@ class OrganizationCurrentStatusResource(Resource):
          
         milestone.contributions =  totalContributions
         milestone.totalValue =  totalValue
-        for key, elem in contributersDic.items():
-            totalContributers = totalContributers + 1
-            mileStoneContributer = cls.MileStoneContributer()
-            mileStoneContributer.contributer_id = key
-            mileStoneContributer.contributer_percentage = elem/totalContributions
-            mileStoneContributer.name= getUser(mileStoneContributer.contributer_id).name
-            mileStoneContributer.real_name= getUser(mileStoneContributer.contributer_id).real_name
-            mileStoneContributer.url= getUser(mileStoneContributer.contributer_id).url
-            milestone.milestoneContributers.append(mileStoneContributer)
-        milestone.contributers = totalContributers
+        for key, elem in contributorsDic.items():
+            totalContributors = totalContributors + 1
+            mileStoneContributor = cls.MileStoneContributor()
+            mileStoneContributor.id = key
+            mileStoneContributor.percentage = elem/totalContributions
+            mileStoneContributor.name= getUser(mileStoneContributor.id).name
+            mileStoneContributor.real_name= getUser(mileStoneContributor.id).real_name
+            mileStoneContributor.url= getUser(mileStoneContributor.id).url
+            milestone.milestoneContributors.append(mileStoneContributor)
+        milestone.contributors = totalContributors
         return milestone
 
 

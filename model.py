@@ -33,7 +33,7 @@ Bid - schema definition:
 bid_table = schema.Table('bid', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('bid_seq_id', optional=True), primary_key=True),
-    schema.Column('owner', types.Integer,
+    schema.Column('ownerId', types.Integer,
         schema.ForeignKey('user.id')),   
     schema.Column('contribution_id', types.Integer,
         schema.ForeignKey('contribution.id')),
@@ -54,7 +54,7 @@ Contribution - schema definition:
 contribution_table = schema.Table('contribution', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('contribution_seq_id', optional=True), primary_key=True),
-    schema.Column('owner', types.Integer,
+    schema.Column('ownerId', types.Integer,
         schema.ForeignKey('user.id')),
     schema.Column('users_organizations_id', types.Integer,
         schema.ForeignKey('users_organizations.id')),
@@ -68,16 +68,16 @@ contribution_table = schema.Table('contribution', metadata,
 )
 
 """
-Contribution Contributers List - schema definition:
+Contribution Contributors List - schema definition:
 """
-contribution_contributer_table = schema.Table('contribution_contributer', metadata,
+contribution_contributor_table = schema.Table('contribution_contributor', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('contribution_contributer_seq_id', optional=True), primary_key=True),
+        schema.Sequence('contribution_contributor_seq_id', optional=True), primary_key=True),
     schema.Column('contribution_id', types.Integer,
         schema.ForeignKey('contribution.id')),
-    schema.Column('contributer_id', types.Integer,
+    schema.Column('contributor_id', types.Integer,
         schema.ForeignKey('user.id')),
-    schema.Column('contributer_percentage', types.FLOAT),   
+    schema.Column('percentage', types.FLOAT),   
 )
 
 """
@@ -86,7 +86,7 @@ MileStone Bid - schema definition:
 milestone_bid_table = schema.Table('milestone_bid', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('milestone_bid_seq_id', optional=True), primary_key=True),
-    schema.Column('owner', types.Integer,
+    schema.Column('ownerId', types.Integer,
         schema.ForeignKey('user.id')),   
     schema.Column('milestone_id', types.Integer,
         schema.ForeignKey('milestone.id')),
@@ -107,7 +107,7 @@ MileStone - schema definition:
 milestone_table = schema.Table('milestone', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('milestone_seq_id', optional=True), primary_key=True),
-    schema.Column('owner', types.Integer,
+    schema.Column('ownerId', types.Integer,
         schema.ForeignKey('user.id')),
     schema.Column('users_organizations_id', types.Integer,
         schema.ForeignKey('users_organizations.id')),
@@ -123,16 +123,16 @@ milestone_table = schema.Table('milestone', metadata,
 )
 
 """
-MileStone Contributers List - schema definition:
+MileStone Contributors List - schema definition:
 """
-milestone_contributer_table = schema.Table('milestone_contributer', metadata,
+milestone_contributor_table = schema.Table('milestone_contributor', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('milestone_contributer_seq_id', optional=True), primary_key=True),
+        schema.Sequence('milestone_contributor_seq_id', optional=True), primary_key=True),
     schema.Column('milestone_id', types.Integer,
         schema.ForeignKey('milestone.id')),
-    schema.Column('contributer_id', types.Integer,
+    schema.Column('contributor_id', types.Integer,
         schema.ForeignKey('user.id')),
-    schema.Column('contributer_percentage', types.FLOAT),   
+    schema.Column('percentage', types.FLOAT),   
 )
 
 """
@@ -211,7 +211,7 @@ orm.mapper(cls.UserOrganization, users_organizations_table, properties={
 orm.mapper(cls.MileStone, milestone_table, properties={
     'milestone_owner':orm.relation(cls.User, backref='milestone'),
     'milestoneBids':orm.relation(cls.MileStoneBid, backref='milestone'),  
-    'milestoneContributers':orm.relation(cls.MileStoneContributer, backref='milestone'),  
+    'milestoneContributors':orm.relation(cls.MileStoneContributor, backref='milestone'),  
     'milestoneContributions':orm.relation(cls.MileStoneContribution, backref='milestone'),                                                  
     'userOrganization':orm.relation(cls.UserOrganization),
 })
@@ -219,16 +219,16 @@ orm.mapper(cls.MileStone, milestone_table, properties={
 orm.mapper(cls.Contribution, contribution_table, properties={
     'contribution_owner':orm.relation(cls.User, backref='contribution'),
     'bids':orm.relation(cls.Bid, backref='contribution'),  
-    'contributionContributers':orm.relation(cls.ContributionContributer, backref='contribution'),                                                  
+    'contributionContributors':orm.relation(cls.ContributionContributor, backref='contribution'),                                                  
     'userOrganization':orm.relation(cls.UserOrganization),
 })
 
-orm.mapper(cls.ContributionContributer, contribution_contributer_table, properties={
-    'contribution_user':orm.relation(cls.User, backref='contributer'),                                                
+orm.mapper(cls.ContributionContributor, contribution_contributor_table, properties={
+    'contribution_user':orm.relation(cls.User, backref='contributor'),                                                
 })
 
-orm.mapper(cls.MileStoneContributer, milestone_contributer_table, properties={
-    'milestone_user':orm.relation(cls.User, backref='milestoneContributer'),                                                
+orm.mapper(cls.MileStoneContributor, milestone_contributor_table, properties={
+    'milestone_user':orm.relation(cls.User, backref='milestoneContributor'),                                                
 })
 
 orm.mapper(cls.MileStoneContribution, milestone_contribution_table, properties={

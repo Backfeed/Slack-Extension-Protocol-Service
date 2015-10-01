@@ -137,7 +137,6 @@ def allChannelIdsForTeam():
 @application.teardown_appcontext
 def shutdown_session(exception=None):
     session.remove()
-    Refactor
     
 @application.before_request
 def db_connect():
