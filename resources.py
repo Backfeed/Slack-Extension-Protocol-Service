@@ -513,7 +513,9 @@ class ContributionResource(Resource):
               contributionValue.reputation = userOrgObject.org_reputation
               contributionValue.user_id = userOrgObject.user_id
               session.add(contributionValue)
-        session.commit()        
+        session.commit()    
+        for contributor in contribution.contributionContributors:             
+            contributor.id=contributor.contributor_id
         contribution.channelId = userOrgObjectForOwner.organization.channelId
         return contribution, 201
 
