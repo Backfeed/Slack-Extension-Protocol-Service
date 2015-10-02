@@ -21,18 +21,11 @@ class Resource(FlaskResource):
 
 userParser = reqparse.RequestParser()
 userOrganizationParser = reqparse.RequestParser()
-contributionParser = reqparse.RequestParser()
 milestoneParser = reqparse.RequestParser()
 bidParser = reqparse.RequestParser()
 mileStonebidParser = reqparse.RequestParser()
 closeContributionParser = reqparse.RequestParser()
 
-contributionParser.add_argument('contributors', type=cls.Contributor, action='append')
-contributionParser.add_argument('ownerId', type=int,required=True)
-contributionParser.add_argument('users_organizations_id', type=int,required=True)
-contributionParser.add_argument('min_reputation_to_close', type=str)
-contributionParser.add_argument('file', type=str,required=True)
-contributionParser.add_argument('title', type=str)
 
 milestoneParser.add_argument('users_organizations_id', type=int,required=True)
 milestoneParser.add_argument('description', type=str,required=True)
@@ -217,6 +210,10 @@ milestone_fields['milestoneContributions'] = fields.Nested(milestoneContribution
 
 def getUser(id):
     user = session.query(cls.User).filter(cls.User.id == id).first()    
+    return user
+
+def getUserBySlackId(id):
+    user = session.query(cls.User).filter(cls.User.slackId == id).first()    
     return user
    
 class UserResource(Resource):
@@ -453,48 +450,43 @@ class ContributionResource(Resource):
     
     @marshal_with(contribution_fields)   
     def post(self):        
-        parsed_args = contributionParser.parse_args()  
+        json = request.json
         contribution = cls.Contribution()
-        contribution.ownerId = parsed_args['ownerId']
-        contribution.min_reputation_to_close = parsed_args['min_reputation_to_close']
-        contribution.file = parsed_args['file']
-        contribution.ownerId = parsed_args['ownerId']
-        contribution.title = parsed_args['title']
-        contribution.users_organizations_id = parsed_args['users_organizations_id']
+        contribution.ownerId = json['ownerId']
+        contribution.min_reputation_to_close = json['min_reputation_to_close']
+        contribution.file = json['file']
+        contribution.title = json['title']
+        contribution.users_organizations_id = json['users_organizations_id']
         session.add(contribution) 
         session.flush()  
-        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == parsed_args['users_organizations_id']).first()
+        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == json['users_organizations_id']).first()
         userObj = getUser(contribution.ownerId) 
                
         if not userObj:
             abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.ownerId))    
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == parsed_args['users_organizations_id']).first()
-        firstContribution = False
-        if (not contributionObject ):
-            firstContribution = True
-        for contributor in parsed_args['contributors']:             
+        for contributor in json['contributors']:             
             contributionContributor = cls.ContributionContributor()
-            contributionContributor.contributor_id = contributor.obj1['id']
-            if contributionContributor.contributor_id == '':
+            if contributor['id'] == '':
                 continue
-            userObj = getUser(contributionContributor.contributor_id)        
+            userObj = getUserBySlackId(contributor['id'])        
             if not userObj:
                 abort(404, message="Contributor {} doesn't exist".format(contributionContributor.contributor_id))
+            contributionContributor.contributor_id = userObj.id
             contributionContributor.contribution_id=contribution.id
             contributionContributor.name = userObj.name          
-            contributionContributor.percentage=contributor.obj1['percentage']
+            contributionContributor.percentage=contributor['percentage']
             #if (firstContribution == True):
                  #userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
                  #if userOrgObject:
                     #userOrgObject.org_reputation = contributor.obj1['contributor_percentage']
                     #session.add(userOrgObject)                                               
             contribution.contributionContributors.append(contributionContributor)  
-        if(len(contribution.contributionContributor) == 0):
+        if(len(contribution.contributionContributors) == 0):
             contributionContributor = cls.ContributionContributor()
             contributionContributor.contributor_id = contribution.ownerId
             contributionContributor.percentage = '100'
             contributionContributor.name = userObj.name
-            contribution.contributionContributor.append(contributionContributor)  
+            contribution.contributionContributors.append(contributionContributor)  
             #if (firstContribution == True):
                 #userOrgObjectForOwner.org_reputation = 100
                 #session.add(userOrgObjectForOwner) 
@@ -521,7 +513,6 @@ class ContributionResource(Resource):
               contributionValue.reputation = userOrgObject.org_reputation
               contributionValue.user_id = userOrgObject.user_id
               session.add(contributionValue)
-              
         session.commit()        
         contribution.channelId = userOrgObjectForOwner.organization.channelId
         return contribution, 201

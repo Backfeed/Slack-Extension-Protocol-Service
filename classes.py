@@ -87,15 +87,4 @@ class MileStoneContribution(object):
 
 class ContributionValue(object):
 	pass
-
-class Contributor(object):
-     def __init__(self, id, percentage):
-        self.obj1 = id
-        self.obj2 = percentage
-       
-class IntialBid(object):
-    def __init__(self, tokens, reputation):
-        self.obj1 = tokens
-        self.obj2 = reputation        
-		
 # checkout serlizing : http://www.diveintopython3.net/serializing.html
