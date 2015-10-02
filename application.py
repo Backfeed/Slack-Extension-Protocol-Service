@@ -138,7 +138,6 @@ def allChannelIdsForTeam():
 def shutdown_session(exception=None):
     session.remove()
     
-    
 @application.before_request
 def db_connect():
     envType = os.getenv('ENV_TYPE', 'Local')
@@ -147,6 +146,8 @@ def db_connect():
     if envType == 'Prod' :
         engine.execute("USE ebdb")
     if envType == 'Stage' :
+        engine.execute("USE ebdb")
+    if envType == 'Refactor' :
         engine.execute("USE ebdb")        
   
 	

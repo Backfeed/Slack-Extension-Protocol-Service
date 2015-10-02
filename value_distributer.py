@@ -29,7 +29,7 @@ class ValueDistributer(ValueDistributerBase):
 	def isBidderFirstBid(self,bids, current_bid):
 		self.log('\n\n *** isBidderFirstBid: ***:\n')
 		for bid in bids:
-			if bid.owner == current_bid.owner:
+			if bid.ownerId == current_bid.ownerId:
 				self.log('is not  bidders first bid.')
 				return False
 
@@ -42,13 +42,13 @@ class ValueDistributer(ValueDistributerBase):
 
 		Wi = 0.0
 		users = self.usersDict
-		current_bidder = users[current_bid.owner]
+		current_bidder = users[current_bid.ownerId]
 		rep = current_bid.reputation
 		print 'rep is'+str(rep)
 		#check how much reputation has been engaged by current_bidder,
 		for bid in bids:
 			print 'comes here in bids'
-			if bid.owner == current_bidder.user_id:  
+			if bid.ownerId == current_bidder.user_id:  
 				Wi += bid.reputation
 		self.log('amount of reputation which  has been engaged by the current_bidder:'+str(Wi))
 		print 'Wi is'+str(Wi)
@@ -125,7 +125,7 @@ class ValueDistributer(ValueDistributerBase):
 		self.log('reputation (weight):'+str(current_bid.reputation))	
 		self.log('tokens (eval):'+str(current_bid.tokens))
 
-	def process_current_evaluation(self,current_eval,contributers,session,slackTeamId,organization):
+	def process_current_evaluation(self,current_eval,contributors,session,slackTeamId,organization):
 		eval_delta = current_eval - self.highest_eval
 		contributionValueObjects = self.contributionValueObjectsDict
 		#hardcoding for Lazzoz for right now making it 90% T03K9TS1Q
@@ -141,9 +141,9 @@ class ValueDistributer(ValueDistributerBase):
 			print 'after eval_delta is' + str(eval_delta)
 		if (eval_delta > 0):
 			# Issue tokens and reputation to collaborators:
-			for contributer in contributers:
-				user = self.usersDict[contributer.contributer_id]		
-				tokens_to_add =  ( float(eval_delta) * float(contributer.contributer_percentage) ) / 100 	
+			for contributor in contributors:
+				user = self.usersDict[contributor.contributor_id]		
+				tokens_to_add =  ( float(eval_delta) * float(contributor.percentage) ) / 100 	
 				user.org_tokens += tokens_to_add
 				if self.contributionsSize == 1:
 					user.org_reputation += (int(tokens_to_add))*10/pow(10,(int(self.b)/50)) 
@@ -155,7 +155,7 @@ class ValueDistributer(ValueDistributerBase):
 
 	def distribute_rep(self,bids_distribution, current_bid,session):
 		users = self.usersDict
-		current_bidder = users[current_bid.owner]
+		current_bidder = users[current_bid.ownerId]
 		contributionValueObjects = self.contributionValueObjectsDict
 
 		if(not current_bid.stake):
@@ -216,7 +216,7 @@ class ValueDistributer(ValueDistributerBase):
 		# prepare protocol function Input:
 		bidsInfo = []
 		for bid in bids:
-			bidsInfo.append( BidInfo(bid.tokens,bid.reputation,bid.stake,bid.owner,self.contributionsSize) )
+			bidsInfo.append( BidInfo(bid.tokens,bid.reputation,bid.stake,bid.ownerId,self.contributionsSize) )
 
 		current_bid_info = bidsInfo[-1]
 		fin = FIn(bidsInfo,current_bid_info,self.total_system_reputation,self.a,self.contributionsSize)
@@ -230,7 +230,7 @@ class ValueDistributer(ValueDistributerBase):
 		
 		# success: handle result:	
 		self.distribute_rep(result.rep_distributions, current_bid,session)
-		self.process_current_evaluation(result.evaluation, contributionObject.contributionContributers,session,contributionObject.userOrganization.organization.slack_teamid,contributionObject.userOrganization.organization)
+		self.process_current_evaluation(result.evaluation, contributionObject.contributionContributors,session,contributionObject.userOrganization.organization.slack_teamid,contributionObject.userOrganization.organization)
 
 		# add current bid and commit DB session:
 		current_bid.contribution_value_after_bid = result.evaluation

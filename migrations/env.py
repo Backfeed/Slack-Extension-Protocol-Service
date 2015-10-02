@@ -61,7 +61,9 @@ def run_migrations_online():
     if envType == 'Prod' :
         engine.execute("USE ebdb")
     if envType == 'Stage' :
-        engine.execute("USE ebdb") 
+        engine.execute("USE ebdb")
+    if envType == 'Refactor' :
+        engine.execute("USE ebdb")  
     connection = engine.connect()
     
     context.configure(connection=connection,

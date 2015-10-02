@@ -82,7 +82,7 @@ def me():
     if(not user):
         print 'User Not Logged In.',404
         return 'User Not Logged In.',404	  
-    return jsonify(dict(displayName=user.name,user_realname=user.real_name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,access_token=g.access_token,slackUserId=g.slackUserId))
+    return jsonify(dict(imgUrl=user.url,displayName=user.name,user_realname=user.real_name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,access_token=g.access_token,slackUserId=g.slackUserId))
 
 def create_token(user,slackTeamId,slackTeamName,access_token,slackUserId):    
     payload = {
@@ -227,8 +227,11 @@ def ext_login():
         return jsonify(token=token,orgChannelId=orgChannelId)
 
     print 'slack profile:'+str(profile)
-    #u = cls.User(slack_id=profile['user_id'], name=profile['user'])
-    jsonStr = {"slackId":profile['user_id'],"name":profile['user']}
+    
+    userInfo = requests.get('https://slack.com/api/users.info', params={'token':access_token,'user':profile['user_id']}, headers=headers)
+    userData = json.loads(userInfo.text)['user']
+    
+    jsonStr = {"slackId":profile['user_id'],"name":profile['user'],"real_name":userData['profile']['real_name'],"url":userData['profile']['image_48'],"url72":userData['profile']['image_72']}
     u = cls.User(jsonStr,session)
     session.add(u)
     session.commit()
