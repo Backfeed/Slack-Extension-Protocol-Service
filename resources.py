@@ -773,11 +773,11 @@ class OrganizationResource(Resource):
     @marshal_with(userOrganization_fields)
     def post(self):
         json = request.json
-        orgObj = session.query(cls.Organization).filter(cls.Organization.code == json['code']).first()
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slack_teamid']).filter(cls.Organization.code == json['code']).first()
         if orgObj:
             return {"codeExist":"true"}
         
-        orgObj = session.query(cls.Organization).filter(cls.Organization.token_name == json['token_name']).first()
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slack_teamid']).filter(cls.Organization.token_name == json['token_name']).first()
         if orgObj:
             return {"tokenExist":"true"}
         
@@ -785,9 +785,9 @@ class OrganizationResource(Resource):
         #channelId = createChannel(json['channelName'])
         jsonStr = {"token_name":json['token_name'],
                     "slack_teamid":json['slack_teamid'],"a":json['a'],"b":json['b'],
-                    "name":json['name'],"code":json['code'],"channelName":json['channelName'],"channelId":json['channelId']}
-        userOrgObj = cls.UserOrganization(jsonStr,session)        
+                    "code":json['code'],"channelName":json['channelName'],"channelId":json['channelId']}
         organization = cls.Organization(jsonStr,session)
+        organization.name = json['channelName']
         session.add(organization)
         session.flush()            
         usersDic = createUserAndUserOrganizations(organization.id,json['contributors'],json['token'],json['b'],json['access_token'])
