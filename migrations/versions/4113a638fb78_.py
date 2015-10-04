@@ -43,23 +43,23 @@ def upgrade():
     )
     op.create_table('contribution',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('owner', sa.INTEGER(), nullable=True),
+    sa.Column('ownerId', sa.INTEGER(), nullable=True),
     sa.Column('users_organizations_id', sa.INTEGER(), nullable=True),
     sa.Column('min_reputation_to_close', sa.INTEGER(), nullable=True),
     sa.Column('time_created', sa.DATETIME(), nullable=True),
     sa.Column('file', sa.TEXT(), nullable=True),
     sa.Column('title', sa.TEXT(), nullable=True),
     sa.Column('status', sa.VARCHAR(length=100), nullable=True),
-    sa.ForeignKeyConstraint(['owner'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['ownerId'], ['user.id'], ),
     sa.ForeignKeyConstraint(['users_organizations_id'], ['users_organizations.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('contribution_contributer',
     sa.Column('id', sa.INTEGER(), nullable=False),
     sa.Column('contribution_id', sa.INTEGER(), nullable=True),
-    sa.Column('contributer_id', sa.INTEGER(), nullable=True),
-    sa.Column('contributer_percentage', sa.FLOAT(), nullable=True),
-    sa.ForeignKeyConstraint(['contributer_id'], ['user.id'], ),
+    sa.Column('contributor_id', sa.INTEGER(), nullable=True),
+    sa.Column('percentage', sa.FLOAT(), nullable=True),
+    sa.ForeignKeyConstraint(['contributor_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['contribution_id'], ['contribution.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -67,7 +67,7 @@ def upgrade():
     
     op.create_table('bid',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('owner', sa.INTEGER(), nullable=True),
+    sa.Column('ownerId', sa.INTEGER(), nullable=True),
     sa.Column('contribution_id', sa.INTEGER(), nullable=True),
     sa.Column('tokens', sa.FLOAT(), nullable=True),
     sa.Column('stake', sa.FLOAT(), nullable=True),
@@ -76,7 +76,7 @@ def upgrade():
     sa.Column('contribution_value_after_bid', sa.FLOAT(), nullable=True),
     sa.Column('time_created', sa.DATETIME(), nullable=True),
     sa.ForeignKeyConstraint(['contribution_id'], ['contribution.id'], ),
-    sa.ForeignKeyConstraint(['owner'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['ownerId'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     
