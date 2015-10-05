@@ -784,17 +784,18 @@ class OrganizationResource(Resource):
         if orgObj:
             return {"tokenExist":"true"}
         
-        
+        channelInfo = getChannelInfo(json['access_token'],json['channelId'])
+        channelName = channelInfo['name']
         #channelId = createChannel(json['channelName'])
         jsonStr = {"token_name":json['token_name'],
-                    "slack_teamid":json['slack_teamid'],"a":json['a'],"b":json['b'],
-                    "code":json['code'],"channelName":json['channelName'],"channelId":json['channelId']}
+                    "slack_teamid":json['slack_teamid'],"a":json['similarEvauationRate'],"b":json['passingResponsibilityRate'],
+                    "code":json['code'],"channelName":channelName,"channelId":json['channelId']}
         userOrgObj = cls.UserOrganization(jsonStr,session)  
         organization = cls.Organization(jsonStr,session)
         organization.name = json['channelName']
         session.add(organization)
         session.flush()            
-        usersDic = createUserAndUserOrganizations(organization.id,json['contributors'],json['token'],json['b'],json['access_token'])
+        usersDic = createUserAndUserOrganizations(organization.id,json['contributors'],json['initialTokens'],json['passingResponsibilityRate'],json['access_token'])
         
         
         contribution = cls.Contribution()
@@ -827,7 +828,7 @@ class OrganizationResource(Resource):
               contributionValue.user_id = userOrgObject.user_id
               session.add(contributionValue)
               session.flush()
-        jsonStr = {"tokens":json['token'],
+        jsonStr = {"tokens":json['initialTokens'],
                    "reputation":userOrgObjectForOwner.org_reputation,
                    "ownerId":contribution.ownerId,
                    "contribution_id":contribution.id,
@@ -884,6 +885,14 @@ def getSlackUsers(access_token):
     print 'slack users:'+str(users)
     return users
 
+def getChannelInfo(access_token,channelId):
+    print 'access_token'+access_token
+    channel_info_api_url = 'https://slack.com/api/channels.info'
+    headers = {'User-Agent': 'DEAP'}
+    r = requests.get(channel_info_api_url, params={'token':access_token,'channel':channelId}, headers=headers)
+    channelInfo = json.loads(r.text)['channel']
+    print 'channelInfo is:'+str(channelInfo)
+    return channelInfo
     
 class getAllSlackUsersResource(Resource):
     def post(self):
