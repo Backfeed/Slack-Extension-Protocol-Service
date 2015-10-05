@@ -789,6 +789,7 @@ class OrganizationResource(Resource):
         jsonStr = {"token_name":json['token_name'],
                     "slack_teamid":json['slack_teamid'],"a":json['a'],"b":json['b'],
                     "code":json['code'],"channelName":json['channelName'],"channelId":json['channelId']}
+        userOrgObj = cls.UserOrganization(jsonStr,session)  
         organization = cls.Organization(jsonStr,session)
         organization.name = json['channelName']
         session.add(organization)
