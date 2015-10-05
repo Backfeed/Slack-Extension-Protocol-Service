@@ -25,10 +25,10 @@ def upgrade():
     )
     op.create_table('organization',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('token_name', sa.VARCHAR(length=255), nullable=False),
+    sa.Column('token_name', sa.VARCHAR(length=60), nullable=False),
     sa.Column('slack_teamid', sa.VARCHAR(length=255), nullable=True),
     sa.Column('name', sa.VARCHAR(length=255), nullable=False),
-    sa.Column('code', sa.VARCHAR(length=255), nullable=False),
+    sa.Column('code', sa.VARCHAR(length=3), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )   
     op.create_table('users_organizations',
@@ -48,7 +48,7 @@ def upgrade():
     sa.Column('min_reputation_to_close', sa.INTEGER(), nullable=True),
     sa.Column('time_created', sa.DATETIME(), nullable=True),
     sa.Column('file', sa.TEXT(), nullable=True),
-    sa.Column('title', sa.TEXT(), nullable=True),
+    sa.Column('title', sa.VARCHAR(length=340), nullable=True),
     sa.Column('status', sa.VARCHAR(length=100), nullable=True),
     sa.ForeignKeyConstraint(['ownerId'], ['user.id'], ),
     sa.ForeignKeyConstraint(['users_organizations_id'], ['users_organizations.id'], ),
