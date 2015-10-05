@@ -65,6 +65,7 @@ user_org_fields = {
 }
 
 org_fields = {
+    'orgId': fields.Integer,
     'id': fields.Integer,
     'name': fields.String, 
     'token_name': fields.String,
@@ -259,6 +260,8 @@ class AllOrganizationResource(Resource):
     @marshal_with(org_fields)
     def get(self):
         organizations = session.query(cls.Organization).all()
+        for organization in organizations :
+            organization.orgId = organization.id
         return organizations
     
 class AllOrganizationForCurrentTeamResource(Resource):
