@@ -1000,7 +1000,7 @@ def allContributionsFromUser():
     }
 
     access_token = params["access_token"]
-
+    channelId = request.form['channelId']
     headers = {'User-Agent': 'DEAP'}
     print 'access_token:'+str(access_token)
 
@@ -1010,18 +1010,41 @@ def allContributionsFromUser():
     print 'slack profile:'+str(profile)  
     contribitions = [];
     milestones = [];
-    user = session.query(cls.User).filter(cls.User.name == profile['user']).first()
+    closedContribitions = [];
+    closedMilestones = [];
+    user = session.query(cls.User).filter(cls.User.slackId == profile['user_id']).first()
     if not user:
-        return []    
+        return [] 
+    orgObj = session.query(cls.Organization).filter(cls.Organization.channelId == channelId).filter(cls.Organization.slack_teamid == profile['team_id']).first()
+    if not orgObj:
+        return []
+    userOrganizationObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgObj.id).filter(cls.UserOrganization.user_id == user.id).first()
+    if not userOrganizationObj:
+        return []
+    allClosedContribution = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == userOrganizationObj.id).filter(cls.Contribution.status == 'Closed').all()
+    for contribution in allClosedContribution :
+        mileStoneObj = session.query(cls.MileStone).filter(cls.MileStone.contribution_id == contribution.id).first()
+        if mileStoneObj :
+            closedMilestones.append(mileStoneObj.id)
+        else:
+            closedContribitions.append(contribution.id)
+       
     bidsList = session.query(cls.Bid).filter(cls.Bid.ownerId == user.id).all()
+    contributionObj = session.query(cls.Contribution).filter(cls.Contribution.id == bid.contribution_id).first()
     for bid in bidsList:        
         mileStoneObj = session.query(cls.MileStone).filter(cls.MileStone.contribution_id == bid.contribution_id).first()
+        contributionObj = session.query(cls.Contribution).filter(cls.Contribution.id == bid.contribution_id).first()
         if mileStoneObj :
-             milestones.append(mileStoneObj.id)
+             if contributionObj.status != 'Closed':
+                 milestones.append(mileStoneObj.id)
+                
         else :
-            contribitions.append(bid.contribution_id)
+            if contributionObj.status != 'Closed':
+                 contribitions.append(bid.contribution_id)
+                
+            
     
-    jsonString = {'contribitions':contribitions,'milestones':milestones}
+    jsonString = {'contribitions':contribitions,'milestones':milestones,'closedContribitions':closedContribitions,'closedMilestones':closedMilestones}
     return jsonString
 
 
