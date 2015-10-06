@@ -788,11 +788,11 @@ class OrganizationResource(Resource):
         channelName = channelInfo['name']
         #channelId = createChannel(json['channelName'])
         jsonStr = {"token_name":json['token_name'],
-                    "slack_teamid":json['slack_teamid'],"a":json['similarEvauationRate'],"b":json['passingResponsibilityRate'],
+                    "slack_teamid":json['slack_teamid'],"a":json['similarEvaluationRate'],"b":json['passingResponsibilityRate'],
                     "code":json['code'],"channelName":channelName,"channelId":json['channelId']}
         userOrgObj = cls.UserOrganization(jsonStr,session)  
         organization = cls.Organization(jsonStr,session)
-        organization.name = json['channelName']
+        organization.name = channelName
         session.add(organization)
         session.flush()            
         usersDic = createUserAndUserOrganizations(organization.id,json['contributors'],json['initialTokens'],json['passingResponsibilityRate'],json['access_token'])
@@ -1005,12 +1005,12 @@ def createUserAndUserOrganizations(organizaionId,contributors,token,b,access_tok
   
     
 def allContributionsFromUser(): 
+    
     users_api_url = 'https://slack.com/api/auth.test'
 
     params = {
         'access_token': request.form['token'],
     }
-
     access_token = params["access_token"]
     channelId = request.form['channelId']
     headers = {'User-Agent': 'DEAP'}
@@ -1041,8 +1041,7 @@ def allContributionsFromUser():
         else:
             closedContribitions.append(contribution.id)
        
-    bidsList = session.query(cls.Bid).filter(cls.Bid.ownerId == user.id).all()
-    contributionObj = session.query(cls.Contribution).filter(cls.Contribution.id == bid.contribution_id).first()
+    bidsList = session.query(cls.Bid).filter(cls.Bid.ownerId == user.id).filter(cls.Bid.contribution_id == cls.Contribution.id).filter(cls.Contribution.users_organizations_id == userOrganizationObj.id).all()
     for bid in bidsList:        
         mileStoneObj = session.query(cls.MileStone).filter(cls.MileStone.contribution_id == bid.contribution_id).first()
         contributionObj = session.query(cls.Contribution).filter(cls.Contribution.id == bid.contribution_id).first()
