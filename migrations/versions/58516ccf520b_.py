@@ -21,7 +21,7 @@ def upgrade():
     sa.Column('users_organizations_id', sa.INTEGER(), nullable=True),
     sa.Column('start_date', sa.DATETIME(), nullable=True),
     sa.Column('end_date', sa.DATETIME(), nullable=True),
-    sa.Column('description', sa.Unicode(), nullable=True),
+    sa.Column('description', sa.Unicode(2000), nullable=True),
     sa.Column('title', sa.Unicode(340), nullable=True),
     sa.Column('tokens', sa.FLOAT(), nullable=True),
     sa.Column('totalValue', sa.FLOAT(), nullable=True),
