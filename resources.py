@@ -776,11 +776,11 @@ class OrganizationResource(Resource):
     @marshal_with(userOrganization_fields)
     def post(self):
         json = request.json
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slack_teamid']).filter(cls.Organization.code == json['code']).first()
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slackTeamId']).filter(cls.Organization.code == json['code']).first()
         if orgObj:
             return {"codeExist":"true"}
         
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slack_teamid']).filter(cls.Organization.token_name == json['token_name']).first()
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slackTeamId']).filter(cls.Organization.token_name == json['token_name']).first()
         if orgObj:
             return {"tokenExist":"true"}
         
@@ -788,7 +788,7 @@ class OrganizationResource(Resource):
         channelName = channelInfo['name']
         #channelId = createChannel(json['channelName'])
         jsonStr = {"token_name":json['token_name'],
-                    "slack_teamid":json['slack_teamid'],"a":json['similarEvaluationRate'],"b":json['passingResponsibilityRate'],
+                    "slack_teamid":json['slackTeamId'],"a":json['similarEvaluationRate'],"b":json['passingResponsibilityRate'],
                     "code":json['code'],"channelName":channelName,"channelId":json['channelId']}
         userOrgObj = cls.UserOrganization(jsonStr,session)  
         organization = cls.Organization(jsonStr,session)
