@@ -1273,7 +1273,8 @@ class MileStoneResource(Resource):
               session.add(contributionValue)
                 
         session.commit()  
-          
+        for contributor in milestone.milestoneContributors:             
+            contributor.id = contributor.contributor_id
         return milestone, 201
 
     
