@@ -82,7 +82,7 @@ def me():
     if(not user):
         print 'User Not Logged In.',404
         return 'User Not Logged In.',404	  
-    return jsonify(dict(imgUrl=user.url,displayName=user.name,user_realname=user.real_name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,access_token=g.access_token,slackUserId=g.slackUserId))
+    return jsonify(dict(imgUrl=user.imgUrl,displayName=user.name,user_realname=user.real_name,userId=user.id,slackTeamId=g.slackTeamId,slackTeamName=g.slackTeamName,access_token=g.access_token,slackUserId=g.slackUserId))
 
 def create_token(user,slackTeamId,slackTeamName,access_token,slackUserId):    
     payload = {
@@ -231,7 +231,7 @@ def ext_login():
     userInfo = requests.get('https://slack.com/api/users.info', params={'token':access_token,'user':profile['user_id']}, headers=headers)
     userData = json.loads(userInfo.text)['user']
     
-    jsonStr = {"slackId":profile['user_id'],"name":profile['user'],"real_name":userData['profile']['real_name'],"url":userData['profile']['image_48'],"url72":userData['profile']['image_72']}
+    jsonStr = {"slackId":profile['user_id'],"name":profile['user'],"real_name":userData['profile']['real_name'],"imgUrl":userData['profile']['image_48'],"imgUrl72":userData['profile']['image_72']}
     u = cls.User(jsonStr,session)
     session.add(u)
     session.commit()
@@ -402,7 +402,7 @@ def syncUsers(orgId,access_token):
         try:
             userId = usersDic[slackUser['id']]
         except KeyError:
-            jsonStr = {"slackId":slackUser['id'],"name":slackUser['name'],"url":slackUser['profile']['image_48'],"url72":slackUser['profile']['image_72'],"real_name":slackUser['profile']['real_name']}
+            jsonStr = {"slackId":slackUser['id'],"name":slackUser['name'],"imgUrl":slackUser['profile']['image_48'],"imgUrl72":slackUser['profile']['image_72'],"real_name":slackUser['profile']['real_name']}
             u = cls.User(jsonStr,session)
             session.add(u) 
             session.flush() 
