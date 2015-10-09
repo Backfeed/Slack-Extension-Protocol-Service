@@ -921,7 +921,7 @@ class getAllSlackUsersResource(Resource):
             if user['is_bot'] == True :
                 continue
             if searchString != '':
-                if  searchString  not in realName and searchString  not in userName:
+                if  searchString.lower()  not in realName.lower() and searchString.lower()  not in userName.lower():
                     continue
             if len(userIdsList) > 0 :
                 if slackUserId in userIdsList:   
