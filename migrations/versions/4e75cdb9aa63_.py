@@ -15,7 +15,7 @@ import sqlalchemy as sa
 
 def upgrade():
     op.add_column('user',sa.Column('slackId', sa.Unicode(255)))
-    op.add_column('user',sa.Column('url72', sa.Unicode(255)))
+    op.add_column('user',sa.Column('imgUrl72', sa.Unicode(255)))
     op.add_column('organization',sa.Column('channelName', sa.Unicode(255)))
     op.add_column('organization',sa.Column('channelId', sa.Unicode(255)))
 

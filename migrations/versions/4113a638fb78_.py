@@ -20,7 +20,7 @@ def upgrade():
     sa.Column('id', sa.INTEGER(), nullable=False),
     sa.Column('name', sa.Unicode(length=255), nullable=True),
     sa.Column('real_name', sa.Unicode(length=255), nullable=True),
-    sa.Column('url', sa.Unicode(length=255), nullable=True),
+    sa.Column('imgUrl', sa.Unicode(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('organization',
