@@ -780,6 +780,9 @@ class OrganizationResource(Resource):
     @marshal_with(userOrganization_fields)
     def post(self):
         json = request.json
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slackTeamId']).filter(cls.Organization.channelId == json['channelId']).first()
+        if orgObj:
+            return {"orgExist":"true"}
         orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slackTeamId']).filter(cls.Organization.code == json['code']).first()
         if orgObj:
             return {"codeExist":"true"}
