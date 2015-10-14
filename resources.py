@@ -1,4 +1,5 @@
 from db import session
+# -*- coding: utf-8 -*-
 import classes as cls
 
 from flask.ext.restful import reqparse
@@ -1181,19 +1182,19 @@ class MileStoneResource(Resource):
         return {}, 204
     
     @marshal_with(milestone_fields)   
-    def post(self):          
-        parsed_args = milestoneParser.parse_args()  
+    def post(self): 
+        json = request.json         
         milestone = cls.MileStone()
-        milestone.description = parsed_args['description']
-        milestone.title = parsed_args['title']
-        milestone.users_organizations_id = parsed_args['users_organizations_id']
-        milestone.destination_org_id = parsed_args['evaluatingTeam']
+        milestone.description = json['description']
+        milestone.title = json['title']
+        milestone.users_organizations_id = json['users_organizations_id']
+        milestone.destination_org_id = json['evaluatingTeam']
         session.add(milestone)
         session.flush()
         totalContributions = 0
         totalValue = 0
         totalTokens = 0            
-        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == parsed_args['users_organizations_id']).first()
+        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == json['users_organizations_id']).first()
         userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).all()
         for userOrgObject in userOrgObjects:
             totalTokens = totalTokens + userOrgObject.org_tokens
@@ -1244,13 +1245,13 @@ class MileStoneResource(Resource):
                 perc = float(mileStoneContributor.percentage)
                 ownerId = mileStoneContributor.contributor_id
             milestone.milestoneContributors.append(mileStoneContributor)
-        userOrgObjectForTargetOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == ownerId).filter(cls.UserOrganization.organization_id == parsed_args['evaluatingTeam']).first()
+        userOrgObjectForTargetOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == ownerId).filter(cls.UserOrganization.organization_id == json['evaluatingTeam']).first()
         contribution = cls.Contribution()
         contribution.ownerId = ownerId
         milestone.ownerId = ownerId
         contribution.min_reputation_to_close = 0
-        contribution.file = parsed_args['description']
-        contribution.title = parsed_args['title']
+        contribution.file = json['description']
+        contribution.title = json['title']
         contribution.users_organizations_id = userOrgObjectForTargetOwner.id
         session.add(contribution)
         session.flush()
@@ -1264,7 +1265,7 @@ class MileStoneResource(Resource):
         session.add(contribution)
         milestone.contribution_id =  contribution.id 
         
-        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == parsed_args['evaluatingTeam']).all()
+        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == json['evaluatingTeam']).all()
         for userOrgObject in userOrgObjects :
               contributionValue = cls.ContributionValue()
               contributionValue.user_id = userOrgObject.user_id

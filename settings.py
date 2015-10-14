@@ -12,6 +12,6 @@ if envType == 'Prod' :
 if envType == 'Staging':
     DB_URI = 'mysql+pymysql://backfeed:backfeed@aa1g5dhpz9ey233.cb6pht5ogo4h.us-east-1.rds.amazonaws.com/'
 if envType == 'Develop':
-    DB_URI = 'mysql+pymysql://backfeed:backfeed@aa1vms3iw8o83xh.cb6pht5ogo4h.us-east-1.rds.amazonaws.com/'
+    DB_URI = 'mysql+pymysql://backfeed:backfeed@aadz7cmluktrd9.cb6pht5ogo4h.us-east-1.rds.amazonaws.com/'
 
 print 'DB_URI is:'+DB_URI

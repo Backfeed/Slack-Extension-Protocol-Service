@@ -3,6 +3,7 @@
 """
 
 from flask import Flask,json
+# -*- coding: utf-8 -*-
 from flask.ext.restful import Api
 from flask import send_file
 import os
