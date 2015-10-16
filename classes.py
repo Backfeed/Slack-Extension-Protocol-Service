@@ -73,16 +73,16 @@ class UserOrganization(BaseObject):
 class ContributionContributor(object):
 	pass
 
-class MileStone(object):
+class Milestone(object):
 	pass
 
-class MileStoneBid(BaseObject):
+class MilestoneBid(BaseObject):
 	pass
 
-class MileStoneContributor(object):
+class MilestoneContributor(object):
 	pass
 
-class MileStoneContribution(object):
+class MilestoneContribution(object):
 	pass
 
 class ContributionValue(object):
