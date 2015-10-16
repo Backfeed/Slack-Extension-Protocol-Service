@@ -17,7 +17,7 @@ import sqlalchemy as sa
 def upgrade():
     op.create_table('milestone',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('ownerId', sa.INTEGER(), nullable=True),
+    sa.Column('userId', sa.INTEGER(), nullable=True),
     sa.Column('users_organizations_id', sa.INTEGER(), nullable=True),
     sa.Column('start_date', sa.DATETIME(), nullable=True),
     sa.Column('end_date', sa.DATETIME(), nullable=True),
@@ -27,7 +27,7 @@ def upgrade():
     sa.Column('totalValue', sa.FLOAT(), nullable=True),
     sa.Column('destination_org_id', sa.INTEGER(), nullable=True),
     sa.Column('contributions', sa.INTEGER(), nullable=True),
-    sa.ForeignKeyConstraint(['ownerId'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['userId'], ['user.id'], ),
     sa.ForeignKeyConstraint(['users_organizations_id'], ['users_organizations.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

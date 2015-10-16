@@ -1,11 +1,11 @@
 import math
 
 class BidInfo(object):
-	def __init__(self, tokens,reputation,stake,ownerId,contributionsSize):
+	def __init__(self, tokens,reputation,stake,userId,contributionsSize):
 		self.tokens = float(tokens)
 		self.reputation = float(reputation)
 		self.stake = float(stake)	
-		self.ownerId = ownerId	
+		self.userId = userId	
 		self.contributionsSize = contributionsSize
 
 	def debug(self,logger):
@@ -13,7 +13,7 @@ class BidInfo(object):
 			logger.info('tokens: '+str(self.tokens))
 			logger.info('reputation: '+str(self.reputation))
 			logger.info('stake: '+str(self.stake))
-			logger.info('ownerId: '+str(self.ownerId))
+			logger.info('userId: '+str(self.userId))
 			
 
 class FIn(object):
@@ -111,11 +111,11 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 			#bidders_rep_distribution =  math.ceil(float(current_bid.stake) * new_rep_weight ) 
 			bidders_rep_distribution =  current_bid.stake * new_rep_weight 
 			
-			fout.rep_distributions[str(bid.ownerId)] = bidders_rep_distribution
+			fout.rep_distributions[str(bid.userId)] = bidders_rep_distribution
 			
 			# debug:
 			self.log("\n")
-			self.log("calculating reputation distibution for bidder :" + str(bid.ownerId))
+			self.log("calculating reputation distibution for bidder :" + str(bid.userId))
 			self.log("bidders evaluation: = " + str(bid.tokens) + ", current bid  = " + str(current_bid.tokens))
 			self.log("calculated decay = " + str(current_decay))
 			self.log('new reputation percentage :'+str(new_rep_weight))

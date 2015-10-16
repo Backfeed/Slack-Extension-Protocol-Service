@@ -29,7 +29,7 @@ class ValueDistributer(ValueDistributerBase):
 	def isBidderFirstBid(self,bids, current_bid):
 		self.log('\n\n *** isBidderFirstBid: ***:\n')
 		for bid in bids:
-			if bid.ownerId == current_bid.ownerId:
+			if bid.userId == current_bid.userId:
 				self.log('is not  bidders first bid.')
 				return False
 
@@ -42,13 +42,13 @@ class ValueDistributer(ValueDistributerBase):
 
 		Wi = 0.0
 		users = self.usersDict
-		current_bidder = users[current_bid.ownerId]
+		current_bidder = users[current_bid.userId]
 		rep = current_bid.reputation
 		print 'rep is'+str(rep)
 		#check how much reputation has been engaged by current_bidder,
 		for bid in bids:
 			print 'comes here in bids'
-			if bid.ownerId == current_bidder.user_id:  
+			if bid.userId == current_bidder.user_id:  
 				Wi += bid.reputation
 		self.log('amount of reputation which  has been engaged by the current_bidder:'+str(Wi))
 		print 'Wi is'+str(Wi)
@@ -155,7 +155,7 @@ class ValueDistributer(ValueDistributerBase):
 
 	def distribute_rep(self,bids_distribution, current_bid,session):
 		users = self.usersDict
-		current_bidder = users[current_bid.ownerId]
+		current_bidder = users[current_bid.userId]
 		contributionValueObjects = self.contributionValueObjectsDict
 
 		if(not current_bid.stake):
@@ -169,12 +169,12 @@ class ValueDistributer(ValueDistributerBase):
 		session.add(current_bidder)	
 		session.add(contributionValueObjects[current_bidder.id])
 		#reallocate reputation
-		for ownerId in bids_distribution:
-			user = users[int(ownerId)]
-			self.log("\n\nrealocating reputation for bidder Id:" + str(ownerId))
+		for userId in bids_distribution:
+			user = users[int(userId)]
+			self.log("\n\nrealocating reputation for bidder Id:" + str(userId))
 			self.log("OLD REP === " + str(user.org_reputation))		
-			user.org_reputation += bids_distribution[ownerId] 
-			contributionValueObjects[user.id].reputationGain= contributionValueObjects[user.id].reputationGain  + bids_distribution[ownerId]
+			user.org_reputation += bids_distribution[userId] 
+			contributionValueObjects[user.id].reputationGain= contributionValueObjects[user.id].reputationGain  + bids_distribution[userId]
 			self.log("NEW REP === " + str(user.org_reputation))
 			session.add(user)
 			session.add(contributionValueObjects[user.id])
@@ -216,7 +216,7 @@ class ValueDistributer(ValueDistributerBase):
 		# prepare protocol function Input:
 		bidsInfo = []
 		for bid in bids:
-			bidsInfo.append( BidInfo(bid.tokens,bid.reputation,bid.stake,bid.ownerId,self.contributionsSize) )
+			bidsInfo.append( BidInfo(bid.tokens,bid.reputation,bid.stake,bid.userId,self.contributionsSize) )
 
 		current_bid_info = bidsInfo[-1]
 		fin = FIn(bidsInfo,current_bid_info,self.total_system_reputation,self.a,self.contributionsSize)
