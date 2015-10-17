@@ -36,7 +36,7 @@ def login_required(f):
         g.user_id = payload['sub']
         g.slackTeamId = payload['slackTeamId']
         g.slackTeamName = payload['slackTeamName']
-        g.access_token = payload['access_token'];
+        g.slackAccessToken = payload['slackAccessToken'];
         g.slackUserId = payload['slackUserId']
         return f(*args, **kwargs)
 
@@ -53,14 +53,14 @@ def me():
     if(not user):
         print 'User Not Logged In.', 404
         return 'User Not Logged In.', 404	  
-    return jsonify(dict(imgUrl=user.imgUrl, displayName=user.name, user_realname=user.real_name, userId=user.id, slackTeamId=g.slackTeamId, slackTeamName=g.slackTeamName, access_token=g.access_token, slackUserId=g.slackUserId))
+    return jsonify(dict(imgUrl=user.imgUrl, displayName=user.name, user_realname=user.real_name, userId=user.id, slackTeamId=g.slackTeamId, slackTeamName=g.slackTeamName, slackAccessToken=g.slackAccessToken, slackUserId=g.slackUserId))
 
-def create_token(user, slackTeamId, slackTeamName, access_token, slackUserId):    
+def create_token(user, slackTeamId, slackTeamName, slackAccessToken, slackUserId):    
     payload = {
         'sub': user.id,
         'slackTeamId' : slackTeamId,
         'slackTeamName' : slackTeamName,
-        'access_token' : access_token,
+        'slackAccessToken' : slackAccessToken,
         'slackUserId' : slackUserId,
         # 'iat': datetime.now(),
         'exp': datetime.now() + timedelta(days=14)
@@ -98,16 +98,16 @@ def ext_login():
     users_api_url = 'https://slack.com/api/auth.test'
 
     params = {
-        'access_token': request.form['token'],
+        'slackAccessToken': request.form['token'],
     }
 
-    access_token = params["access_token"]
+    slackAccessToken = params["slackAccessToken"]
 
     headers = {'User-Agent': 'DEAP'}
-    print 'access_token:' + str(access_token)
+    print 'slackAccessToken:' + str(slackAccessToken)
 
     # Step 2. Retrieve information about the current user.
-    r = requests.get(users_api_url, params={'token':access_token}, headers=headers)
+    r = requests.get(users_api_url, params={'token':slackAccessToken}, headers=headers)
     profile = json.loads(r.text)
     print 'slack profile:' + str(profile)   
     # Step 3. (optional) Link accounts.
@@ -158,7 +158,7 @@ def ext_login():
     # getting all orgs from current slack team
     for org in orgs:
             # sync the extension db with all the members currently exists in slack team
-            syncUsers(org.id, access_token)
+            syncUsers(org.id, slackAccessToken)
             if count == 1:
                 orgChannelId = org.channelId
             else:
@@ -166,11 +166,11 @@ def ext_login():
             count = count + 1;
     print 'orgChannelId is' + str(orgChannelId);
     if user:
-        token = create_token(user, profile['team_id'], profile['team'], access_token, profile['user_id'])
+        token = create_token(user, profile['team_id'], profile['team'], slackAccessToken, profile['user_id'])
         return jsonify(token=token, orgChannelId=orgChannelId)
     
     # getting additional info about user
-    userInfo = requests.get('https://slack.com/api/users.info', params={'token':access_token, 'user':profile['user_id']}, headers=headers)
+    userInfo = requests.get('https://slack.com/api/users.info', params={'token':slackAccessToken, 'user':profile['user_id']}, headers=headers)
     userData = json.loads(userInfo.text)['user']
     # create user in DB if this is the first time login into slack extension
     jsonStr = {"slackId":profile['user_id'], "name":profile['user'], "real_name":userData['profile']['real_name'], "imgUrl":userData['profile']['image_48'], "imgUrl72":userData['profile']['image_72']}
@@ -178,7 +178,7 @@ def ext_login():
     session.add(u)
     session.commit()
 
-    token = create_token(u, profile['team_id'], profile['team'], access_token, profile['user_id'])
+    token = create_token(u, profile['team_id'], profile['team'], slackAccessToken, profile['user_id'])
     return jsonify(token=token, orgChannelId=orgChannelId)
 
 # Services Auth Routes:
@@ -199,13 +199,13 @@ def slack():
 
     response = json.loads(r.text)
     print str(response)
-    access_token = response["access_token"]
+    slackAccessToken = response["slackAccessToken"]
     
     headers = {'User-Agent': 'DEAP'}
-    print 'access_token:' + str(access_token)
+    print 'slackAccessToken:' + str(slackAccessToken)
 
     # Step 2. Retrieve information about the current user.
-    r = requests.get(users_api_url, params={'token':access_token}, headers=headers)
+    r = requests.get(users_api_url, params={'token':slackAccessToken}, headers=headers)
     profile = json.loads(r.text)
     print 'slack profile:' + str(profile)   
     # Step 3. (optional) Link accounts.
@@ -250,9 +250,9 @@ def slack():
     user = session.query(cls.User).filter(cls.User.slackId == profile['user_id']).first()
     orgs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == profile['team_id']).all()   
     for org in orgs:
-            syncUsers(org.id, access_token)            
+            syncUsers(org.id, slackAccessToken)            
     if user:
-        token = create_token(user, profile['team_id'], profile['team'], access_token, profile['user_id'])
+        token = create_token(user, profile['team_id'], profile['team'], slackAccessToken, profile['user_id'])
         return jsonify(token=token)
 
     jsonStr = {"slackId":profile['user_id'], "name":profile['user']}
@@ -260,11 +260,11 @@ def slack():
     session.add(u)
     session.commit()
     
-    token = create_token(u, profile['team_id'], profile['team'], access_token, profile['user_id'])
+    token = create_token(u, profile['team_id'], profile['team'], slackAccessToken, profile['user_id'])
     return jsonify(token=token)
 
 
-def syncUsers(orgId, access_token):
+def syncUsers(orgId, slackAccessToken):
     # get all  the db users
     usersInSystem = session.query(cls.User).all()
     # get al user organizations in this org
@@ -275,7 +275,7 @@ def syncUsers(orgId, access_token):
     # get all slack users
     team_users_api_url = 'https://slack.com/api/users.list'
     headers = {'User-Agent': 'DEAP'}
-    r = requests.get(team_users_api_url, params={'token':access_token}, headers=headers)
+    r = requests.get(team_users_api_url, params={'token':slackAccessToken}, headers=headers)
     slackUsers = json.loads(r.text)['members']
     usersDic = {}
     for user in usersInSystem:                

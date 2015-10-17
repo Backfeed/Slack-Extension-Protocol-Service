@@ -7,7 +7,7 @@ from flask.ext.restful import abort
 from flask.ext.restful import fields
 from flask.ext.restful import marshal_with
 import json
-from auth import login_required
+from auth import login_required,parse_token
 import requests
 from flask import g,request
 
@@ -33,22 +33,18 @@ milestoneParser.add_argument('description', type=str,required=True)
 milestoneParser.add_argument('title', type=str)
 milestoneParser.add_argument('evaluatingTeam', type=int,required=True)
 
-userParser.add_argument('userId', type=str)
 userParser.add_argument('name', type=str,required=True)
 userParser.add_argument('slack_id', type=str)
 
 
 bidParser.add_argument('tokens', type=str,required=True)
 bidParser.add_argument('contribution_id', type=str,required=True)
-bidParser.add_argument('userId', type=int,required=True)
 
 milestonebidParser.add_argument('stake', type=str,required=True)
 milestonebidParser.add_argument('tokens', type=str,required=True)
 milestonebidParser.add_argument('reputation', type=str,required=True)    
 milestonebidParser.add_argument('milestone_id', type=str,required=True)
-milestonebidParser.add_argument('userId', type=int,required=True)
 
-closeContributionParser.add_argument('userId', type=int,required=True)
 closeContributionParser.add_argument('id', type=int,required=True)
 
 user_fields = {
@@ -315,14 +311,16 @@ class BidResource(Resource):
             abort(404, message="Contribution {} doesn't exist".format(contributionid))
         if contributionObject.status != 'Open':
             abort(404, message="Contribution {} is not Open".format(contributionid))
-        userObj = getUser(parsed_args['userId'])        
+        payload = parse_token(request)
+        userId = payload['sub']
+        userObj = getUser(userId)        
         if not userObj:
-            abort(404, message="User {} who is creating bid  doesn't exist".format(parsed_args['userId']))
+            abort(404, message="User {} who is creating bid  doesn't exist".format(userId))
         contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == userObj.id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
         
         jsonStr = {"tokens":parsed_args['tokens'],
                    "reputation":contributionValues.reputation,
-                   "userId":parsed_args['userId'],
+                   "userId":userId,
                    "contribution_id":parsed_args['contribution_id'],
                    "stake":contributionValues.reputation*5/100, 
                    "time_created":datetime.now()
@@ -369,14 +367,16 @@ class MilestoneBidResource(Resource):
             abort(404, message="Contribution {} doesn't exist".format(contributionid))
         if contributionObject.status != 'Open':
             abort(404, message="Contribution {} is not Open".format(contributionid))
-        userObj = getUser(parsed_args['userId'])        
+        payload = parse_token(request)
+        userId = payload['sub']
+        userObj = getUser(userId)        
         if not userObj:
-            abort(404, message="User {} who is creating bid  doesn't exist".format(parsed_args['userId']))
+            abort(404, message="User {} who is creating bid  doesn't exist".format(userId))
         contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == userObj.id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
         
         jsonStr = {"tokens":parsed_args['tokens'],
                    "reputation":contributionValues.reputation,
-                   "userId":parsed_args['userId'],
+                   "userId":userId,
                    "contribution_id":contributionid,
                    "stake":contributionValues.reputation*5/100, 
                    "time_created":datetime.now()
@@ -460,7 +460,8 @@ class ContributionResource(Resource):
     def post(self):        
         json = request.json
         contribution = cls.Contribution()
-        contribution.userId = json['userId']
+        payload = parse_token(request)
+        contribution.userId = payload['sub']
         contribution.min_reputation_to_close = 0
         contribution.description = json['description']
         contribution.title = json['title']
@@ -532,8 +533,9 @@ class ContributionResource(Resource):
 class CloseContributionResource(Resource):
     @marshal_with(contribution_fields)   
     def post(self):      
-        parsed_args = closeContributionParser.parse_args()   
-        userId = parsed_args['userId'] 
+        parsed_args = closeContributionParser.parse_args()  
+        payload = parse_token(request)
+        userId = payload['sub'] 
         contributionId = parsed_args['id'] 
         userObj = getUser(userId)  
         if not userObj:
@@ -782,30 +784,32 @@ class OrganizationResource(Resource):
     @marshal_with(userOrganization_fields)
     def post(self):
         json = request.json
-        channelInfo = getChannelInfo(json['access_token'],json['channelId'])
+        channelInfo = getChannelInfo(json['slackAccessToken'],json['channelId'])
         channelName = channelInfo['name']
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slackTeamId']).filter(cls.Organization.channelId == json['channelId']).first()
+        payload = parse_token(request)
+        slackTeamId = payload['slackTeamId']
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.channelId == json['channelId']).first()
         if orgObj:
             abort(404, message="Project for channelName {} already exist".format(channelName))
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slackTeamId']).filter(cls.Organization.code == json['code']).first()
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.code == json['code']).first()
         if orgObj:
             abort(404, message="Project with code {} already exist".format(json['code']))
         
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == json['slackTeamId']).filter(cls.Organization.token_name == json['token_name']).first()
+        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.token_name == json['token_name']).first()
         if orgObj:
             abort(404, message="Project with token {} already exist".format(json['token_name']))
         
         
         #channelId = createChannel(json['channelName'])
         jsonStr = {"token_name":json['token_name'],
-                    "slack_teamid":json['slackTeamId'],"a":json['similarEvaluationRate'],"b":json['passingResponsibilityRate'],
+                    "slack_teamid":slackTeamId,"a":json['similarEvaluationRate'],"b":json['passingResponsibilityRate'],
                     "code":json['code'],"channelName":channelName,"channelId":json['channelId']}
         userOrgObj = cls.UserOrganization(jsonStr,session)  
         organization = cls.Organization(jsonStr,session)
         organization.name = channelName
         session.add(organization)
         session.flush()            
-        usersDic = createUserAndUserOrganizations(organization.id,json['contributors'],json['initialTokens'],json['passingResponsibilityRate'],json['access_token'])
+        usersDic = createUserAndUserOrganizations(organization.id,json['contributors'],json['initialTokens'],json['passingResponsibilityRate'],json['slackAccessToken'])
         
         
         contribution = cls.Contribution()
@@ -886,20 +890,20 @@ class OrganizationResource(Resource):
             session.commit()
         return {}, 204
     
-def getSlackUsers(access_token):
-    print 'access_token'+access_token
+def getSlackUsers(slackAccessToken):
+    print 'slackAccessToken'+slackAccessToken
     team_users_api_url = 'https://slack.com/api/users.list'
     headers = {'User-Agent': 'DEAP'}
-    r = requests.get(team_users_api_url, params={'token':access_token}, headers=headers)
+    r = requests.get(team_users_api_url, params={'token':slackAccessToken}, headers=headers)
     users = json.loads(r.text)['members']
     print 'slack users:'+str(users)
     return users
 
-def getChannelInfo(access_token,channelId):
-    print 'access_token'+access_token
+def getChannelInfo(slackAccessToken,channelId):
+    print 'slackAccessToken'+slackAccessToken
     channel_info_api_url = 'https://slack.com/api/channels.info'
     headers = {'User-Agent': 'DEAP'}
-    r = requests.get(channel_info_api_url, params={'token':access_token,'channel':channelId}, headers=headers)
+    r = requests.get(channel_info_api_url, params={'token':slackAccessToken,'channel':channelId}, headers=headers)
     channelInfo = json.loads(r.text)['channel']
     print 'channelInfo is:'+str(channelInfo)
     return channelInfo
@@ -908,11 +912,11 @@ class getAllSlackUsersResource(Resource):
     def post(self):
         print 'comes here'
         json = request.json
-        access_token = json['access_token']
+        slackAccessToken = json['slackAccessToken']
         userIds = json['userIds']
         searchString = json['searchString']
         
-        users = getSlackUsers(access_token)
+        users = getSlackUsers(slackAccessToken)
         usersJson = []
         userIdsList = []
         if userIds != '':
@@ -936,10 +940,10 @@ class getAllSlackUsersResource(Resource):
             usersJson.append(jsonStr)
         return usersJson
     
-def createChannel(channelName):
+def createChannel(channelName,slackAccessToken):
         team_users_api_url = 'https://slack.com/api/channels.create'
         headers = {'User-Agent': 'DEAP'}
-        r = requests.post(team_users_api_url, params={'token':g.access_token,'name':channelName}, headers=headers)
+        r = requests.post(team_users_api_url, params={'token':slackAccessToken,'name':channelName}, headers=headers)
         channelObj = json.loads(r.text)
         print str(channelObj)
         
@@ -962,7 +966,7 @@ def createChannel(channelName):
         
         
     
-def createUserAndUserOrganizations(organizaionId,contributors,token,b,access_token):
+def createUserAndUserOrganizations(organizaionId,contributors,token,b,slackAccessToken):
     
     usersInSystem = session.query(cls.User).all()
     contributionDic = {}
@@ -972,7 +976,7 @@ def createUserAndUserOrganizations(organizaionId,contributors,token,b,access_tok
     for u in usersInSystem:
         usersDic[u.slackId] = u.id
     # parse response:
-    users = getSlackUsers(access_token)
+    users = getSlackUsers(slackAccessToken)
     print 'slack users:'+str(users)
     for user in users :
         token = 0
@@ -1019,15 +1023,15 @@ def allContributionsFromUser():
     users_api_url = 'https://slack.com/api/auth.test'
 
     params = {
-        'access_token': request.form['token'],
+        'slackAccessToken': request.form['token'],
     }
-    access_token = params["access_token"]
+    slackAccessToken = params["slackAccessToken"]
     channelId = request.form['channelId']
     headers = {'User-Agent': 'DEAP'}
-    print 'access_token:'+str(access_token)
+    print 'slackAccessToken:'+str(slackAccessToken)
 
     # Step 2. Retrieve information about the current user.
-    r = requests.get(users_api_url, params={'token':access_token}, headers=headers)
+    r = requests.get(users_api_url, params={'token':slackAccessToken}, headers=headers)
     profile = json.loads(r.text)
     print 'slack profile:'+str(profile)  
     contribitions = [];

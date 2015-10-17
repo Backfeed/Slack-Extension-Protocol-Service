@@ -44,6 +44,7 @@ application = Flask(__name__, static_url_path='', static_folder=client_path)
 # Set application.debug=true to enable tracebacks on Beanstalk log output. 
 # TBD: Make sure to remove this line before deploying to production.
 application.debug=True
+application.config['ERROR_404_HELP'] = False
 
 # Set CORS options on app configuration TBD: do we need this ?
 """"
