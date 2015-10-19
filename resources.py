@@ -40,16 +40,16 @@ userParser.add_argument('slack_id', type=str)
 bidParser.add_argument('tokens', type=str,required=True)
 bidParser.add_argument('contribution_id', type=str,required=True)
 
-milestonebidParser.add_argument('stake', type=str,required=True)
-milestonebidParser.add_argument('tokens', type=str,required=True)
-milestonebidParser.add_argument('reputation', type=str,required=True)    
-milestonebidParser.add_argument('milestone_id', type=str,required=True)
+milestonebidParser.add_argument('tokens', type=int,required=True)
+milestonebidParser.add_argument('milestoneId', type=int,required=True)
 
 closeContributionParser.add_argument('id', type=int,required=True)
 
 user_fields = {
     'id': fields.Integer,
-    'name': fields.String,    
+    'name': fields.String,
+    'displayName': fields.String,
+    'imgUrl': fields.String,
 }
 
 user_org_fields = {
@@ -213,6 +213,14 @@ def getUser(id):
 def getUserBySlackId(id):
     user = session.query(cls.User).filter(cls.User.slackId == id).first()    
     return user
+
+class UserSlackResource(Resource):
+    @marshal_with(user_fields)
+    def get(self, slackId):
+        char = getUserBySlackId(slackId)
+        if not char:
+            abort(404, message="User {} doesn't exist".format(id))       
+        return {"id": char.id,"name":char.name,"displayName": char.name,"imgUrl": char.imgUrl}
    
 class UserResource(Resource):
     @marshal_with(user_org_fields)
@@ -357,7 +365,7 @@ class MilestoneBidResource(Resource):
     @marshal_with(bid_fields)
     def post(self):
         parsed_args = milestonebidParser.parse_args()
-        milestoneId = parsed_args['milestone_id']        
+        milestoneId = parsed_args['milestoneId']        
         milestoneObject = session.query(cls.Milestone).filter(cls.Milestone.id == milestoneId).first()
         if not milestoneObject:
             abort(404, message="Milestone {} doesn't exist".format(milestoneId)) 
@@ -624,17 +632,16 @@ class ContributionStatusResource(Resource):
     
 class MemberStatusAllOrgsResource(Resource):
     @marshal_with(member_status_fields)
-    def get(self,slackTeamId,userId):        
-        userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).filter(cls.UserOrganization.organization_id == cls.Organization.id).filter(cls.Organization.slack_teamid == slackTeamId).all()
+    def get(self,userId):        
+        userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).all()
         userOrgObj = userOrgObjs[0]
         allContributions = session.query(cls.Contribution).all()
-        allContributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).filter(cls.UserOrganization.organization_id == cls.Organization.id).filter(cls.Organization.slack_teamid == slackTeamId).all()
+        allContributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).all()
         contributionsDict = {}
         for allContributionValue in allContributionValues :
             contributionsDict[allContributionValue.contribution_id] = allContributionValue.reputationGain
         currentValuation = 0
         myWeight = 0
-        reputationDelta = 0
         userOrgObj.name = userOrgObj.user.name
         userOrgObj.fullName = userOrgObj.user.real_name
         userOrgObj.imgUrl= userOrgObj.user.imgUrl72
@@ -685,7 +692,7 @@ class MemberStatusAllOrgsResource(Resource):
 
 class MemberStatusResource(Resource):
     @marshal_with(member_status_fields)
-    def get(self,orgId,userId):        
+    def get(self,userId,orgId):        
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).filter(cls.UserOrganization.organization_id == orgId).first()
         userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).all()
         allContributions = session.query(cls.Contribution).filter(cls.UserOrganization.id == cls.Contribution.users_organizations_id).filter(cls.UserOrganization.organization_id == orgId).all()
@@ -1194,14 +1201,17 @@ class MilestoneResource(Resource):
         milestone = cls.Milestone()
         milestone.description = json['description']
         milestone.title = json['title']
-        milestone.users_organizations_id = json['users_organizations_id']
+        payload = parse_token(request)
+        userId = payload['sub']
+        orgObject = session.query(cls.Organization).filter(cls.Organization.channelId == json['channelId']).first()
+        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgObject.id).filter(cls.UserOrganization.user_id == userId).first()
+        milestone.users_organizations_id = userOrgObjectForOwner.id
         milestone.destination_org_id = json['evaluatingTeam']
         session.add(milestone)
         session.flush()
         totalContributions = 0
         totalValue = 0
         totalTokens = 0            
-        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.id == json['users_organizations_id']).first()
         userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).all()
         for userOrgObject in userOrgObjects:
             totalTokens = totalTokens + userOrgObject.org_tokens

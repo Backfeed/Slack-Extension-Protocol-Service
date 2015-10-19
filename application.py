@@ -8,7 +8,7 @@ from flask.ext.restful import Api
 from flask import send_file
 import os
 
-from resources import UserResource, MilestoneBidResource
+from resources import UserResource, MilestoneBidResource, UserSlackResource
 from resources import BidResource
 from resources import ContributionResource
 from resources import CloseContributionResource
@@ -60,6 +60,7 @@ api = Api(application)
 api.add_resource(UserResource, '/users/<string:id>/<string:orgId>', endpoint='users')
 api.add_resource(UserResource, '/users', endpoint='user')
 api.add_resource(AllUserResource, '/users/all/<string:organizationId>', endpoint='allUser')
+api.add_resource(UserSlackResource, '/api/user/<string:slackId>', endpoint='apiusers')
 
 api.add_resource(BidResource, '/bids/<string:id>', endpoint='bids')
 api.add_resource(BidResource, '/bids', endpoint='bid')
@@ -84,15 +85,15 @@ api.add_resource(ChannelOrganizationExistsResource, '/organization/channel/<stri
 
 api.add_resource(AllOrganizationResource, '/organization/all', endpoint='allOrganizations')
 api.add_resource(AllOrganizationForCurrentTeamResource, '/organization/all/team/<string:slackTeamId>', endpoint='allOrganizationsForCurrentTeam')
-api.add_resource(MemberStatusResource, '/member/status/<string:orgId>/<string:userId>', endpoint='memberStatus')
-api.add_resource(MemberStatusAllOrgsResource, '/member/statusallOrgs/<string:slackTeamId>/<string:userId>', endpoint='memberStatusAllOrgs')
+api.add_resource(MemberStatusResource, '/member/status/<string:userId>/<string:orgId>', endpoint='memberStatus')
+api.add_resource(MemberStatusAllOrgsResource, '/member/status/<string:userId>', endpoint='memberStatusAllOrgs')
 api.add_resource(OrganizationCurrentStatusResource, '/organization/currentStatus/<string:orgId>', endpoint='organizationCurrentStatus')
 
 api.add_resource(MilestoneResource, '/milestone', endpoint='milestone')
 api.add_resource(MilestoneResource, '/milestone/<string:id>', endpoint='milestones')
 api.add_resource(AllMilestonesForOrgResource, '/milestone/all/<string:id>', endpoint='allMilestonesForOrg')
-api.add_resource(MilestoneBidContributionResource, '/mileStonebid/<string:mileStoneId>/<string:userId>', endpoint='mileStonebids')
-api.add_resource(MilestoneBidResource, '/mileStoneBids', endpoint='mileStoneBid')
+api.add_resource(MilestoneBidContributionResource, '/milestonebid/<string:milestoneId>/<string:userId>', endpoint='milestonebids')
+api.add_resource(MilestoneBidResource, '/milestoneBids', endpoint='milestoneBid')
 
 
 
