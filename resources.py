@@ -22,16 +22,10 @@ class Resource(FlaskResource):
 
 userParser = reqparse.RequestParser()
 userOrganizationParser = reqparse.RequestParser()
-milestoneParser = reqparse.RequestParser()
 bidParser = reqparse.RequestParser()
 milestonebidParser = reqparse.RequestParser()
 closeContributionParser = reqparse.RequestParser()
 
-
-milestoneParser.add_argument('users_organizations_id', type=int,required=True)
-milestoneParser.add_argument('description', type=str,required=True)
-milestoneParser.add_argument('title', type=str)
-milestoneParser.add_argument('evaluatingTeam', type=int,required=True)
 
 userParser.add_argument('name', type=str,required=True)
 userParser.add_argument('slack_id', type=str)
@@ -1206,7 +1200,7 @@ class MilestoneResource(Resource):
         orgObject = session.query(cls.Organization).filter(cls.Organization.channelId == json['channelId']).first()
         userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgObject.id).filter(cls.UserOrganization.user_id == userId).first()
         milestone.users_organizations_id = userOrgObjectForOwner.id
-        milestone.destination_org_id = json['evaluatingTeam']
+        milestone.destination_org_id = json['evaluatingProject']
         session.add(milestone)
         session.flush()
         totalContributions = 0
@@ -1262,7 +1256,7 @@ class MilestoneResource(Resource):
                 perc = float(milestoneContributor.percentage)
                 userId = milestoneContributor.contributor_id
             milestone.milestoneContributors.append(milestoneContributor)
-        userOrgObjectForTargetOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == json['evaluatingTeam']).first()
+        userOrgObjectForTargetOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == json['evaluatingProject']).first()
         contribution = cls.Contribution()
         contribution.userId = userId
         milestone.userId = userId
@@ -1282,7 +1276,7 @@ class MilestoneResource(Resource):
         session.add(contribution)
         milestone.contribution_id =  contribution.id 
         
-        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == json['evaluatingTeam']).all()
+        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == json['evaluatingProject']).all()
         for userOrgObject in userOrgObjects :
               contributionValue = cls.ContributionValue()
               contributionValue.user_id = userOrgObject.user_id
