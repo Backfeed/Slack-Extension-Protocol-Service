@@ -119,7 +119,6 @@ milestone_table = schema.Table('milestone', metadata,
     schema.Column('tokens',  types.Float),
     schema.Column('totalValue',  types.Float),
     schema.Column('destination_org_id', types.Integer),
-    schema.Column('contributions',  types.Integer),
 )
 
 """
@@ -211,8 +210,8 @@ orm.mapper(cls.UserOrganization, users_organizations_table, properties={
 orm.mapper(cls.Milestone, milestone_table, properties={
     'milestone_owner':orm.relation(cls.User, backref='milestone'),
     'milestoneBids':orm.relation(cls.MilestoneBid, backref='milestone'),  
-    'milestoneContributors':orm.relation(cls.MilestoneContributor, backref='milestone'),  
-    'milestoneContributions':orm.relation(cls.MilestoneContribution, backref='milestone'),                                                  
+    'contributors':orm.relation(cls.MilestoneContributor, backref='milestone'),  
+    'contributions':orm.relation(cls.MilestoneContribution, backref='milestone'),                                                  
     'userOrganization':orm.relation(cls.UserOrganization),
 })
 

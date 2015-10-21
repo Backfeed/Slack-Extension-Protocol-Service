@@ -31,8 +31,8 @@ userParser.add_argument('name', type=str,required=True)
 userParser.add_argument('slack_id', type=str)
 
 
-bidParser.add_argument('tokens', type=str,required=True)
-bidParser.add_argument('contribution_id', type=str,required=True)
+bidParser.add_argument('evaluation', type=str,required=True)
+bidParser.add_argument('contributionId', type=str,required=True)
 
 milestonebidParser.add_argument('tokens', type=int,required=True)
 milestonebidParser.add_argument('milestoneId', type=int,required=True)
@@ -188,15 +188,13 @@ milestone_fields['userId'] = fields.String
 milestone_fields['description'] = fields.String
 milestone_fields['tokens'] = fields.Float
 milestone_fields['totalValue'] = fields.Float
-milestone_fields['contributions'] = fields.Integer
-milestone_fields['contributors'] = fields.Integer
 milestone_fields['title'] = fields.String
 milestone_fields['tokenName'] = fields.String
 milestone_fields['channelName'] = fields.String
 milestone_fields['code'] = fields.String
 milestone_fields['destination_org_id'] = fields.Integer
-milestone_fields['milestoneContributors'] = fields.Nested(milestoneContributor_nested_fields)
-milestone_fields['milestoneContributions'] = fields.Nested(milestoneContribution_nested_fields)
+milestone_fields['contributors'] = fields.Nested(milestoneContributor_nested_fields)
+milestone_fields['contributions'] = fields.Nested(milestoneContribution_nested_fields)
 
 
 
@@ -307,7 +305,7 @@ class BidResource(Resource):
     @marshal_with(bid_fields)
     def post(self):
         parsed_args = bidParser.parse_args()
-        contributionid = parsed_args['contribution_id']        
+        contributionid = parsed_args['contributionId']        
         contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionid).first()
         if not contributionObject:
             abort(404, message="Contribution {} doesn't exist".format(contributionid))
@@ -320,10 +318,10 @@ class BidResource(Resource):
             abort(404, message="User {} who is creating bid  doesn't exist".format(userId))
         contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == userObj.id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
         
-        jsonStr = {"tokens":parsed_args['tokens'],
+        jsonStr = {"tokens":parsed_args['evaluation'],
                    "reputation":contributionValues.reputation,
                    "userId":userId,
-                   "contribution_id":parsed_args['contribution_id'],
+                   "contribution_id":contributionid,
                    "stake":contributionValues.reputation*5/100, 
                    "time_created":datetime.now()
                     }
@@ -1113,10 +1111,7 @@ class MilestoneResource(Resource):
         usersReputationDic = {}
         for userOrgObject in userOrgObjects:
             usersReputationDic[userOrgObject.user_id]=userOrgObject.org_reputation
-        totalContributions = 0
-        totalContributors = 0
-        for milestoneContributor in milestoneObject.milestoneContributors:
-            totalContributors = totalContributors + 1 
+        for milestoneContributor in milestoneObject.contributors:
             milestoneContributor.name= getUser(milestoneContributor.contributor_id).name
             milestoneContributor.real_name= getUser(milestoneContributor.contributor_id).real_name
             milestoneContributor.imgUrl= getUser(milestoneContributor.contributor_id).imgUrl
@@ -1124,7 +1119,7 @@ class MilestoneResource(Resource):
         milestoneObject.channelName = milestoneObject.userOrganization.organization.channelName
         milestoneObject.code = milestoneObject.userOrganization.organization.code
         milestoneObject.tokenName = milestoneObject.userOrganization.organization.token_name
-        for milestoneContribution in milestoneObject.milestoneContributions:
+        for milestoneContribution in milestoneObject.contributions:
             countOfLines = 0
             shortDescription = '';
             milestoneContributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == milestoneContribution.contribution_id).first()
@@ -1139,7 +1134,6 @@ class MilestoneResource(Resource):
                         break    
             
                    
-            totalContributions = totalContributions + 1 
             contributionContributorsObjs =milestoneContributionObject.contributionContributors
             finalCountOfContributors = 0
             for contributionContributorsObj in contributionContributorsObjs:
@@ -1171,19 +1165,17 @@ class MilestoneResource(Resource):
             if (last_bid):
                 currentValuation = last_bid.contribution_value_after_bid
             milestoneContribution.valuation = currentValuation
-        milestoneObject.contributions = totalContributions
-        milestoneObject.contributors = totalContributors
         return milestoneObject
 
     def delete(self, id):
         milestoneObject = session.query(cls.Milestone).filter(cls.Milestone.id == id).first()
         if not milestoneObject:
             abort(404, message="Milestone {} doesn't exist".format(id))
-        for milestoneContributor in milestoneObject.milestoneContributors:
+        for milestoneContributor in milestoneObject.contributors:
             session.delete(milestoneContributor)
         for milestoneBid in milestoneObject.milestoneBids:
             session.delete(milestoneBid)
-        for milestoneContribution in milestoneObject.milestoneContributions:
+        for milestoneContribution in milestoneObject.contributions:
             session.delete(milestoneContribution)
         session.delete(milestoneObject)
         session.commit()
@@ -1239,11 +1231,10 @@ class MilestoneResource(Resource):
             milestoneContribution.contribution_id = contribution.id
             milestoneContribution.milestone_id = milestone.id
             
-            milestone.milestoneContributions.append(milestoneContribution) 
+            milestone.contributions.append(milestoneContribution) 
             contribution.status='Closed'
             session.add(contribution)
          
-        milestone.contributions =  totalContributions
         milestone.totalValue =  totalValue
         perc = 0
         userId = ''
@@ -1255,7 +1246,7 @@ class MilestoneResource(Resource):
             if float(milestoneContributor.percentage) > perc:
                 perc = float(milestoneContributor.percentage)
                 userId = milestoneContributor.contributor_id
-            milestone.milestoneContributors.append(milestoneContributor)
+            milestone.contributors.append(milestoneContributor)
         userOrgObjectForTargetOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == json['evaluatingProject']).first()
         contribution = cls.Contribution()
         contribution.userId = userId
@@ -1266,7 +1257,7 @@ class MilestoneResource(Resource):
         contribution.users_organizations_id = userOrgObjectForTargetOwner.id
         session.add(contribution)
         session.flush()
-        for contributor in milestone.milestoneContributors:             
+        for contributor in milestone.contributors:             
             contributionContributor = cls.ContributionContributor()
             contributionContributor.contributor_id = contributor.contributor_id
             contributionContributor.contribution_id=contribution.id
@@ -1288,7 +1279,7 @@ class MilestoneResource(Resource):
               session.add(contributionValue)
                 
         session.commit()  
-        for contributor in milestone.milestoneContributors:             
+        for contributor in milestone.contributors:             
             contributor.id = contributor.contributor_id
         return milestone, 201
 
@@ -1313,7 +1304,6 @@ class OrganizationCurrentStatusResource(Resource):
         allContributionObjects = session.query(cls.Contribution).filter(cls.Contribution.status == 'Open').filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == orgId).all()
         contributorsDic = {}
         totalContributions = 0
-        totalContributors = 0
         totalValue = 0
         for contribution in allContributionObjects:
             shortDescription = ''
@@ -1369,20 +1359,17 @@ class OrganizationCurrentStatusResource(Resource):
             milestoneContribution.contribution_id = contribution.id
             milestoneContribution.title= contribution.title
             milestoneContribution.date= contribution.time_created.date()
-            milestone.milestoneContributions.append(milestoneContribution) 
+            milestone.contributions.append(milestoneContribution) 
          
-        milestone.contributions =  totalContributions
         milestone.totalValue =  totalValue
         for key, elem in contributorsDic.items():
-            totalContributors = totalContributors + 1
             milestoneContributor = cls.MilestoneContributor()
             milestoneContributor.id = key
             milestoneContributor.percentage = elem/totalContributions
             milestoneContributor.name= getUser(milestoneContributor.id).name
             milestoneContributor.real_name= getUser(milestoneContributor.id).real_name
             milestoneContributor.imgUrl= getUser(milestoneContributor.id).imgUrl
-            milestone.milestoneContributors.append(milestoneContributor)
-        milestone.contributors = totalContributors
+            milestone.contributors.append(milestoneContributor)
         return milestone
 
 

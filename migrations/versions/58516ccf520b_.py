@@ -26,7 +26,6 @@ def upgrade():
     sa.Column('tokens', sa.FLOAT(), nullable=True),
     sa.Column('totalValue', sa.FLOAT(), nullable=True),
     sa.Column('destination_org_id', sa.INTEGER(), nullable=True),
-    sa.Column('contributions', sa.INTEGER(), nullable=True),
     sa.ForeignKeyConstraint(['userId'], ['user.id'], ),
     sa.ForeignKeyConstraint(['users_organizations_id'], ['users_organizations.id'], ),
     sa.PrimaryKeyConstraint('id')
