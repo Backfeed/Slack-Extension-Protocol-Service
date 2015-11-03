@@ -59,6 +59,7 @@ api = Api(application)
 
 api.add_resource(UserResource, '/users/<string:id>/<string:orgId>', endpoint='users')
 api.add_resource(UserResource, '/users', endpoint='user')
+api.add_resource(UserResource, '/users/<string:id>', endpoint='userUpdate')
 api.add_resource(AllUserResource, '/users/all/<string:organizationId>', endpoint='allUser')
 api.add_resource(UserSlackResource, '/api/user/<string:slackId>', endpoint='apiusers')
 
@@ -73,7 +74,7 @@ api.add_resource(ContributionResource, '/contribution/<string:id>', endpoint='co
 api.add_resource(CloseContributionResource, '/contribution/close', endpoint='closeContribution')
 
 api.add_resource(AllContributionResource, '/contribution/all/<string:organizationId>', endpoint='allContribution')
-api.add_resource(ContributionStatusResource, '/contribution/status/<string:id>/<string:userId>', endpoint='contributionStatus')
+api.add_resource(ContributionStatusResource, '/contribution/status/<string:id>', endpoint='contributionStatus')
 api.add_resource(OrganizationTokenExistsResource, '/organization/checkTokenName/<string:tokenName>', endpoint='checkOrgToken')
 api.add_resource(OrganizationCodeExistsResource, '/organization/checkCode/<string:code>', endpoint='checkCode')
 api.add_resource(MemberOranizationsResource, '/organization/member/<string:slackTeamId>', endpoint='memberOrganizations')

@@ -25,6 +25,7 @@ user_table = schema.Table('user', metadata,
     schema.Column('imgUrl', types.Unicode(255)),
     schema.Column('imgUrl72', types.Unicode(255)),
     schema.Column('slackId', types.Unicode(255)),
+    schema.Column('twitterHandle', types.Unicode(255)),
 )
 
 """
@@ -218,7 +219,7 @@ orm.mapper(cls.Milestone, milestone_table, properties={
 orm.mapper(cls.Contribution, contribution_table, properties={
     'contribution_owner':orm.relation(cls.User, backref='contribution'),
     'bids':orm.relation(cls.Bid, backref='contribution'),  
-    'contributionContributors':orm.relation(cls.ContributionContributor, backref='contribution'),                                                  
+    'contributors':orm.relation(cls.ContributionContributor, backref='contribution'),                                                  
     'userOrganization':orm.relation(cls.UserOrganization),
 })
 

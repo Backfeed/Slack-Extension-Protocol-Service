@@ -230,7 +230,7 @@ class ValueDistributer(ValueDistributerBase):
 		
 		# success: handle result:	
 		self.distribute_rep(result.rep_distributions, current_bid,session)
-		self.process_current_evaluation(result.evaluation, contributionObject.contributionContributors,session,contributionObject.userOrganization.organization.slack_teamid,contributionObject.userOrganization.organization)
+		self.process_current_evaluation(result.evaluation, contributionObject.contributors,session,contributionObject.userOrganization.organization.slack_teamid,contributionObject.userOrganization.organization)
 
 		# add current bid and commit DB session:
 		current_bid.contribution_value_after_bid = result.evaluation

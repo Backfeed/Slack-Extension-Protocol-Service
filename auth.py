@@ -267,6 +267,7 @@ def slack():
 def syncUsers(orgId, slackAccessToken):
     # get all  the db users
     usersInSystem = session.query(cls.User).all()
+    usersInSystem.sort(key=lambda x: x.id, reverse=True)
     # get al user organizations in this org
     userOrgs = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId)
     usersOrgDic = {}
@@ -278,8 +279,11 @@ def syncUsers(orgId, slackAccessToken):
     r = requests.get(team_users_api_url, params={'token':slackAccessToken}, headers=headers)
     slackUsers = json.loads(r.text)['members']
     usersDic = {}
+    usersDic1 = {}
     for user in usersInSystem:                
         usersDic[user.slackId] = user.id
+            
+        
     for slackUser in slackUsers :
         if slackUser['deleted'] == True :
             continue
@@ -295,10 +299,13 @@ def syncUsers(orgId, slackAccessToken):
             userId = u.id
         
         userOrg = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).filter(cls.UserOrganization.user_id == userId).first()
+            
         # associate user and org if there are not associated earlier
         if not userOrg:
             jsonStr = {"user_id":userId,"organization_id": orgId,"org_tokens":0,"org_reputation":0}     
             userOrg = cls.UserOrganization(jsonStr, session)
             session.add(userOrg)
             session.commit()
+                
+            
                 
