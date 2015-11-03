@@ -58,12 +58,8 @@ def run_migrations_online():
     print 'envType is'+envType
     if envType == 'Local' :
         pass
-    if envType == 'Prod' :
-        engine.execute("USE ebdb")
     if envType == 'Staging' :
         engine.execute("USE ebdb")
-    if envType == 'Develop' :
-        engine.execute("USE ebdb")  
     connection = engine.connect()
     
     context.configure(connection=connection,

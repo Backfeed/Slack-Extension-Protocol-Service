@@ -55,36 +55,40 @@ class BaseObject(object):
 		return self.__str__()		
 
 	
-class User(BaseObject):
+class Agent(BaseObject):
 	pass
 
-class Bid(BaseObject):
+class AgentHandle(object):
+	pass
+
+class Network(BaseObject):
+	pass
+
+class AgentNetwork(object):
+	pass
+
+
+class Collaboration(BaseObject):
+	pass
+
+class CollaborationHandle(object):
+	pass
+
+class AgentCollaboration(object):
 	pass
 
 class Contribution(object):
 	pass
 
-class Organization(BaseObject):
-	pass
-
-class UserOrganization(BaseObject):
-	pass
-
 class ContributionContributor(object):
-	pass
-
-class Milestone(object):
-	pass
-
-class MilestoneBid(BaseObject):
-	pass
-
-class MilestoneContributor(object):
-	pass
-
-class MilestoneContribution(object):
 	pass
 
 class ContributionValue(object):
 	pass
+
+
+class Evaluation(BaseObject):
+	pass
+
+
 # checkout serlizing : http://www.diveintopython3.net/serializing.html

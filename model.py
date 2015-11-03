@@ -14,39 +14,101 @@ Tables - schema definition:
 """
 
 """
-User - schema definition:
+Agent - schema definition:
 """
-user_table = schema.Table('user', metadata,
+agent_table = schema.Table('agent', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('user_seq_id', optional=True), primary_key=True),
+        schema.Sequence('agent_seq_id', optional=True), primary_key=True),
 
     schema.Column('name', types.Unicode(255)),
-    schema.Column('real_name', types.Unicode(255)),
+    schema.Column('fullName', types.Unicode(255)),
     schema.Column('imgUrl', types.Unicode(255)),
-    schema.Column('imgUrl72', types.Unicode(255)),
-    schema.Column('slackId', types.Unicode(255)),
-    schema.Column('twitterHandle', types.Unicode(255)),
 )
 
-"""
-Bid - schema definition:
-"""
-bid_table = schema.Table('bid', metadata,
+
+agent_handle_table = schema.Table('agent_handle', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('bid_seq_id', optional=True), primary_key=True),
-    schema.Column('userId', types.Integer,
-        schema.ForeignKey('user.id')),   
-    schema.Column('contribution_id', types.Integer,
-        schema.ForeignKey('contribution.id')),
-    schema.Column('tokens', types.Float),
-    schema.Column('stake', types.Float),
-    schema.Column('reputation',  types.Float),
-    schema.Column('current_rep_to_return', types.Float),
-    schema.Column('weight', types.Float),
-    schema.Column('contribution_value_after_bid',  types.Float),
-    schema.Column('time_created', types.DateTime(), default=now),
+        schema.Sequence('agent_seq_id', optional=True), primary_key=True),
 
+    schema.Column('agentId', types.Integer,
+        schema.ForeignKey('agent.id'),nullable=False),
+    schema.Column('handleName', types.Unicode(255)),
+    schema.Column('handleType', types.Unicode(255)),
 )
+
+"""
+Network - schema definition:
+"""
+network_table = schema.Table('network', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('network_seq_id', optional=True), primary_key=True),
+    schema.Column('agentHandleId', types.Integer,
+        schema.ForeignKey('agent_handle.id'),nullable=False),                              
+    schema.Column('name', types.Unicode(255),nullable=False),
+    schema.Column('description', types.Unicode(255),nullable=False),
+)
+
+"""
+Agent networks - schema definition:
+"""
+agent_network_table = schema.Table('agent_network', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('agent_network_seq_id', optional=True), primary_key=True),
+    schema.Column('agentHandleId', types.Integer,
+        schema.ForeignKey('agent_handle.id')),
+    schema.Column('networkId', types.Integer,
+        schema.ForeignKey('network.id')),
+)
+
+
+"""
+Collaboration - schema definition:
+"""
+collaboration_table = schema.Table('collaboration', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('collaboration_seq_id', optional=True), primary_key=True),
+    schema.Column('agentHandleId', types.Integer,
+        schema.ForeignKey('agent_handle.id'),nullable=False),
+    schema.Column('networkId', types.Integer,
+        schema.ForeignKey('network.id'),nullable=False),
+    schema.Column('protocol',types.Unicode(255)),
+    schema.Column('tokenName', types.Unicode(60)),
+    schema.Column('name', types.Unicode(255),nullable=False),
+    schema.Column('description', types.Unicode(255),nullable=False),
+    schema.Column('tokenSymbol', types.Unicode(3)),
+    schema.Column('tokenTotal', types.Integer),
+    schema.Column('comment', types.Unicode(1000)),
+    schema.Column('status', types.Unicode(100),default=u'Open'),
+    schema.Column('similarEvaluationRate', types.Integer),
+    schema.Column('passingResponsibilityRate', types.Integer),
+)
+
+"""
+Agent collaborations - schema definition:
+"""
+agent_collaboration_table = schema.Table('agent_collaboration', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('agent_collaboration_seq_id', optional=True), primary_key=True),
+    schema.Column('agentHandleId', types.Integer,
+        schema.ForeignKey('agent_handle.id')),
+    schema.Column('collaborationId', types.Integer,
+        schema.ForeignKey('collaboration.id')),
+    schema.Column('tokens', types.Float),
+    schema.Column('reputation',  types.Float),   
+)
+
+"""
+collaboration hanldes - schema definition:
+"""
+collaboration_handle_table = schema.Table('collaboration_handle', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('collaboration_handle_seq_id', optional=True), primary_key=True),
+    schema.Column('collaborationId', types.Integer,
+        schema.ForeignKey('collaboration.id')),
+    schema.Column('handleName', types.Unicode(255)),
+    schema.Column('handleType', types.Unicode(255)),   
+)
+
 
 
 """
@@ -55,18 +117,19 @@ Contribution - schema definition:
 contribution_table = schema.Table('contribution', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('contribution_seq_id', optional=True), primary_key=True),
-    schema.Column('userId', types.Integer,
-        schema.ForeignKey('user.id')),
-    schema.Column('users_organizations_id', types.Integer,
-        schema.ForeignKey('users_organizations.id')),
-    schema.Column('min_reputation_to_close',  types.Integer,nullable=True),
-    schema.Column('time_created', types.DateTime(), default=now),
-    schema.Column('description', types.Unicode(2000)),
-    schema.Column('title', types.Unicode(340)),
+    schema.Column('agentHandleId', types.Integer,
+        schema.ForeignKey('agent_handle.id')),
+    schema.Column('agentCollaborationId', types.Integer,
+        schema.ForeignKey('agent_collaboration.id')),
+    schema.Column('timeCreated', types.DateTime(), default=now),
+    schema.Column('comment', types.Unicode(2000)),
+    schema.Column('type', types.Unicode(340)),
     schema.Column('status', types.Unicode(100),default=u'Open'),
     schema.Column('currentValuation',  types.Float,default=0),
     schema.Column('valueIndic',  types.Integer,default=0),
+    schema.Column('content',  types.Unicode(10000)),
 )
+
 
 """
 Contribution Contributors List - schema definition:
@@ -74,111 +137,13 @@ Contribution Contributors List - schema definition:
 contribution_contributor_table = schema.Table('contribution_contributor', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('contribution_contributor_seq_id', optional=True), primary_key=True),
-    schema.Column('contribution_id', types.Integer,
+    schema.Column('contributionId', types.Integer,
         schema.ForeignKey('contribution.id')),
-    schema.Column('contributor_id', types.Integer,
-        schema.ForeignKey('user.id')),
+    schema.Column('contributorId', types.Integer,
+        schema.ForeignKey('agent_handle.id')),
     schema.Column('percentage', types.FLOAT),   
 )
-
-"""
-Milestone Bid - schema definition:
-"""
-milestone_bid_table = schema.Table('milestone_bid', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('milestone_bid_seq_id', optional=True), primary_key=True),
-    schema.Column('userId', types.Integer,
-        schema.ForeignKey('user.id')),   
-    schema.Column('milestone_id', types.Integer,
-        schema.ForeignKey('milestone.id')),
-    schema.Column('tokens', types.Float),
-    schema.Column('stake', types.Float),
-    schema.Column('reputation',  types.Float),
-    schema.Column('current_rep_to_return', types.Float),
-    schema.Column('weight', types.Float),
-    schema.Column('milestone_value_after_bid',  types.Float),
-    schema.Column('time_created', types.DateTime(), default=now),
-
-)
-
-
-"""
-Milestone - schema definition:
-"""
-milestone_table = schema.Table('milestone', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('milestone_seq_id', optional=True), primary_key=True),
-    schema.Column('userId', types.Integer,
-        schema.ForeignKey('user.id')),
-    schema.Column('users_organizations_id', types.Integer,
-        schema.ForeignKey('users_organizations.id')),
-    schema.Column('contribution_id', types.Integer),
-    schema.Column('start_date', types.DateTime(), default=now),
-    schema.Column('end_date', types.DateTime(), default=now),
-    schema.Column('description', types.Unicode(2000)),
-    schema.Column('title', types.Unicode(340)),
-    schema.Column('tokens',  types.Float),
-    schema.Column('totalValue',  types.Float),
-    schema.Column('destination_org_id', types.Integer),
-)
-
-"""
-Milestone Contributors List - schema definition:
-"""
-milestone_contributor_table = schema.Table('milestone_contributor', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('milestone_contributor_seq_id', optional=True), primary_key=True),
-    schema.Column('milestone_id', types.Integer,
-        schema.ForeignKey('milestone.id')),
-    schema.Column('contributor_id', types.Integer,
-        schema.ForeignKey('user.id')),
-    schema.Column('percentage', types.FLOAT),   
-)
-
-"""
-Milestone Contribution List - schema definition:
-"""
-milestone_contribution_table = schema.Table('milestone_contribution', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('milestone_contribution_seq_id', optional=True), primary_key=True),
-    schema.Column('milestone_id', types.Integer,
-        schema.ForeignKey('milestone.id')),
-    schema.Column('contribution_id', types.Integer,
-        schema.ForeignKey('contribution.id')),
-)
-
-"""
-Organization - schema definition:
-"""
-organization_table = schema.Table('organization', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('organization_seq_id', optional=True), primary_key=True),
-
-    schema.Column('token_name', types.Unicode(60),nullable=False),
-    schema.Column('slack_teamid', types.Unicode(255)),
-    schema.Column('name', types.Unicode(255),nullable=False),
-    schema.Column('code', types.Unicode(3),nullable=False),
-    schema.Column('channelName', types.Unicode(255),nullable=False),
-    schema.Column('channelId', types.Unicode(255),nullable=False),
-    schema.Column('reserveTokens', types.Float),
-    schema.Column('a', types.Integer),
-    schema.Column('b', types.Integer),
-)
-
-"""
-User Organizations - schema definition:
-"""
-users_organizations_table = schema.Table('users_organizations', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('users_organizations_seq_id', optional=True), primary_key=True),
-    schema.Column('user_id', types.Integer,
-        schema.ForeignKey('user.id')),
-    schema.Column('organization_id', types.Integer,
-        schema.ForeignKey('organization.id')),
-    schema.Column('org_tokens', types.Float),
-    schema.Column('org_reputation',  types.Float),   
-)
-
+   
 
 """
 Contribution value- schema definition:
@@ -186,117 +151,95 @@ Contribution value- schema definition:
 contribution_value_table = schema.Table('contributionValue', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('contribution_value_seq_id', optional=True), primary_key=True),
-    schema.Column('user_id', types.Integer,
-        schema.ForeignKey('user.id')),
-    schema.Column('users_organizations_id', types.Integer,
-        schema.ForeignKey('users_organizations.id')),
-    schema.Column('contribution_id', types.Integer,
+    schema.Column('agentHandleId', types.Integer,
+        schema.ForeignKey('agent_handle.id')),
+    schema.Column('agentCollaborationId', types.Integer,
+        schema.ForeignKey('agent_collaboration.id')),
+    schema.Column('contributionId', types.Integer,
         schema.ForeignKey('contribution.id')),
     schema.Column('reputationGain',  types.Float,default=0),
     schema.Column('reputation',  types.Float,default=0),
 )
 
 """
+Evaluation - schema definition:
+"""
+evaluation_table = schema.Table('evaluation', metadata,
+    schema.Column('id', types.Integer,
+        schema.Sequence('evaluation_seq_id', optional=True), primary_key=True),
+    schema.Column('agentHandleId', types.Integer,
+        schema.ForeignKey('agent_handle.id')),   
+    schema.Column('contributionId', types.Integer,
+        schema.ForeignKey('contribution.id')),
+    schema.Column('tokens', types.Float),
+    schema.Column('stake', types.Float),
+    schema.Column('reputation',  types.Float),
+    schema.Column('contributionValueAfterEvaluation',  types.Float),
+    schema.Column('timeCreated', types.DateTime(), default=now),
+
+)
+
+
+"""
 Relationships - definitions
 """
-orm.mapper(cls.User, user_table, properties={
-    'userOrganizations':orm.relation(cls.UserOrganization, backref='user'),
+
+orm.mapper(cls.Agent, agent_table, properties={
+    'agentHandles':orm.relation(cls.AgentHandle, backref='agent'),
 })
 
-orm.mapper(cls.UserOrganization, users_organizations_table, properties={
+
+orm.mapper(cls.AgentHandle, agent_handle_table, properties={
+    'agentNetworks':orm.relation(cls.AgentNetwork, backref='agentHandle'),
+    'agentCollaborations':orm.relation(cls.AgentCollaboration, backref='agentHandle'),
+    'agentContributions':orm.relation(cls.Contribution, backref='agentHandle'),
+    'agentEvaluations':orm.relation(cls.Evaluation, backref='agentHandle'),
+})
+
+
+orm.mapper(cls.AgentNetwork, agent_network_table)
+
+orm.mapper(cls.Network, network_table, properties={
+    'agentNetworks':orm.relation(cls.AgentNetwork, backref='network'),  
+    'network_owner':orm.relation(cls.AgentHandle, backref='network'),
+    'collaborations':orm.relation(cls.Collaboration, backref='network'),                                                
+})
+
+
+
+
+orm.mapper(cls.Collaboration, collaboration_table, properties={
+    'agentCollaborations':orm.relation(cls.AgentCollaboration, backref='collaboration'),  
+    'handles':orm.relation(cls.CollaborationHandle, backref='collaboration'),
+    'collaboration_owner':orm.relation(cls.AgentHandle, backref='collaboration'),                                                
+})
+
+orm.mapper(cls.AgentCollaboration, agent_collaboration_table, properties={
           'contributions':orm.relation(cls.Contribution),                                                              
                                                                         })
+orm.mapper(cls.CollaborationHandle, collaboration_handle_table)
 
-
-orm.mapper(cls.Milestone, milestone_table, properties={
-    'milestone_owner':orm.relation(cls.User, backref='milestone'),
-    'milestoneBids':orm.relation(cls.MilestoneBid, backref='milestone'),  
-    'contributors':orm.relation(cls.MilestoneContributor, backref='milestone'),  
-    'contributions':orm.relation(cls.MilestoneContribution, backref='milestone'),                                                  
-    'userOrganization':orm.relation(cls.UserOrganization),
-})
 
 orm.mapper(cls.Contribution, contribution_table, properties={
-    'contribution_owner':orm.relation(cls.User, backref='contribution'),
-    'bids':orm.relation(cls.Bid, backref='contribution'),  
+    'contribution_owner':orm.relation(cls.AgentHandle, backref='contribution'),
+    'evaluations':orm.relation(cls.Evaluation, backref='contribution'),  
     'contributors':orm.relation(cls.ContributionContributor, backref='contribution'),                                                  
-    'userOrganization':orm.relation(cls.UserOrganization),
+    'agentCollaboration':orm.relation(cls.AgentCollaboration),
+    'contributionValues':orm.relation(cls.ContributionValue),
 })
 
 orm.mapper(cls.ContributionContributor, contribution_contributor_table, properties={
-    'contribution_user':orm.relation(cls.User, backref='contributor'),                                                
-})
-
-orm.mapper(cls.MilestoneContributor, milestone_contributor_table, properties={
-    'milestone_user':orm.relation(cls.User, backref='milestoneContributor'),                                                
-})
-
-orm.mapper(cls.MilestoneContribution, milestone_contribution_table, properties={
-    'milestone_contribution':orm.relation(cls.Contribution, backref='milestoneContribution'),                                                
-})
-
-
-orm.mapper(cls.Bid, bid_table, properties={
-    'bid_owner':orm.relation(cls.User, backref='bid'),    
-})
-
-orm.mapper(cls.MilestoneBid, milestone_bid_table, properties={
-    'milestone_bid_owner':orm.relation(cls.User, backref='milestoneBid'),    
-})
-
-orm.mapper(cls.Organization, organization_table, properties={
-    'userOrganizations':orm.relation(cls.UserOrganization, backref='organization'),                                                  
+    'contribution_agent':orm.relation(cls.AgentHandle, backref='contributor'),                                                
 })
 
 orm.mapper(cls.ContributionValue, contribution_value_table)
 
-"""
-# BELOW is an example of relations between objects, (for when you dont have just a simple object that holds data)
-# in this example we see "comments", and "tags" tables which have an additional column  which relates back  to a "page" object. 
 
-page_table = schema.Table('page', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('page_seq_id', optional=True), primary_key=True),
-    schema.Column('content', types.Text(), nullable=False),
-    schema.Column('posted', types.DateTime(), default=now),
-    schema.Column('title', types.Unicode(255), default=u'Untitled Page'),
-    schema.Column('heading', types.Unicode(255)),
-)
-comment_table = schema.Table('comment', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('comment_seq_id', optional=True), primary_key=True),
-    schema.Column('pageid', types.Integer,
-        schema.ForeignKey('page.id'), nullable=False),
-    schema.Column('content', types.Text(), default=u''),
-    schema.Column('name', types.Unicode(255)),
-    schema.Column('email', types.Unicode(255), nullable=False),
-    schema.Column('created', types.TIMESTAMP(), default=now()),
-)
-pagetag_table = schema.Table('pagetag', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('pagetag_seq_id', optional=True), primary_key=True),
-    schema.Column('pageid', types.Integer, schema.ForeignKey('page.id')),
-    schema.Column('tagid', types.Integer, schema.ForeignKey('tag.id')),
-)
-tag_table = schema.Table('tag', metadata,
-    schema.Column('id', types.Integer,
-        schema.Sequence('tag_seq_id', optional=True), primary_key=True),
-    schema.Column('name', types.Unicode(20), nullable=False, unique=True),
-)
 
-class Page(object):
-    pass
 
-class Comment(object):
-    pass
-
-class Tag(object):
-    pass
-
-orm.mapper(Page, page_table, properties={
-    'comments':orm.relation(Comment, backref='page'),
-    'tags':orm.relation(Tag, secondary=pagetag_table)
+orm.mapper(cls.Evaluation, evaluation_table, properties={
+    'evaluation_owner':orm.relation(cls.AgentHandle, backref='evaluation'),    
 })
-orm.mapper(Comment, comment_table)
-orm.mapper(Tag, tag_table)
-"""
+
+
+

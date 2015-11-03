@@ -1,19 +1,22 @@
-from protocol_function import BidInfo,FIn,ProtocolFunctionV1
+from protocol_function import ProtocolFunctionV1
 import classes as cls
 from operator import attrgetter
+from EvaluationInfo import EvaluationInfo
+from FIn import FIn
 
 class ValueDistributerBase(object):
 	
-	def process_bid(self,current_bid,session,logger = None):
+	def process_evaluation(self,current_evaluation,session,logger = None):
 		pass
 
 
 class ValueDistributer(ValueDistributerBase):
 	
-	def __init__(self,logger = None):
+	def __init__(self,protocolName,logger = None):
 		self.logger = logger
 		self.error_occured = False
 		self.error_code = None
+		self.protocolName = protocolName
 		
 
 	def log(self,messsage,level = 'info'):
@@ -21,205 +24,184 @@ class ValueDistributer(ValueDistributerBase):
 			self.logger.info(messsage)
 		return True
 
-	def getHighestEval(self,bids):
-		maxValue = max(bids, key=attrgetter('contribution_value_after_bid')).contribution_value_after_bid
+	def getHighestEval(self,evaluations):
+		maxValue = max(evaluations, key=attrgetter('contributionValueAfterEvaluation')).contributionValueAfterEvaluation
 		return maxValue
 
 
-	def isBidderFirstBid(self,bids, current_bid):
-		self.log('\n\n *** isBidderFirstBid: ***:\n')
-		for bid in bids:
-			if bid.userId == current_bid.userId:
-				self.log('is not  bidders first bid.')
+	def isEvaluatarFirstEvaluation(self,evaluations, current_evaluation):
+		self.log('\n\n *** isEvaluatarFirstEvaluation: ***:\n')
+		for evaluation in evaluations:
+			if int(evaluation.agentHandleId) == int(current_evaluation.agentHandleId):
+				self.log('is not  evaluators first evaluation.')
 				return False
 
-		self.log('is  bidders first bid.')
+		self.log('is  evaluators first evaluation.')
 		return True
 
 
-	def validateBid(self,bids, current_bid):
-		self.log('\n\n *** validateBid: ***:\n')
+	def validateEvaluation(self,evaluations, current_evaluation):
+		self.log('\n\n *** validateEvaluation: ***:\n')
 
 		Wi = 0.0
-		users = self.usersDict
-		current_bidder = users[current_bid.userId]
-		rep = current_bid.reputation
+		agents = self.agentsDict
+		current_evaluator = agents[int(current_evaluation.agentHandleId)]
+		rep = current_evaluation.reputation
 		print 'rep is'+str(rep)
-		#check how much reputation has been engaged by current_bidder,
-		for bid in bids:
-			print 'comes here in bids'
-			if bid.userId == current_bidder.user_id:  
-				Wi += bid.reputation
-		self.log('amount of reputation which  has been engaged by the current_bidder:'+str(Wi))
+		#check how much reputation has been engaged by current_evaluator,
+		for evaluation in evaluations:
+			print 'comes here in evaluations'
+			if evaluation.agentHandleId == current_evaluator.agentHandleId:  
+				Wi += evaluation.reputation
+		self.log('amount of reputation which  has been engaged by the current_evaluator:'+str(Wi))
 		print 'Wi is'+str(Wi)
-		print 'current_bidder.org_reputation is'+str(current_bidder.org_reputation)
-		print 'diffrence is'+str(float(current_bidder.org_reputation) - float(Wi))
-		print 'check is'+str(float(current_bidder.org_reputation) - float(Wi) < float(rep))
+		print 'current_evaluator.reputation is'+str(current_evaluator.reputation)
+		print 'diffrence is'+str(float(current_evaluator.reputation) - float(Wi))
+		print 'check is'+str(float(current_evaluator.reputation) - float(Wi) < float(rep))
 		#check if something has to be trimmed
-		if float(current_bidder.org_reputation) - float(Wi) < float(rep):
+		if float(current_evaluator.reputation) - float(Wi) < float(rep):
 			print 'comes here in check1'
-			if float(current_bidder.org_reputation) > float(Wi):
-				current_bid.reputation = float(current_bidder.org_reputation) - float(Wi)
-				self.log("trimmed reputation to : "+str(current_bid.reputation))
+			if float(current_evaluator.reputation) > float(Wi):
+				current_evaluation.reputation = float(current_evaluator.reputation) - float(Wi)
+				self.log("trimmed reputation to : "+str(current_evaluation.reputation))
 
 			else:
 				print 'comes here in check2'
-				self.log("bidder has no more reputation to spare for current bid. exit.")
+				self.log("evaluator has no more reputation to spare for current evaluation. exit.")
 				return None;
-		elif(not current_bidder.org_reputation and self.contributionsSize > 1):
+		elif(not current_evaluator.reputation):
 			print 'comes here in check3'
-			self.log("bidder has no more reputation to spare for current bid. exit.")
+			self.log("evaluator has no more reputation to spare for current evaluations. exit.")
 			return None;		
 
-		self.log("current_bid.stake = " + str(current_bid.stake) + " and current_bid.rep = " + str(current_bid.reputation))				
-		if float(current_bid.stake) > float(current_bid.reputation):
-			self.log("bidder has put more stake than he has reputation - reducing stake to bidder's reputation.")
-			current_bid.stake = current_bid.reputation
+		self.log("current_evaluation.stake = " + str(current_evaluation.stake) + " and current_evaluation.rep = " + str(current_evaluation.reputation))				
+		if float(current_evaluation.stake) > float(current_evaluation.reputation):
+			self.log("evaluator has put more stake than he has reputation - reducing stake to evaluator's reputation.")
+			current_evaluation.stake = current_evaluation.reputation
 
-		self.log( "bidder reputation: "+ str(current_bidder.org_reputation) + ", bidder total weight = " + str(Wi) + "Appending current bid reputation:" + str(current_bid.reputation))
+		self.log( "evaluator reputation: "+ str(current_evaluator.reputation) + ", evaluator total weight = " + str(Wi) + "Appending current evaluation reputation:" + str(current_evaluation.reputation))
 		self.log('\n\n')
 
-		return current_bid;
+		return current_evaluation;
 
 	def debug_state(self):
 		self.log('\n\n *** current state ***:\n')
 		self.log('previous highest eval:'+str(self.highest_eval))
 		self.log('total system reputation:'+str(self.total_system_reputation))	
 
-	# get state : users Dict which is a dict of (key : value) userId:userOrgenization object  ,also calc total_system_reputation and highest_eval:
-	def getCurrentState(self,contributionObject,session):
-		usersDict = {}
-		contributionValueObjectsDict = {}
+	# get state : agents Dict which is a dict of (key : value) agentHandleId:agentOrgenization object  ,also calc total_system_reputation and highest_eval:
+	def getCurrentState(self,contribution,session):
+		agentsDict = {}
+		contributionValuesDict = {}
 		total_system_reputation = 0
 
-		# get users:
-		user_org = contributionObject.userOrganization
-		org = user_org.organization
-		userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == user_org.organization_id).all()
-		contributionValueObjects = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).all()
-		contributionObjects = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == org.id).all()
-		contributionObjectsLength = len(contributionObjects)
-		self.contributionsSize = contributionObjectsLength
-		for userOrg in userOrgObjects:
-			usersDict[userOrg.user_id] = userOrg
+		# get agents:
+		agent_collaboration = contribution.agentCollaboration
+		collaboration = agent_collaboration.collaboration
+		agentCollaborations = session.query(cls.AgentCollaboration).filter(cls.AgentCollaboration.collaborationId == agent_collaboration.collaborationId).all()
+		contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contributionId == contribution.id).all()
+		for agentCollaboration in agentCollaborations:
+			agentsDict[agentCollaboration.agentHandleId] = agentCollaboration
 		 
-		for contributionValueObject in contributionValueObjects:
-			total_system_reputation = total_system_reputation + contributionValueObject.reputation
-			contributionValueObjectsDict[contributionValueObject.users_organizations_id] = contributionValueObject
+		for contributionValue in contributionValues:
+			total_system_reputation = total_system_reputation + contributionValue.reputation
+			contributionValuesDict[contributionValue.agentCollaborationId] = contributionValue
 		
 		self.highest_eval =  0 
-		if(contributionObject.bids and len(contributionObject.bids)):
-			self.highest_eval = self.getHighestEval(contributionObject.bids)
+		if(contribution.evaluations and len(contribution.evaluations)):
+			self.highest_eval = self.getHighestEval(contribution.evaluations)
 
 		self.total_system_reputation = total_system_reputation
-		self.a = org.a
-		self.b = org.b
-		self.usersDict = usersDict
-		self.contributionValueObjectsDict = contributionValueObjectsDict
+		self.similarEvaluationRate = collaboration.similarEvaluationRate
+		self.passingResponsibilityRate = collaboration.passingResponsibilityRate
+		self.agentsDict = agentsDict
+		self.contributionValuesDict = contributionValuesDict
 		self.debug_state()
 
 
-	def debug_bid(self,current_bid):
-		self.log('\n\n *** processing bid - info: ***\n')
-		self.log('stake (risk):'+str(current_bid.stake))
-		self.log('reputation (weight):'+str(current_bid.reputation))	
-		self.log('tokens (eval):'+str(current_bid.tokens))
+	def debug_evaluation(self,current_evaluation):
+		self.log('\n\n *** processing evaluation - info: ***\n')
+		self.log('stake (risk):'+str(current_evaluation.stake))
+		self.log('reputation (weight):'+str(current_evaluation.reputation))	
+		self.log('tokens (eval):'+str(current_evaluation.tokens))
 
-	def process_current_evaluation(self,current_eval,contributors,session,slackTeamId,organization):
+	def process_current_evaluation(self,current_eval,contributors,session,organization):
 		eval_delta = current_eval - self.highest_eval
-		contributionValueObjects = self.contributionValueObjectsDict
-		#hardcoding for Lazzoz for right now making it 90% T03K9TS1Q
-		#if (slackTeamId == 'T02UHLXM9') :
+		contributionValues = self.contributionValuesDict
 		print 'before eval_delta is'+str(eval_delta)
-		print 'slack team id'+str(slackTeamId)
-		if (slackTeamId == 'T02UHLXM9') :
-		#if (slackTeamId == 'T03K9TS1Q') :
-			restData = float(eval_delta * 90/100)
-			organization.reserveTokens = organization.reserveTokens + (float(eval_delta) - restData)
-			session.add(organization)
-			eval_delta = restData
-			print 'after eval_delta is' + str(eval_delta)
 		if (eval_delta > 0):
 			# Issue tokens and reputation to collaborators:
 			for contributor in contributors:
-				user = self.usersDict[contributor.contributor_id]		
+				agent = self.agentsDict[contributor.contributorId]		
 				tokens_to_add =  ( float(eval_delta) * float(contributor.percentage) ) / 100 	
-				user.org_tokens += tokens_to_add
-				if self.contributionsSize == 1:
-					user.org_reputation += (int(tokens_to_add))*10/pow(10,(int(self.b)/50)) 
-				else:
-					user.org_reputation += tokens_to_add
-				contributionValueObjects[user.id].reputationGain = contributionValueObjects[user.id].reputationGain + tokens_to_add
-				session.add(user)
-				session.add(contributionValueObjects[user.id])
+				agent.tokens += tokens_to_add
+				agent.reputation += tokens_to_add
+				contributionValues[agent.id].reputationGain = contributionValues[agent.id].reputationGain + tokens_to_add
+				session.add(agent)
+				session.add(contributionValues[agent.id])
 
-	def distribute_rep(self,bids_distribution, current_bid,session):
-		users = self.usersDict
-		current_bidder = users[current_bid.userId]
-		contributionValueObjects = self.contributionValueObjectsDict
+	def distribute_rep(self,evaluations_distribution, current_evaluation,session):
+		agents = self.agentsDict
+		current_evaluator = agents[int(current_evaluation.agentHandleId)]
+		contributionValues = self.contributionValuesDict
 
-		if(not current_bid.stake):
-			self.log('stake is null --> stake is set to entire bid reputation:'+str(current_bid.reputation))
-			current_bid.stake = current_bid.reputation
+		if(not current_evaluation.stake):
+			self.log('stake is null --> stake is set to entire evaluation reputation:'+str(current_evaluation.reputation))
+			current_evaluation.stake = current_evaluation.reputation
 
-		#kill the stake of the current_bidder
+		#kill the stake of the current_evaluator
 		
-		current_bidder.org_reputation = current_bidder.org_reputation - float(current_bid.stake)
-		contributionValueObjects[current_bidder.id].reputationGain= contributionValueObjects[current_bidder.id].reputationGain  - float(current_bid.stake)
-		session.add(current_bidder)	
-		session.add(contributionValueObjects[current_bidder.id])
+		current_evaluator.reputation = current_evaluator.reputation - float(current_evaluation.stake)
+		contributionValues[current_evaluator.id].reputationGain= contributionValues[current_evaluator.id].reputationGain  - float(current_evaluation.stake)
+		session.add(current_evaluator)	
+		session.add(contributionValues[current_evaluator.id])
 		#reallocate reputation
-		for userId in bids_distribution:
-			user = users[int(userId)]
-			self.log("\n\nrealocating reputation for bidder Id:" + str(userId))
-			self.log("OLD REP === " + str(user.org_reputation))		
-			user.org_reputation += bids_distribution[userId] 
-			contributionValueObjects[user.id].reputationGain= contributionValueObjects[user.id].reputationGain  + bids_distribution[userId]
-			self.log("NEW REP === " + str(user.org_reputation))
-			session.add(user)
-			session.add(contributionValueObjects[user.id])
+		for agentHandleId in evaluations_distribution:
+			agent = agents[int(agentHandleId)]
+			self.log("\n\nrealocating reputation for evaluator Id:" + str(agentHandleId))
+			self.log("OLD REP === " + str(agent.reputation))		
+			agent.reputation += evaluations_distribution[agentHandleId] 
+			contributionValues[agent.id].reputationGain= contributionValues[agent.id].reputationGain  + evaluations_distribution[agentHandleId]
+			self.log("NEW REP === " + str(agent.reputation))
+			session.add(agent)
+			session.add(contributionValues[agent.id])
 
 	def set_error(self,message):
 		self.log('Error:'+message)
 		self.error_occured = True
 		self.error_code = message	
 
-	def process_bid(self,current_bid,session,logger = None):
-		print 'comes here 1'
-		self.debug_bid(current_bid)
+	def process_evaluation(self,current_evaluation,session,logger = None):
+		self.debug_evaluation(current_evaluation)
 		
 		# get current state data:
-		contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == current_bid.contribution_id).first()
-		#orgObject = session.query(cls.Organization).filter(cls.Organization.id == cls.UserOrganization.organization_id).filter(cls.UserOrganization.id == cls.Contribution.users_organizations_id).first()
-		self.getCurrentState(contributionObject,session)
+		contribution = session.query(cls.Contribution).filter(cls.Contribution.id == current_evaluation.contributionId).first()
+		#orgObject = session.query(cls.Organization).filter(cls.Organization.id == cls.AgentOrganization.organization_id).filter(cls.AgentOrganization.id == cls.Contribution.agents_organizations_id).first()
+		self.getCurrentState(contribution,session)
 
-		# validate is First Bid:
-		if(not self.isBidderFirstBid(contributionObject.bids, current_bid)):
-			self.set_error('is Not bidders first bid, (we currently do not allow several bids per contribution.)')
+		# validate is First Evaluation:
+		if(not self.isEvaluatarFirstEvaluation(contribution.evaluations, current_evaluation)):
+			self.set_error('is Not evaluators first evaluation, (we currently do not allow several evaluations per contribution.)')
 			return None
 
-		# validate Bid:
-		current_bid = self.validateBid(contributionObject.bids, current_bid)
-		if self.contributionsSize > 1:
-			current_bid.weight = (float(current_bid.reputation)/float(self.total_system_reputation))*100
-		else :
-			current_bid.weight = 0
+		# validate Evaluation:
+		current_evaluation = self.validateEvaluation(contribution.evaluations, current_evaluation)
 		
-		if(not current_bid):
-			self.set_error('bid not valid.')
+		if(not current_evaluation):
+			self.set_error('evaluation not valid.')
 			return None
 
-		# add current bid to bids:
-		bids = contributionObject.bids
-		bids.append(current_bid);
+		# add current_evaluation evaluation to evaluations:
+		evaluations = contribution.evaluations
+		evaluations.append(current_evaluation);
 
 		# prepare protocol function Input:
-		bidsInfo = []
-		for bid in bids:
-			bidsInfo.append( BidInfo(bid.tokens,bid.reputation,bid.stake,bid.userId,self.contributionsSize) )
+		evaluationsInfo = []
+		for evaluation in evaluations:
+			evaluationsInfo.append( EvaluationInfo(evaluation.tokens,evaluation.reputation,evaluation.stake,evaluation.agentHandleId) )
 
-		current_bid_info = bidsInfo[-1]
-		fin = FIn(bidsInfo,current_bid_info,self.total_system_reputation,self.a,self.contributionsSize)
+		current_evaluation_info = evaluationsInfo[-1]
+		fin = FIn(evaluationsInfo,current_evaluation_info,self.total_system_reputation,self.similarEvaluationRate)
 
 		# protocol function calc:
 		f = ProtocolFunctionV1(logger)
@@ -229,20 +211,20 @@ class ValueDistributer(ValueDistributerBase):
 			return None
 		
 		# success: handle result:	
-		self.distribute_rep(result.rep_distributions, current_bid,session)
-		self.process_current_evaluation(result.evaluation, contributionObject.contributors,session,contributionObject.userOrganization.organization.slack_teamid,contributionObject.userOrganization.organization)
+		self.distribute_rep(result.rep_distributions, current_evaluation,session)
+		self.process_current_evaluation(result.evaluation, contribution.contributors,session,contribution.agentCollaboration.collaboration)
 
-		# add current bid and commit DB session:
-		current_bid.contribution_value_after_bid = result.evaluation
-		if result.evaluation > contributionObject.currentValuation :
-			contributionObject.valueIndic = 1
-		elif result.evaluation < contributionObject.currentValuation :
-			contributionObject.valueIndic = -1
+		# add current evaluation and commit DB session:
+		current_evaluation.contributionValueAfterEvaluation = result.evaluation
+		if result.evaluation > contribution.currentValuation :
+			contribution.valueIndic = 1
+		elif result.evaluation < contribution.currentValuation :
+			contribution.valueIndic = -1
 		else :
-			contributionObject.valueIndic = 0
-		contributionObject.currentValuation = result.evaluation
-		session.add(current_bid)
-		session.add(contributionObject)
+			contribution.valueIndic = 0
+		contribution.currentValuation = result.evaluation
+		session.add(current_evaluation)
+		session.add(contribution)
 		session.commit()
-		return current_bid
+		return current_evaluation
 

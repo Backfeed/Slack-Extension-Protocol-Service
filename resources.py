@@ -7,7 +7,7 @@ from flask.ext.restful import abort
 from flask.ext.restful import fields
 from flask.ext.restful import marshal_with
 import json
-from auth import login_required,parse_token
+from auth import login_required
 import requests
 from flask import g,request
 
@@ -20,1405 +20,930 @@ from flask.ext.restful import Resource as FlaskResource
 class Resource(FlaskResource):
    method_decorators = [login_required]   # applies to all inherited resources
 
-userParser = reqparse.RequestParser()
-userOrganizationParser = reqparse.RequestParser()
-bidParser = reqparse.RequestParser()
-milestonebidParser = reqparse.RequestParser()
-closeContributionParser = reqparse.RequestParser()
 
-
-userParser.add_argument('name', type=str,required=True)
-userParser.add_argument('slack_id', type=str)
-userParser.add_argument('twitterHandle', type=str)
-
-
-bidParser.add_argument('evaluation', type=str,required=True)
-bidParser.add_argument('contributionId', type=str,required=True)
-
-milestonebidParser.add_argument('tokens', type=int,required=True)
-milestonebidParser.add_argument('milestoneId', type=int,required=True)
-
-closeContributionParser.add_argument('id', type=int,required=True)
-
-user_fields = {
+agent_fields = {
     'id': fields.Integer,
+}
+
+handle_fields = {
+    'id': fields.Integer,
+    'handleName': fields.String,
+    'handleType': fields.String,
+}
+
+agent_handle_fields = {
+    'id': fields.Integer,
+    'handleName': fields.String,
+    'handleType': fields.String,
     'name': fields.String,
-    'displayName': fields.String,
+    'fullName': fields.String,
     'imgUrl': fields.String,
 }
 
-user_org_fields = {
+agent_network_fields = {
+    'id': fields.Integer,
+}
+
+network_fields = {
     'id': fields.Integer,
     'name': fields.String, 
-    'tokens': fields.String,  
-    'reputation': fields.String, 
+    'description': fields.String,
+}
+
+collaboration_fields = {
+    'id': fields.Integer,
+    'name': fields.String, 
+    'tokenName': fields.String,
+    'tokenSymbol': fields.String,
+    'status': fields.String,
+    'similarEvaluationRate': fields.Integer,
+    'passingResponsibilityRate': fields.Integer,        
+}
+
+agent_collaboration_fields = {
+    'id': fields.Integer,
+    'name': fields.String, 
+    'tokens': fields.Float,  
+    'reputation': fields.Float, 
      'imgUrl' : fields.String,
-     'real_name':fields.String,
+     'fullName':fields.String,
 }
 
-org_fields = {
-    'orgId': fields.Integer,
+
+evaluation_fields = {
     'id': fields.Integer,
-    'name': fields.String, 
-    'token_name': fields.String,
-    'channelName': fields.String,
-    'channelId': fields.String,       
+    'contributionId': fields.Integer,
+    'agentHandleId': fields.Integer,
+    'tokens': fields.Float,
+    'stake': fields.Float,
+    'reputation': fields.Float,
+    'contributionValueAfterEvaluation': fields.Float,
+    'timeCreated': fields.DateTime
 }
 
-userOrganization_fields = {
-    'id': fields.Integer,
-    'user_id': fields.String,
-    'organization_id': fields.String,
-    'org_tokens': fields.String,
-    'org_reputation': fields.String,
-    'channelId':fields.String
-}
-
-bid_fields = {
-    'id': fields.Integer,
-    'contribution_id': fields.Integer
-}
-
-bid_nested_fields = {}
-bid_nested_fields['stake'] = fields.String
-bid_nested_fields['tokens'] = fields.String
-bid_nested_fields['reputation'] = fields.String
-bid_nested_fields['userId'] = fields.Integer
-bid_nested_fields['bidderName'] = fields.String
-
-bid_status_nested_fields = {}
-bid_status_nested_fields['date'] = fields.String
-bid_status_nested_fields['tokens'] = fields.String
-bid_status_nested_fields['reputation'] = fields.String
-bid_status_nested_fields['contributionValueAfterBid'] = fields.Float
-bid_status_nested_fields['stake'] = fields.Float
-bid_status_nested_fields['userId'] = fields.Integer
+evaluation_nested_fields = {}
+evaluation_nested_fields['stake'] = fields.Float
+evaluation_nested_fields['tokens'] = fields.Float
+evaluation_nested_fields['reputation'] = fields.Float
+evaluation_nested_fields['agentId'] = fields.Integer
 
 contributor_nested_fields = {}
 contributor_nested_fields['id'] = fields.String
 contributor_nested_fields['percentage'] = fields.String
 contributor_nested_fields['name'] = fields.String
-contributor_nested_fields['real_name'] = fields.String
-contributor_nested_fields['imgUrl'] = fields.String
-contributor_nested_fields['project_reputation'] = fields.String
 
 contribution_fields = {}
 contribution_fields['id'] = fields.Integer
-contribution_fields['time_created'] = fields.DateTime
-contribution_fields['users_organizations_id'] = fields.Integer
+contribution_fields['timeCreated'] = fields.DateTime
+contribution_fields['agentCollaborationId'] = fields.Integer
 contribution_fields['status'] = fields.String
-contribution_fields['userId'] = fields.String
-contribution_fields['description'] = fields.String
-contribution_fields['title'] = fields.String
+contribution_fields['tokenSymbol'] = fields.String
 contribution_fields['tokenName'] = fields.String
-contribution_fields['code'] = fields.String
-contribution_fields['channelId'] = fields.String
 contribution_fields['currentValuation'] = fields.Integer
-contribution_fields['bids'] = fields.Nested(bid_nested_fields)
+contribution_fields['evaluations'] = fields.Nested(evaluation_nested_fields)
 contribution_fields['contributors'] = fields.Nested(contributor_nested_fields)
 
-contribution_status_fields ={}
-contribution_status_fields['id'] = fields.Integer
-contribution_status_fields['time_created'] = fields.DateTime
-contribution_status_fields['users_organizations_id'] = fields.Integer
-contribution_status_fields['status'] = fields.String
-contribution_status_fields['userId'] = fields.String
-contribution_status_fields['currentValuation'] = fields.Float
-contribution_status_fields['valueIndic'] = fields.Integer
-contribution_status_fields['myReputationDelta'] = fields.Integer
-contribution_status_fields['myEvaluation'] = fields.Integer
-contribution_status_fields['myWeight'] = fields.Float
-contribution_status_fields['groupWeight'] = fields.Float
-contribution_status_fields['channelId'] = fields.String
-contribution_status_fields['project_reputation'] = fields.Float
-contribution_status_fields['totalSystemReputation'] = fields.Float
-contribution_status_fields['description'] = fields.String
-contribution_status_fields['title'] = fields.String
-contribution_status_fields['tokenName'] = fields.String
-contribution_status_fields['code'] = fields.String
-contribution_status_fields['bids'] = fields.Nested(bid_status_nested_fields)
-contribution_status_fields['contributors'] = fields.Nested(contributor_nested_fields)
-
-contribution_status_nested_fields ={}
-contribution_status_nested_fields['currentValuation'] = fields.Integer
-contribution_status_nested_fields['reputationDelta'] = fields.Integer
-contribution_status_nested_fields['id'] = fields.Integer
-contribution_status_nested_fields['myWeight'] = fields.Float
-contribution_status_nested_fields['title'] = fields.String
-contribution_status_nested_fields['cTime'] = fields.String
-contribution_status_nested_fields['tokenName'] = fields.String
-contribution_status_nested_fields['userId'] = fields.String
-
-project_nested_fields ={}
-project_nested_fields['id'] = fields.Integer
-project_nested_fields['channelName'] = fields.String
-project_nested_fields['name'] = fields.String
-
-
-member_status_fields ={}
-member_status_fields['tokens'] = fields.String
-member_status_fields['tokenName'] = fields.String
-member_status_fields['code'] = fields.String
-member_status_fields['reputation'] = fields.String
-member_status_fields['contributionLength'] = fields.String
-member_status_fields['imgUrl'] = fields.String
-member_status_fields['fullName'] = fields.String
-member_status_fields['name'] = fields.String
-member_status_fields['reputationPercentage'] = fields.String
-member_status_fields['contributions'] = fields.Nested(contribution_status_nested_fields)
-member_status_fields['projects'] = fields.Nested(project_nested_fields)
-
-
-
-milestoneContributor_nested_fields = {}
-milestoneContributor_nested_fields['id'] = fields.String
-milestoneContributor_nested_fields['percentage'] = fields.String
-milestoneContributor_nested_fields['name'] = fields.String
-milestoneContributor_nested_fields['real_name'] = fields.String
-milestoneContributor_nested_fields['imgUrl'] = fields.String
-
-contribution_contributor_nested_fields = {}
-contribution_contributor_nested_fields['memberId'] = fields.String
-contribution_contributor_nested_fields['imgUrl'] = fields.String
-
-milestoneContribution_nested_fields = {}
-milestoneContribution_nested_fields['title'] = fields.String
-milestoneContribution_nested_fields['description'] = fields.String
-milestoneContribution_nested_fields['date'] = fields.String
-milestoneContribution_nested_fields['valuation'] = fields.String
-milestoneContribution_nested_fields['contribution_id'] = fields.Integer
-milestoneContribution_nested_fields['remainingContributors'] = fields.Integer
-milestoneContribution_nested_fields['contributors'] = fields.Nested(contribution_contributor_nested_fields)
-
-
-
-milestone_fields = {}
-milestone_fields['id'] = fields.Integer
-milestone_fields['current_org_id'] = fields.Integer
-milestone_fields['contribution_id'] = fields.Integer
-milestone_fields['start_date'] = fields.DateTime
-milestone_fields['end_date'] = fields.DateTime
-milestone_fields['users_organizations_id'] = fields.Integer
-milestone_fields['userId'] = fields.String
-milestone_fields['description'] = fields.String
-milestone_fields['tokens'] = fields.Float
-milestone_fields['totalValue'] = fields.Float
-milestone_fields['title'] = fields.String
-milestone_fields['tokenName'] = fields.String
-milestone_fields['channelName'] = fields.String
-milestone_fields['destChannelId'] = fields.String
-milestone_fields['destChannelName'] = fields.String
-milestone_fields['code'] = fields.String
-milestone_fields['destination_org_id'] = fields.Integer
-milestone_fields['contributors'] = fields.Nested(milestoneContributor_nested_fields)
-milestone_fields['contributions'] = fields.Nested(milestoneContribution_nested_fields)
-
-
-
-def getUser(id):
-    user = session.query(cls.User).filter(cls.User.id == id).first()    
-    return user
-
-def getUserBySlackId(id):
-    user = session.query(cls.User).filter(cls.User.slackId == id).first()    
-    return user
-
-def getUserByTwitterId(id):
-    user = session.query(cls.User).filter(cls.User.twitterHandle == id).first()    
-    return user
-
-class UserSlackResource(Resource):
-    @marshal_with(user_fields)
-    def get(self, slackId):
-        char = getUserBySlackId(slackId)
-        if not char:
-            abort(404, message="User {} doesn't exist".format(id))       
-        return {"id": char.id,"name":char.name,"displayName": char.name,"imgUrl": char.imgUrl}
-   
-class UserResource(Resource):
-    @marshal_with(user_org_fields)
-    def get(self, id,orgId):
-        char = getUser(id)
-        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).filter(cls.UserOrganization.user_id == id).first()
-        print 'got Get for User fbid:'+id
-        if not char:
-            abort(404, message="User {} doesn't exist".format(id))       
-        return {"id": char.id,"name":char.name,"tokens": userOrgObj.org_tokens,"reputation": userOrgObj.org_reputation} 
     
-    def delete(self, id):
-        char = getUser(id)
-        if not char:
-            abort(404, message="User {} doesn't exist".format(id))
-        session.delete(char)
-        session.commit()
-        return {}, 204
-
-    @marshal_with(user_fields)
-    def put(self, id):
-        json = request.json
-        twitterHandle = json['twitterHandle']
-        char = getUser(id)
-        if twitterHandle != None :
-            char.twitterHandle = twitterHandle
-        session.add(char)
-        session.commit()
-        return char, 201
-
-    @marshal_with(user_fields)
-    def post(self):
-        parsed_args = userParser.parse_args()
-
-        jsonStr = {
-                    "name":parsed_args['name']
-                    }
-        user = cls.User(jsonStr,session)
-
-        session.add(user)
-        session.commit()
-        return user, 201
-    
-class AllOrganizationResource(Resource):
-    @marshal_with(org_fields)
+class AgentResource(FlaskResource):
+    @marshal_with(agent_handle_fields)
     def get(self):
-        payload = parse_token(request)
-        slackTeamId = payload['slackTeamId']
-        organizations = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).all()
-        for organization in organizations :
-            organization.orgId = organization.id
-        return organizations
-    
-class AllOrganizationForCurrentTeamResource(Resource):
-    @marshal_with(org_fields)
-    def get(self,slackTeamId):
-        organizations = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).all()
-        return organizations
-    
-class AllUserResource(Resource):
-    @marshal_with(user_org_fields)
-    def get(self,organizationId):
-        users =[]    
-        userOrganizationObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == organizationId).all()
-        for userOrganization in userOrganizationObjects :
-            print 'imgUrlis'+str(userOrganization.user.imgUrl)
-            users.append({'imgUrl':userOrganization.user.imgUrl,'real_name':userOrganization.user.real_name,'id':userOrganization.user.id,'name':userOrganization.user.name,"tokens": userOrganization.org_tokens,"reputation": userOrganization.org_reputation})           
-        return users
-        
-class BidResource(Resource):
-    @marshal_with(bid_fields)
-    def get(self, id):
-        char = session.query(cls.Bid).filter(cls.Bid.id == id).first()
-        print 'got Get for Bid fbid:'+id
-        if not char:
-            abort(404, message="Bid {} doesn't exist".format(id))
-        return char
-
-    def delete(self, id):
-        char = session.query(cls.Bid).filter(cls.Bid.id == id).first()
-        if not char:
-            abort(404, message="Bid {} doesn't exist".format(id))
-        session.delete(char)
-        session.commit()
-        return {}, 204
-
-    @marshal_with(bid_fields)
-    def put(self, id):
-        parsed_args = bidParser.parse_args()
-        char = session.query(cls.Bid).filter(cls.Bid.id == id).first()
-        session.add(char)
-        session.commit()
-        return char, 201
-
-    @marshal_with(bid_fields)
-    def post(self):
-        parsed_args = bidParser.parse_args()
-        contributionid = parsed_args['contributionId']        
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionid).first()
-        if not contributionObject:
-            abort(404, message="Contribution {} doesn't exist".format(contributionid))
-        if contributionObject.status != 'Open':
-            abort(404, message="Contribution {} is not Open".format(contributionid))
-        payload = parse_token(request)
-        userId = payload['sub']
-        userObj = getUser(userId)        
-        if not userObj:
-            abort(404, message="User {} who is creating bid  doesn't exist".format(userId))
-        contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == userObj.id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
-        
-        jsonStr = {"tokens":parsed_args['evaluation'],
-                   "reputation":contributionValues.reputation,
-                   "userId":userId,
-                   "contribution_id":contributionid,
-                   "stake":contributionValues.reputation*5/100, 
-                   "time_created":datetime.now()
+        networkId = request.args.get('networkId')
+        agents = []
+        if(networkId != None ) :
+            agentNetworks = session.query(cls.AgentNetwork).filter(cls.AgentNetwork.networkId == networkId).all() 
+            
+            for agentNetwork in agentNetworks :
+                jsonStr = {
+                    "id":agentNetwork.agent.id,
+                    "name":agentNetwork.agent.name,
+                    "imgUrl":agentNetwork.agent.imgUrl
                     }
-
-        bid = cls.Bid(jsonStr,session) 
-        vd = ValueDistributer()
-        vd.process_bid(bid,session)
-        if(vd.error_occured):
-            print vd.error_code
-            # ToDo :  pass correct error message to user
-            abort(404, message="Failed to process bid".format(contributionid))
-
-        return bid, 201
+                agents.append(jsonStr)
+        else :
+            agentHandles = session.query(cls.AgentHandle).all() 
+            for agentHandle in agentHandles :
+                agentHandle = fillAgentDetails(agentHandle)
+            return agentHandles
     
-class MilestoneBidResource(Resource):
-    @marshal_with(bid_fields)
-    def get(self, id):
-        char = session.query(cls.Bid).filter(cls.Bid.id == id).first()
-        print 'got Get for Bid fbid:'+id
-        if not char:
-            abort(404, message="Bid {} doesn't exist".format(id))
-        return char
-
-    def delete(self, id):
-        char = session.query(cls.Bid).filter(cls.Bid.id == id).first()
-        if not char:
-            abort(404, message="Bid {} doesn't exist".format(id))
-        session.delete(char)
+    
+    def delete(self):
+        
+        agentHandles = session.query(cls.AgentHandle).all()
+        for agentHandle in agentHandles :
+            deleteAgentHandle(agentHandle)
+            
         session.commit()
-        return {}, 204
+        
+        return "Agents deleted successfully", 200
     
 
-    @marshal_with(bid_fields)
+    @marshal_with(agent_fields)
     def post(self):
-        parsed_args = milestonebidParser.parse_args()
-        milestoneId = parsed_args['milestoneId']        
-        milestoneObject = session.query(cls.Milestone).filter(cls.Milestone.id == milestoneId).first()
-        if not milestoneObject:
-            abort(404, message="Milestone {} doesn't exist".format(milestoneId)) 
-        contributionid = milestoneObject.contribution_id     
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionid).first()
-        if not contributionObject:
-            abort(404, message="Contribution {} doesn't exist".format(contributionid))
-        if contributionObject.status != 'Open':
-            abort(404, message="Contribution {} is not Open".format(contributionid))
-        payload = parse_token(request)
-        userId = payload['sub']
-        userObj = getUser(userId)        
-        if not userObj:
-            abort(404, message="User {} who is creating bid  doesn't exist".format(userId))
-        contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == userObj.id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
+        name = request.args.get('name')
+        if(name == '' or name == None ):
+            abort(404, message="name is required")
+        handleName = request.args.get('handleName')
+        handleType = request.args.get('handleType')
+        if handleName == None :
+            handleName = name
+        if handleType == None :
+            handleType = 'Backfeed'
+        agentHandle = getAgentByNameAndType(name,handleName,handleType)
+        if agentHandle :
+            abort(404, message="Agent {} with handleName {} and handleType {} already exist".format(name,handleName,handleType))
+        agent = getAgentByName(name) 
+        if not agent :
+            jsonStr = {
+                    "name":name
+                    }
+            agent = cls.Agent(jsonStr,session)
+            session.add(agent)
+            session.flush()
         
-        jsonStr = {"tokens":parsed_args['tokens'],
-                   "reputation":contributionValues.reputation,
-                   "userId":userId,
-                   "contribution_id":contributionid,
-                   "stake":contributionValues.reputation*5/100, 
-                   "time_created":datetime.now()
-                    }     
-      
-
-        bid = cls.Bid(jsonStr,session) 
-        vd = ValueDistributer()
-        vd.process_bid(bid,session)
-        if(vd.error_occured):
-            print vd.error_code
-            # ToDo :  pass correct error message to user
-            abort(404, message="Failed to process bid".format(contributionid))
-        return bid, 201
+        agentHandle = cls.AgentHandle()
+        agentHandle.agentId = agent.id
+        agentHandle.handleType = handleType
+        agentHandle.handleName = handleName
+        session.add(agentHandle)
+        session.commit()
+        return agentHandle, 201
+        
     
-class BidContributionResource(Resource):
-    def get(self, contributionId,userId):
-        char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.userId == userId).first()   
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first() 
-        if contributionObject.status == 'Closed':
-            return {"contributionClose":"true"}  
-        if not char:
-            return {"contributionClose":"false","bidExists":"false","organizationId":contributionObject.userOrganization.organization_id}
-        else:
-            return {"contributionClose":"false","bidExists":"true"} 
+    
+class AgentParameterResource(Resource):
+    @marshal_with(agent_handle_fields)
+    def get(self, id):
+        agentHandle = getAgentHandle(id)
+        if not agentHandle:
+            abort(404, message="Agent {} doesn't exist".format(id)) 
+        agentHandle = fillAgentDetails(agentHandle)
+        return agentHandle 
+    
+    
+    def delete(self, id):
+        handleName = request.args.get('handleName')
+        handleType = request.args.get('handleType')
+        networkId = request.args.get('networkId')
+        if(handleName != None and handleType != None):
+            agentHandle = getAgentHandle(id)
+            if not agentHandle:
+                abort(404, message="Agent {} doesn't exist".format(id))
+            existingAgentHandle = getAgentByNameAndType(agentHandle.agent.name,handleName, handleType)
+            if not existingAgentHandle :
+                abort(404, message="agentHandle with {} and handleName: {} and handleType: {} doesn't exist".format(agentHandle.agent.name,handleName,handleType))
+            deleteAgentHandle(existingAgentHandle)
+            session.commit()
+            return "Agent Handle deleted successfully", 200
+        elif(networkId != None ) :
+            agentNetwork = session.query(cls.AgentNetwork).filter(cls.AgentNetwork.networkId == networkId).filter(cls.AgentNetwork.agentHandleId == id).first() 
+            if agentNetwork :
+                session.delete(agentNetwork)
+            session.commit()
+            return "Agent Networks deleted successfully", 200
+        else :
+            agentHandle = getAgentHandle(id)
+            if not agentHandle:
+                abort(404, message="Agent {} doesn't exist".format(id))
+            deleteAgentHandle(agentHandle)
+            session.commit()
+            return "Agent deleted successfully", 200
         
         
-class MilestoneBidContributionResource(Resource):
-    def get(self, milestoneId,userId):
-        milestoneObj = session.query(cls.Milestone).filter(cls.Milestone.id == milestoneId).first()
-        contributionId = milestoneObj.contribution_id
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()
-        char = session.query(cls.Bid).filter(cls.Bid.contribution_id == contributionId).filter(cls.Bid.userId == userId).first()
-        if contributionObject.status == 'Closed':   
-             return {"contributionClose":"true",'contributionId':contributionId} 
-        if not char:
-            return {"contributionClose":"false","bidExists":"false","organizationId":contributionObject.userOrganization.organization_id,'contributionId':contributionId}
-        else:
-            return {"contributionClose":"false","bidExists":"true",'contributionId':contributionId}       
+        
+    
+    @marshal_with(agent_fields)
+    def post(self,id):
+        handleName = request.args.get('handleName')
+        handleType = request.args.get('handleType')
+        if(handleName == '' or handleName == None ):
+            abort(404, message="handleName is required")
+            
+        if(handleType == '' or handleType == None ):
+            abort(404, message="handleType is required")
+            
+        agentHandle = getAgentHandle(id)
+        
+        if not agentHandle :
+            abort(404, message="Agent {} does not  exist".format(id))
+        existingAgentHandle = getAgentByIdAndType(agentHandle.agent.id,handleName,handleType)
+        if existingAgentHandle :
+            abort(404, message="Agent {} with handleName {} and handleType {} already exist".format(id,handleName,handleType))
+        
+        
+        agentHandle = cls.AgentHandle()
+        agentHandle.agentId = agentHandle.agent.id
+        agentHandle.handleType = handleType
+        agentHandle.handleName = handleName
+        session.add(agentHandle)
+        session.commit()   
+        return agentHandle, 201
+    
+class AgentFindByHandle(Resource):
+    @marshal_with(agent_handle_fields)
+    def get(self):
+        handleName = request.args.get('handleName')
+        handleType = request.args.get('handleType')
+        if(handleName == '' or handleName == None ):
+            abort(404, message="handleName is required")
+            
+        if(handleType == '' or handleType == None ):
+            abort(404, message="handleType is required")
+            
+        agentHandles = session.query(cls.AgentHandle).filter(cls.AgentHandle.handleName == handleName).filter(cls.AgentHandle.handleType == handleType).all()
+        for agentHandle in agentHandles:
+            agentHandle = fillAgentDetails(agentHandle)
+        return agentHandles
+    
+class AgentFindByNetwork(Resource):
+    @marshal_with(agent_handle_fields)
+    def get(self):
+        networkId = request.args.get('networkId')
+        if(networkId != None ) :
+            network = session.query(cls.Network).filter(cls.Network.id == networkId).first()
+            if not network :
+                abort(404, message="Network {} does not exists".format(networkId))
+            agentNetworks = network.agentNetworks
+            agentHandlesList = []
+            for agentNetwork in agentNetworks:
+                agentHandle = agentNetwork.agentHandle
+                agentHandle = fillAgentDetails(agentHandle)
+                agentHandlesList.append(agentHandle)
+        return agentHandlesList
+    
+class AgentFindByCollaboration(Resource):
+    @marshal_with(agent_handle_fields)
+    def get(self):
+        collaborationId = request.args.get('collaborationId')
+        if(collaborationId != None ) :
+            collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == collaborationId).first()
+            if not collaboration :
+                abort(404, message="Collaboration {} does not exists".format(collaborationId))
+            agentCollaborations = collaboration.agentCollaborations
+            agentHandlesList = []
+            for agentCollaboration in agentCollaborations:
+                agentHandle = agentCollaboration.agentHandle
+                agentHandle = fillAgentDetails(agentHandle)
+                agentHandlesList.append(agentHandle)
+        return agentHandlesList
+    
+class AgentUpdateHandle(Resource):
+    @marshal_with(agent_handle_fields)
+    def put(self,id):
+        handleName = request.args.get('handleName')
+        handleType = request.args.get('handleType')
+        if(handleName == '' or handleName == None ):
+            abort(404, message="handleName is required")
+            
+        if(handleType == '' or handleType == None ):
+            abort(404, message="handleType is required")
+            
+        agentHandle = getAgentHandle(id)
+        if not agentHandle :
+            abort(404, message="Agent {} does not exist".format(id))
+        existingAgentHandle = getAgentByNameAndType(agentHandle.agent.name, handleName, handleType)
+        if existingAgentHandle :
+            abort(404, message="Agent {} with handleName {} and handleType {} already exist".format(agentHandle.agent.name,handleName,handleType))
+        agentHandle = cls.AgentHandle()
+        agentHandle.handleName = handleName
+        agentHandle.handleType = handleType
+        agentHandle.agentId = id
+        session.add(agentHandle)
+        session.commit()
+        return agentHandle
+    
+class AgentUpdateNetwork(Resource):
+    @marshal_with(agent_network_fields)
+    def put(self,id):
+        networkId = request.args.get('networkId')
+        if(networkId == '' or networkId == None ):
+            abort(404, message="networkId is required")
+        network = session.query(cls.Network).filter(cls.Network.id == networkId).first()
+        if not network :
+            abort(404, message="Network {} does not exists".format(networkId))
+        agentHandle = getAgentHandle(id)
+        if not agentHandle :
+            abort(404, message="agentHandle {} does not exists".format(id))
+        agentNetwork = getAgentNetwork(id, networkId)
+        if agentNetwork :
+            abort(404, message="agentNetwork already exist with agent {} and network {}".format(id,networkId))
+        agentNetwork = cls.AgentNetwork()
+        agentNetwork.agentHandleId = id
+        agentNetwork.networkId = networkId
+        session.add(agentNetwork)
+        session.commit()
+        return agentNetwork
+        
+    
+    
 
+class NetworkResource(Resource):
+    
+    @marshal_with(network_fields)
+    def get(self):
+        networks = session.query(cls.Network).all()
+        return networks
+    
+    def delete(self):
+        networks = session.query(cls.Network).all()
+        for network in networks :
+            deleteNetwork(network)
+        session.commit()
+        return "Networks deleted successfully", 200
+    
+    @marshal_with(network_fields)
+    def post(self):
+        name = request.args.get('name')
+        description = request.args.get('description')        
+        agentHandleId = request.args.get('creator')
+        
+        if name == '' or name == None:
+            abort(404, message="name is required")
+        if agentHandleId == '' or agentHandleId == None:
+            abort(404, message="creator is required")
+        else :
+            agentHandle = getAgentHandle(agentHandleId)
+            if not agentHandle :
+                abort(404, message="agentId {} does not exists".format(agentHandleId))
+        
+            
+        network = session.query(cls.Network).filter(cls.Network.name == name).first()
+        if network:
+            abort(404, message="Network for name {} already exist".format(name))
+        
+        jsonStr = {"name":name,
+                    "description":description,"agentHandleId":agentHandleId}
+        network = cls.Network(jsonStr,session)
+        session.add(network)
+        session.commit()
+        return network, 201
+    
+class NetworkParameterResource(Resource):
+    
+    @marshal_with(network_fields)
+    def get(self, id):
+        network = session.query(cls.Network).filter(cls.Network.id == id).first()
+        if not network :
+            abort(404, message="Network {} does not exists".format(id))
+        return network
+    
+    def delete(self, id):
+        network = session.query(cls.Network).filter(cls.Network.id == id).first()
+        if network :
+            deleteNetwork(network)           
+            session.commit()
+        return "Network deleted successfully", 200
+
+    
+class CollaborationResource(Resource):
+    
+    @marshal_with(collaboration_fields)
+    def get(self):
+        networkId = request.args.get('networkId')
+        agentId = request.args.get('agentId')
+        if(networkId != None and agentId == None) :
+            network = session.query(cls.Network).filter(cls.Network.id == networkId).first()
+            if not network :
+                abort(404, message="Network {} does not exists".format(networkId))
+            collaborations = network.collaborations
+        
+        elif(networkId != None and agentId != None) :
+            network = session.query(cls.Network).filter(cls.Network.id == networkId).first()
+            if not network :
+                abort(404, message="Network {} does not exists".format(networkId))
+            allcollaborations = network.collaborations
+            collaborations = []
+            for collaboration in allcollaborations :
+                agentCollaborations = collaboration.agentCollaborations
+                for agentCollaboration in agentCollaborations :
+                    if int(agentCollaboration.agentHandleId) == int(agentId) :
+                        collaborations.append(collaboration)
+                        break
+                        
+        else :
+            collaborations = session.query(cls.Collaboration).all()       
+        
+        return collaborations
+    
+    def delete(self):
+        networkId = request.args.get('networkId')
+        if(networkId != None ) :
+            network = session.query(cls.Network).filter(cls.Network.id == networkId).first()
+            if not network :
+                abort(404, message="Network {} does not exists".format(networkId))
+            collaborations = network.collaborations
+        else :
+            collaborations = session.query(cls.Collaboration).all()
+            
+        for collaboration in collaborations :
+            deleteCollaboration(collaboration)
+        session.commit()
+        return "Collaborations deleted successfully", 200
+    
+    @marshal_with(collaboration_fields)
+    def post(self):
+        tokenName = request.args.get('tokenName')
+        name = request.args.get('name')
+        description = request.args.get('description')
+        tokenSymbol = request.args.get('tokenSymbol')
+        agentHandleId = request.args.get('creator')
+        tokenTotal = request.args.get('tokenTotal')
+        networkId = request.args.get('networkId')
+        comment = request.args.get('comment')
+        handles = request.args.get('handles')
+        protocol = request.args.get('protocol')
+        handlesJSON = {}
+        contributorsJSON = {}
+        if handles != '' and handles != None :
+            handlesJSON = json.loads(handles)
+        contributors = request.args.get('contributors')
+        print 'contributors'+contributors
+        if contributors != '' and contributors != None :
+            contributorsJSON = json.loads(contributors)
+        similarEvaluationRate = request.args.get('similarEvaluationRate')
+        passingResponsibilityRate = request.args.get('passingResponsibilityRate')
+        if protocol == '' or  protocol == None :
+            abort(404, message="Protocol is required")
+        if name == '' or name == None:
+            abort(404, message="collaborationName is required")
+        if networkId != '' and networkId != None:
+            network = session.query(cls.Network).filter(cls.Network.id == networkId).first()
+            if not network :
+                abort(404, message="Network {} does not exists".format(networkId))
+        if agentHandleId == '' or agentHandleId == None:
+            abort(404, message="creator is required")
+        else :
+            agentHandle = getAgentHandle(agentHandleId)
+            if not agentHandle :
+                abort(404, message="agent{} does not exists".format(agentHandleId))
+        if similarEvaluationRate == '' or similarEvaluationRate == None :
+            similarEvaluationRate = 50 
+        if passingResponsibilityRate == '' or passingResponsibilityRate == None:
+            passingResponsibilityRate = 50 
+            
+        collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.name == name).first()
+        if collaboration:
+            abort(404, message="Collaboration for name {} already exist".format(name))
+        
+        jsonStr = {"tokenName":tokenName,
+                    "similarEvaluationRate":similarEvaluationRate,"passingResponsibilityRate":passingResponsibilityRate,"tokenTotal":tokenTotal,"protocol":protocol,
+                    "tokenSymbol":tokenSymbol,"description":description,"networkId":networkId,"comment":comment,"name":name,"agentHandleId":agentHandleId}
+        collaboration = cls.Collaboration(jsonStr,session)
+        session.add(collaboration)
+        session.flush()   
+        creatorAlreadyCreated = False
+        #create agent collaborations objects
+        for contributor in contributorsJSON :
+            agentCollaboration = cls.AgentCollaboration()
+            agentCollaboration.collaborationId = collaboration.id
+            contributorId = contributor['id']
+            if int(agentHandleId) == int(contributorId):
+                creatorAlreadyCreated = True;
+            agentCollaboration.agentHandleId = contributorId
+            agentCollaboration.tokens = float(int(tokenTotal)*int(contributor['percentage']))/100
+            agentCollaboration.reputation = float(int(tokenTotal)*int(contributor['percentage']))/100
+            session.add(agentCollaboration)
+            
+            agentNetwork = getAgentNetwork(contributorId, networkId)
+            if not agentNetwork:
+                agentNetwork = cls.AgentNetwork()
+                agentNetwork.agentHandleId = contributorId
+                agentNetwork.networkId = networkId
+                session.add(agentNetwork)
+            
+        
+        if creatorAlreadyCreated == False :
+            agentCollaboration = cls.AgentCollaboration()
+            agentCollaboration.collaborationId = collaboration.id
+            agentCollaboration.agentHandleId = agentHandleId
+            agentCollaboration.tokens = 0
+            agentCollaboration.reputation = 0
+            session.add(agentCollaboration)
+            agentNetwork = getAgentNetwork(agentHandleId, networkId)
+            if not agentNetwork:
+                agentNetwork = cls.AgentNetwork()
+                agentNetwork.agentHandleId = agentHandleId
+                agentNetwork.networkId = networkId
+                session.add(agentNetwork)
+            
+        for handle in handlesJSON :
+            collaborationHandle = cls.CollaborationHandle()
+            collaborationHandle.collaborationId = collaboration.id
+            collaborationHandle.handleName = handle['handleName']
+            collaborationHandle.handleType = handle['handleType']
+            session.add(collaborationHandle)
+            
+        session.commit()    
+        return collaboration, 201
+    
+class CollaborationParameterResource(Resource):
+    
+    @marshal_with(collaboration_fields)
+    def get(self, id):
+        collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == id).first()
+        if not collaboration :
+            abort(404, message="collaborationId {} does not exists".format(id))
+        return collaboration
+    
+    def delete(self, id):
+        collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == id).first()
+        if collaboration :
+            deleteCollaboration(collaboration)            
+            session.commit()
+        return "Collaboration deleted successfully", 200
+    
+    
+    
+class CollaborationClose(Resource):
+
+    @marshal_with(contribution_fields)
+    def put(self):
+        collaborationId = request.args.get('id')
+        collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == collaborationId).first()
+        if not collaboration :
+            abort(404, message="collaborationId {} does not exists".format(collaborationId)) 
+        contributions = collaboration.contributions 
+        winningContribution = None
+        maxContributionValueAfterEvaluation = 0
+        for contribution in contributions :
+            if contribution.contributionValueAfterEvaluation > maxContributionValueAfterEvaluation :
+                maxContributionValueAfterEvaluation = contribution.contributionValueAfterEvaluation
+                winningContribution = contribution
+            contribution.status = 'Closed'
+            session.add(contribution) 
+        collaboration.status = 'Closed'
+        session.add(collaboration) 
+        session.commit()
+        return winningContribution, 200
+    
 class ContributionResource(Resource):
     @marshal_with(contribution_fields)
-    def get(self, id):
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
-        print 'got Get for Contribution fbid:'+id
-        if not contributionObject:
-            abort(404, message="Contribution {} doesn't exist".format(id))
-        for contributor in contributionObject.contributors:
-            contributor.name= getUser(contributor.contributor_id).name
-            contributor.id = contributor.contributor_id
-            
-        last_bid = None 
-        currentValuation = 0  
-        bids = contributionObject.bids
-        bids.sort(key=lambda x: x.time_created, reverse=False)    
-        for bid in bids:
-            bid.bidderName = getUser(bid.userId).name
-            last_bid = bid
-            
-        if (last_bid):
-            currentValuation = last_bid.contribution_value_after_bid
-        contributionObject.tokenName = contributionObject.userOrganization.organization.token_name
-        contributionObject.currentValuation = currentValuation
-        contributionObject.code = contributionObject.userOrganization.organization.code
+    def get(self):
+        collaborationId = request.args.get('collaborationId')
+        key = request.args.get('key')
+        contains = request.args.get('contains')
+        if collaborationId != '' and  collaborationId != None  :
+            collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == collaborationId).first()
+            if not collaboration :
+                abort(404, message="Collaboration {} does not exists".format(collaborationId))
+            contributions = []
+            agentCollaborations = collaboration.agentCollaborations
+            for agentCollaboration in agentCollaborations :
+                contributions.extend(agentCollaboration.contributions)
+        elif key != '' and  key != None and contains != '' and  contains != None :
+            allContributions = session.query(cls.Contribution).all()
+            contributions = []
+            for contribution in allContributions:
+                content = contribution.content
+                handlesContent = json.loads(content)['content']
+                try :
+                    keyValues = handlesContent[key]
+                    if not isinstance(keyValues, (list)):
+                        if contains in keyValues:
+                            contributions.append(contribution)
+                    else:
+                        for keyValue in keyValues :
+                            if contains in keyValue:
+                                contributions.append(contribution)
+                                break
+                    
+                    
+                except KeyError :
+                    keyValue = ''
+        else :
+            contributions = session.query(cls.Contribution).all()            
+        
+        for contribution in contributions :
+            contribution = getContributionDetail(contribution)
+        return contributions
 
-        return contributionObject
-
-    def delete(self, id):
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
-        if not contributionObject:
-            abort(404, message="Contribution {} doesn't exist".format(id))
-        for contributor in contributionObject.contributors:
-            session.delete(contributor)
-        for bid in contributionObject.bids:
-            session.delete(bid)
-        session.delete(contributionObject)
+    def delete(self):
+        contributions = session.query(cls.Contribution).all()
+        for contribution in contributions :
+            deleteContribution(contribution)
         session.commit()
-        return {}, 204
+        return "Contributions deleted successfully", 200
     
     @marshal_with(contribution_fields)   
-    def post(self):        
-        json = request.json
+    def post(self): 
+        collaborationId = request.args.get('collaborationId')
+        agentHandleId = request.args.get('agentId')
+        comment = request.args.get('comment')
+        type = request.args.get('type')
+        content = request.data
+        agentHandle = None
+        if type == '' or type == None :
+            abort(404, message="Type is required")
+            
+        if agentHandleId == '' or agentHandleId == None :
+            abort(404, message="Agent is required")
+        else :
+            agentHandle = getAgentHandle(agentHandleId)
+            if not agentHandle :
+                abort(404, message="agent {} does not exists".format(agentHandleId))
+        
+        if collaborationId == '' or collaborationId == None  :
+            abort(404, message="Collaboration is required")
+        else :
+            collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == collaborationId).first()
+            if not collaboration :
+                abort(404, message="Collaboration {} does not exists".format(collaborationId))
+        agentCollaboration = session.query(cls.AgentCollaboration).filter(cls.AgentCollaboration.agentHandleId == agentHandleId).filter(cls.AgentCollaboration.collaborationId == collaborationId).first()
+        if not agentCollaboration :
+            abort(404, message="Agent {} does not exists in Collaboration {} ".format(agentHandleId,collaborationId))    
         contribution = cls.Contribution()
-        payload = parse_token(request)
-        contribution.userId = payload['sub']
-        contribution.min_reputation_to_close = 0
-        contribution.description = json['description']
-        contribution.title = json['title']
-        orgObject = session.query(cls.Organization).filter(cls.Organization.channelId == json['channelId']).first()
-        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgObject.id).filter(cls.UserOrganization.user_id == contribution.userId).first()
-        contribution.users_organizations_id = userOrgObjectForOwner.id
+        contribution.agentHandleId = agentHandleId
+        contribution.agentCollaborationId = agentCollaboration.id
+        contribution.comment = comment
+        contribution.content = content
+        contribution.type = type
         session.add(contribution) 
         session.flush()  
-        userObj = getUser(contribution.userId) 
+        
+        #adding default contributor
+        
+        contributionContributor = cls.ContributionContributor()
+        contributionContributor.contributorId = agentHandleId
+        contributionContributor.percentage = '100'
+        contributionContributor.name = agentHandle.agent.name
+        contribution.contributors.append(contributionContributor)
                
-        if not userObj:
-            abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.userId))    
-        for contributor in json['contributors']:             
-            contributionContributor = cls.ContributionContributor()
-            try :
-                twitterHandle = contributor['twitterHandle']
-            except KeyError :
-                twitterHandle = None
-            if twitterHandle != None :
-                userObj = getUserByTwitterId(twitterHandle)
-            else :
-                if contributor['id'] == '':
-                    continue
-                userObj = getUserBySlackId(contributor['id']) 
-            if not userObj:
-                abort(404, message="Contributor {} doesn't exist".format(contributionContributor.contributor_id))
-            contributionContributor.contributor_id = userObj.id
-            contributionContributor.contribution_id=contribution.id
-            contributionContributor.name = userObj.name          
-            contributionContributor.percentage=contributor['percentage']
-            #if (firstContribution == True):
-                 #userOrgObject = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).filter(cls.UserOrganization.user_id == userObj.id).first()
-                 #if userOrgObject:
-                    #userOrgObject.org_reputation = contributor.obj1['contributor_percentage']
-                    #session.add(userOrgObject)                                               
-            contribution.contributors.append(contributionContributor)  
-        if(len(contribution.contributors) == 0):
-            contributionContributor = cls.ContributionContributor()
-            contributionContributor.contributor_id = contribution.userId
-            contributionContributor.percentage = '100'
-            contributionContributor.name = userObj.name
-            contribution.contributors.append(contributionContributor)  
-            #if (firstContribution == True):
-                #userOrgObjectForOwner.org_reputation = 100
-                #session.add(userOrgObjectForOwner) 
-                                
-        #if((parsed_args['intialBid'].obj1['tokens'] != '') & (parsed_args['intialBid'].obj1['reputation'] != '')):      
-                #jsonStr = {"tokens":parsed_args['intialBid'].obj1['tokens'],
-                   #"reputation":parsed_args['intialBid'].obj1['reputation'],
-                   #"userId":contribution.userId,
-                   #"contribution_id":contribution.id
-                    #}
-                #intialBidObj = cls.Bid(jsonStr,session)        
-                #contribution.bids.append(intialBidObj)
-        
-        
-        
-        
-        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).all()
-        for userOrgObject in userOrgObjects :
+        #adding reputation stats for this contribution
+        agentCollaborations = session.query(cls.AgentCollaboration).filter(cls.AgentCollaboration.collaborationId == collaborationId).all()
+        for agentCollaboration in agentCollaborations :
               contributionValue = cls.ContributionValue()
-              contributionValue.user_id = userOrgObject.user_id
-              contributionValue.users_organizations_id = userOrgObject.id
-              contributionValue.contribution_id = contribution.id
+              contributionValue.agentHandleId = agentCollaboration.agentHandleId
+              contributionValue.agentCollaborationId = agentCollaboration.id
+              contributionValue.contributionId = contribution.id
               contributionValue.reputationGain = 0
-              contributionValue.reputation = userOrgObject.org_reputation
-              contributionValue.user_id = userOrgObject.user_id
+              contributionValue.reputation = agentCollaboration.reputation
               session.add(contributionValue)
         session.commit()    
-        for contributor in contribution.contributors:             
-            contributor.id=contributor.contributor_id
-        contribution.channelId = userOrgObjectForOwner.organization.channelId
+        
         return contribution, 201
-
-
-class CloseContributionResource(Resource):
-    @marshal_with(contribution_fields)   
-    def post(self):      
-        parsed_args = closeContributionParser.parse_args()  
-        payload = parse_token(request)
-        userId = payload['sub'] 
-        contributionId = parsed_args['id'] 
-        userObj = getUser(userId)  
-        if not userObj:
-            abort(404, message="User who is closing contribution {} doesn't exist".format(userId)) 
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()
-        if not contributionObject:
-            abort(404, message="Contribution {} doesn't exist".format(contributionId))
-        if contributionObject.status != 'Open':
-            abort(404, message="Contribution {} is already closed".format(contributionId))        
-        if userObj.id != contributionObject.userId:
-            abort(404, message="Only contribution userId can close this contribution".format(userId)) 
-        
-        # process contribution:
-        if( not self.process_contribution(contributionObject) ):
-            abort(404, message="Failed to process contribution".format(contributionId))
-
-        # success: close contribution and commit DB session:
-        contributionObject.status='Closed'
-        session.add(contributionObject)
-        session.commit()        
-       
-        return contributionObject, 201
-
-
-    def process_contribution(self,contribution):
-        print 'process_contribution contribution bids:\n'+str(contribution.bids)
-        
-        return True
-
-
-class AllContributionResource(Resource):
+    
+class ContributionParameterResource(Resource):
     @marshal_with(contribution_fields)
-    def get(self,organizationId):
-        if organizationId == 'notintialized':
-            organizationId = 1
-        contributionObject = session.query(cls.Contribution).filter(cls.UserOrganization.organization_id == organizationId).filter(cls.Contribution.users_organizations_id ==cls.UserOrganization.id).all()
-        return contributionObject
-    
-class ContributionStatusResource(Resource):
-    @marshal_with(contribution_status_fields)
-    def get(self,id):
-        contributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
-        print 'got Get for Contribution fbid:'+id
-        if not contributionObject:
+    def get(self, id):
+        contribution = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
+        if not contribution:
             abort(404, message="Contribution {} doesn't exist".format(id))
-        payload = parse_token(request)
-        userId = payload['sub'] 
-        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
-        userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).all()
-        contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == userOrgObj.id).first()
-        totalSystemReputation = 0
-        for userOrgObjVar in userOrgObjs :
-            totalSystemReputation = totalSystemReputation + userOrgObjVar.org_reputation
-        contributionObject.totalSystemReputation = totalSystemReputation
-        currentValuation = 0
-        myValuation = 0
-        myWeight = 0
-        groupWeight = 0
-        reputationDelta = 0
-        last_bid = None
-        for contributor in contributionObject.contributors:
-            contributor.name= getUser(contributor.contributor_id).name
-            contributor.imgUrl= getUser(contributor.contributor_id).imgUrl
-            contributor.real_name= getUser(contributor.contributor_id).real_name
-            contributorUserOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == contributor.contributor_id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
-            contributor.project_reputation = contributorUserOrgObj.org_reputation
-        bids = contributionObject.bids
-        bids.sort(key=lambda x: x.time_created, reverse=False)
-        for bid in bids:
-            bid.date = bid.time_created.date()
-            bid.contributionValueAfterBid = bid.contribution_value_after_bid
-            last_bid = bid
-            groupWeight = groupWeight + bid.weight
-            if(str(bid.userId) == str(userId)):
-                myWeight = bid.weight 
-                #reputationDelta = userOrgObj.org_reputation - bid.reputation
-                myValuation = bid.tokens
-            if (last_bid):
-                currentValuation = last_bid.contribution_value_after_bid
-                if contributionObject.currentValuation == 0 and currentValuation != 0 :
-                    contributionObject.currentValuation = currentValuation
-                    contributionObject.valueIndic = 1
-        contributionObject.myReputationDelta = contributionValues.reputationGain
-        print 'contributionObject.myReputationDelta'+str(contributionObject.myReputationDelta)
-        contributionObject.myEvaluation = myValuation
-        contributionObject.myWeight = myWeight
-        contributionObject.groupWeight = groupWeight
-        contributionObject.project_reputation = userOrgObj.org_reputation
-        contributionObject.tokenName = contributionObject.userOrganization.organization.token_name
-        contributionObject.code = contributionObject.userOrganization.organization.code
-        return contributionObject
+        contribution = getContributionDetail(contribution)
+        return contribution
+
+    def delete(self, id):
+        contribution = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
+        if not contribution:
+            abort(404, message="Contribution {} doesn't exist".format(id))
+        deleteContribution(contribution)
+        session.commit()
+        return "Contribution deleted successfully", 200
     
-class MemberStatusAllOrgsResource(Resource):
-    @marshal_with(member_status_fields)
-    def get(self,userId):        
-        userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).all()
-        userOrgObj = userOrgObjs[0]
-        allContributions = session.query(cls.Contribution).all()
-        allContributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).all()
-        contributionsDict = {}
-        for allContributionValue in allContributionValues :
-            contributionsDict[allContributionValue.contribution_id] = allContributionValue.reputationGain
-        currentValuation = 0
-        myWeight = 0
-        userOrgObj.name = userOrgObj.user.name
-        userOrgObj.fullName = userOrgObj.user.real_name
-        userOrgObj.imgUrl= userOrgObj.user.imgUrl72
-        countOfContribution = 0  
-        userOrgObj.reputationPercentage = 'N/A'
-        projectDic = {}
-        last_bid = None
-        for contribution in allContributions:
-            contributedCounted = False
-            if(str(contribution.userId) == str(userOrgObj.user.id)):
-                projectDic[contribution.userOrganization.organization.id] = contribution.userOrganization.organization
-                countOfContribution = countOfContribution + 1
-                contributedCounted = True
-            if contributedCounted == False:
-                for contributionContributor in contribution.contributors :
-                    if(str(contributionContributor.contributor_id) == str(userOrgObj.user.id)):
-                        projectDic[contribution.userOrganization.organization.id] = contribution.userOrganization.organization
-                        countOfContribution = countOfContribution + 1
-                        contributedCounted = True
-            if contributedCounted == True:
-                last_bid = None
-                currentValuation = 0
-                myWeight = 0
-                #reputationDelta = 0
-                bids = contribution.bids
-                #reputationDelta = 0
-                bids.sort(key=lambda x: x.time_created, reverse=False)
-                for bid in bids:
-                    last_bid = bid
-                    if(str(bid.userId) == str(userOrgObj.user.id)):
-                        myWeight = bid.weight 
-                        #reputationDelta = userOrgObj.org_reputation - bid.reputation
-                if (last_bid):
-                    currentValuation = last_bid.contribution_value_after_bid
-                contribution.currentValuation = currentValuation
-                contribution.reputationDelta = contributionsDict[contribution.id]
-                #contribution.reputationDelta = reputationDelta
-                contribution.myWeight = myWeight
-                contribution.tokenName= contribution.userOrganization.organization.token_name
-                contribution.cTime = contribution.time_created.date()
-                if userOrgObj.id != contribution.userOrganization.id :
-                    userOrgObj.contributions.append(contribution)
-        for contribution in userOrgObj.contributions:
-            print 'contribution.myWeight'+str(contribution.myWeight)
-        projects = []
-        for key, value in projectDic.iteritems():
-            projects.append(value)
-        userOrgObj.contributionLength = countOfContribution
-        userOrgObj.projects = projects
-        userOrgObj.org_tokens = 'N/A'
-        userOrgObj.org_reputation = 'N/A'
-        return userOrgObj    
+
+class EvaluationResource(Resource):
+    @marshal_with(evaluation_fields)
+    def get(self):
+        contributionId = request.args.get('contributionId')
+        evaluations = []
+        if contributionId != '' and contributionId != None:
+            contribution = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()
+            if not contribution :
+                abort(404, message="contributionId {} does not exists".format(contributionId))
+            evaluations = contribution.evaluations
+        evaluations = session.query(cls.Evaluation).all()
+        return evaluations
+
+    def delete(self):
+        evaluations = session.query(cls.Evaluation).all()
+        for evaluation in evaluations :
+            session.delete(evaluation)
+        session.commit()
+        return "Evaluations deleted successfully", 200
 
 
-class MemberStatusResource(Resource):
-    @marshal_with(member_status_fields)
-    def get(self,userId,orgId):        
-        userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == cls.User.id).filter(cls.User.slackId == userId).filter(cls.UserOrganization.organization_id == orgId).first()
-        userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).all()
-        allContributions = session.query(cls.Contribution).filter(cls.UserOrganization.id == cls.Contribution.users_organizations_id).filter(cls.UserOrganization.organization_id == orgId).all()
-        allContributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.users_organizations_id == userOrgObj.id).all()
-        contributionsDict = {}
-        for allContributionValue in allContributionValues :
-            contributionsDict[allContributionValue.contribution_id] = allContributionValue.reputationGain
-        totalReputation = 0;
-        for userOrgObjVar in userOrgObjs:
-            totalReputation = totalReputation + userOrgObjVar.org_reputation
-        currentValuation = 0
-        myWeight = 0
-        reputationDelta = 0
-        userOrgObj.name = userOrgObj.user.name
-        userOrgObj.fullName = userOrgObj.user.real_name
-        userOrgObj.imgUrl= userOrgObj.user.imgUrl72
-        
-        userOrgObj.reputationPercentage = (userOrgObj.org_reputation / totalReputation)*100
-        userOrgObj.tokens = userOrgObj.org_tokens
-        userOrgObj.reputation = userOrgObj.org_reputation
-        userOrgObj.tokenName = userOrgObj.organization.token_name
-        userOrgObj.code = userOrgObj.organization.code
-        last_bid = None
-        countOfContribution = 0       
-        for contribution in allContributions:
-            contributedCounted = False
-            if(str(contribution.userId) == str(userOrgObj.user.id)):
-                countOfContribution = countOfContribution + 1
-                contributedCounted = True
-            if contributedCounted == False:
-                for contributionContributor in contribution.contributors :
-                    if(str(contributionContributor.contributor_id) == str(userOrgObj.user.id)):
-                        countOfContribution = countOfContribution + 1
-                        contributedCounted = True
-            if contributedCounted == True:
-                last_bid = None
-                currentValuation = 0
-                myWeight = 0
-                bids = contribution.bids
-                #reputationDelta = 0
-                bids.sort(key=lambda x: x.time_created, reverse=False)
-                for bid in bids:
-                    last_bid = bid
-                    if(str(bid.userId) == str(userOrgObj.user.id)):
-                        myWeight = bid.weight 
-                        #reputationDelta = userOrgObj.org_reputation - bid.reputation
-                if (last_bid):
-                    currentValuation = last_bid.contribution_value_after_bid
-                contribution.currentValuation = currentValuation
-                contribution.reputationDelta = contributionsDict[contribution.id]
-                contribution.myWeight = myWeight
-                contribution.cTime = contribution.time_created.date()
-                contribution.tokenName= contribution.userOrganization.organization.token_name
-                if(str(contribution.userId) != str(userOrgObj.user.id)):
-                    userOrgObj.contributions.append(contribution)
-        userOrgObj.contributionLength = countOfContribution
-        for contribution in userOrgObj.contributions:
-            print 'contribution.myWeight'+str(contribution.myWeight)
-        return userOrgObj
-    
-    
-class OrganizationTokenExistsResource(Resource):
-    def get(self,tokenName):
-        orgObj = session.query(cls.Organization).filter(cls.Organization.token_name == tokenName).first()
-        if not orgObj:
-            return {"tokenAlreadyExist":"false"}
-        else:
-             return {"tokenAlreadyExist":"true"}
-         
-class ChannelOrganizationExistsResource(Resource):
-    def get(self,channelId,slackTeamId,userId):
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.channelId == channelId).first()
-        if not orgObj:
-            return {"channleOrgExists":"false"}
-        else:
-            userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == orgObj.id).first()
-            return {"channleOrgExists":"true","userOrgId":userOrgObj.id,"orgId":orgObj.id,"channelName":orgObj.channelName}    
-         
-class OrganizationCodeExistsResource(Resource):
-    def get(self,code):
-        orgObj = session.query(cls.Organization).filter(cls.Organization.code == code).first()
-        if not orgObj:
-            return {"codeAlreadyExist":"false"}
-        else:
-             return {"codeAlreadyExist":"true"} 
-         
-class MemberOranizationsResource(Resource):
-    @marshal_with(org_fields)
-    def get(self,slackTeamId):
-        orgObjs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).all()
-        return  orgObjs
-              
-    
-class OrganizationResource(Resource):
-    
-    @marshal_with(userOrganization_fields)
+    @marshal_with(evaluation_fields)
     def post(self):
-        json = request.json
-        channelInfo = getChannelInfo(json['slackAccessToken'],json['channelId'])
-        channelName = channelInfo['name']
-        payload = parse_token(request)
-        slackTeamId = payload['slackTeamId']
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.channelId == json['channelId']).first()
-        if orgObj:
-            abort(404, message="Project for channelName {} already exist".format(channelName))
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.code == json['code']).first()
-        if orgObj:
-            abort(404, message="Project with code {} already exist".format(json['code']))
+        tokens = request.args.get('tokens')
+        contributionId = request.args.get('contributionId')
+        agentHandleId = request.args.get('agentId')
+        stake = request.args.get('stake')
+        agentHandle = None
+        contribution = None
+        if stake == '' or stake == None:
+            abort(404, message="Stake is required")
+        if tokens == '' or tokens == None:
+            abort(404, message="Tokens is required")
+            
+        if agentHandleId == '' or agentHandleId == None:
+            abort(404, message="Agent is required")
+        else :
+            agentHandle = getAgentHandle(agentHandleId)
+            if not agentHandle :
+                abort(404, message="agentId {} does not exists".format(agentHandleId))
         
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.token_name == json['token_name']).first()
-        if orgObj:
-            abort(404, message="Project with token {} already exist".format(json['token_name']))
+        if contributionId == '' or contributionId == None:
+            abort(404, message="Contribution is required")
+        else :
+            contribution = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()
+            if not contribution :
+                abort(404, message="contributionId {} does not exists".format(contributionId))
+                
         
+        if contribution.status != 'Open':
+            abort(404, message="Contribution {} is not Open".format(contributionId))
+        contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contributionId == contribution.id).filter(cls.ContributionValue.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.AgentCollaboration.agentHandleId == agentHandleId).filter(cls.AgentCollaboration.collaborationId == contribution.agentCollaboration.collaborationId).first()
         
-        #channelId = createChannel(json['channelName'])
-        jsonStr = {"token_name":json['token_name'],
-                    "slack_teamid":slackTeamId,"a":json['similarEvaluationRate'],"b":json['passingResponsibilityRate'],
-                    "code":json['code'],"channelName":channelName,"channelId":json['channelId']}
-        userOrgObj = cls.UserOrganization(jsonStr,session)  
-        organization = cls.Organization(jsonStr,session)
-        organization.name = channelName
-        session.add(organization)
-        session.flush()            
-        usersDic = createUserAndUserOrganizations(organization.id,json['contributors'],json['initialTokens'],json['passingResponsibilityRate'],json['slackAccessToken'])
-        
-        
-        contribution = cls.Contribution()
-        contribution.min_reputation_to_close = 0
-        #contribution.description = 'Founding Contribution'
-        contribution.title = 'Founding Contribution'
-        
-        session.add(contribution)    
-        session.flush()
-        perc = 0
-        for contributor in json['contributors']:
-            contributionContributor = cls.ContributionContributor()
-            contributionContributor.contributor_id = usersDic[contributor['id']]
-            contributionContributor.contribution_id=contribution.id
-            contributionContributor.percentage=contributor['percentage']
-            if float(contributor['percentage']) > perc :
-                perc = float(contributor['percentage'])
-                contribution.userId = contributionContributor.contributor_id
-            contribution.contributors.append(contributionContributor)  
-        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == contribution.userId).filter(cls.UserOrganization.organization_id == organization.id).first()
-        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == organization.id).all()
-        contribution.users_organizations_id = userOrgObjectForOwner.id
-        for userOrgObject in userOrgObjects :
-              contributionValue = cls.ContributionValue()
-              contributionValue.user_id = userOrgObject.user_id
-              contributionValue.users_organizations_id = userOrgObject.id
-              contributionValue.contribution_id = contribution.id
-              contributionValue.reputationGain = 0
-              contributionValue.reputation = userOrgObject.org_reputation
-              contributionValue.user_id = userOrgObject.user_id
-              session.add(contributionValue)
-              session.flush()
-        jsonStr = {"tokens":json['initialTokens'],
-                   "reputation":userOrgObjectForOwner.org_reputation,
-                   "userId":contribution.userId,
-                   "contribution_id":contribution.id,
-                   "stake":userOrgObjectForOwner.org_reputation*5/100, 
-                   "time_created":datetime.now()
+        jsonStr = {"tokens":tokens,
+                   "reputation":contributionValues.reputation,
+                   "agentHandleId":agentHandleId,
+                   "contributionId":contributionId,
+                   "stake":stake, 
+                   "timeCreated":datetime.now()
                     }
 
-        bid = cls.Bid(jsonStr,session) 
-        vd = ValueDistributer()
-        vd.process_bid(bid,session)
+        evaluation = cls.Evaluation(jsonStr,session) 
+        vd = ValueDistributer('ProtocolFunctionV1')
+        vd.process_evaluation(evaluation,session)
         if(vd.error_occured):
             print vd.error_code
-            # ToDo :  pass correct error message to user
-            abort(404, message="Failed to process bid".format(contribution.id))
-        
-        
-              
-        orgs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == organization.slack_teamid).all()
-        orgChannelId = ''
-        count = 1
-        for org in orgs:
-            if count == 1:
-                orgChannelId = org.channelId
-            else:
-                orgChannelId = orgChannelId + ','+ org.channelId
-            count = count + 1;
-        userOrgObj.channelId = orgChannelId      
-        
-        return userOrgObj, 201
-    
-    def delete(self, id):
-        orgObj = session.query(cls.Organization).filter(cls.Organization.id == id).first()
-        if orgObj :
-            userOrganizationObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == id).all()
-            for userOrganization in userOrganizationObjects :
-                contributionObjects = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == userOrganization.id).all()
-                for contributionObject in contributionObjects:                    
-                    for contributor in contributionObject.contributors:
-                        session.delete(contributor)
-                    for bid in contributionObject.bids:
-                        session.delete(bid)
-                    session.delete(contributionObject)
-                session.delete(userOrganization)        
-            session.delete(orgObj)
-            session.commit()
-        return {}, 204
-    
-def getSlackUsers(slackAccessToken):
-    print 'slackAccessToken'+slackAccessToken
-    team_users_api_url = 'https://slack.com/api/users.list'
-    headers = {'User-Agent': 'DEAP'}
-    r = requests.get(team_users_api_url, params={'token':slackAccessToken}, headers=headers)
-    users = json.loads(r.text)['members']
-    print 'slack users:'+str(users)
-    return users
+            # ToDo :  pass correct error message to agent
+            abort(404, message="Failed to process evaluation {} due to"+vd.error_code.format(contributionId))
 
-def getChannelInfo(slackAccessToken,channelId):
-    print 'slackAccessToken'+slackAccessToken
-    channel_info_api_url = 'https://slack.com/api/channels.info'
-    headers = {'User-Agent': 'DEAP'}
-    r = requests.get(channel_info_api_url, params={'token':slackAccessToken,'channel':channelId}, headers=headers)
-    channelInfo = json.loads(r.text)['channel']
-    print 'channelInfo is:'+str(channelInfo)
-    return channelInfo
+        return evaluation, 201
     
-class getAllSlackUsersResource(Resource):
-    def post(self):
-        print 'comes here'
-        json = request.json
-        slackAccessToken = json['slackAccessToken']
-        userIds = json['userIds']
-        searchString = json['searchString']
-        
-        users = getSlackUsers(slackAccessToken)
-        usersJson = []
-        userIdsList = []
-        if userIds != '':
-            userIdsList = userIds.split(",")
-        
-        for user in users :
-            realName = user['profile']['real_name']
-            slackUserId = user['id']
-            userName= user['name']
-            if user['deleted'] == True :
-                continue
-            if user['is_bot'] == True :
-                continue
-            if searchString != '':
-                if  searchString.lower()  not in realName.lower() and searchString.lower()  not in userName.lower():
-                    continue
-            if len(userIdsList) > 0 :
-                if slackUserId in userIdsList:   
-                    continue
-            jsonStr = {"id":user['id'],"name":user['name'],"imgUrl":user['profile']['image_48'],"real_name":user['profile']['real_name']}
-            usersJson.append(jsonStr)
-        return usersJson
-    
-def createChannel(channelName,slackAccessToken):
-        team_users_api_url = 'https://slack.com/api/channels.create'
-        headers = {'User-Agent': 'DEAP'}
-        r = requests.post(team_users_api_url, params={'token':slackAccessToken,'name':channelName}, headers=headers)
-        channelObj = json.loads(r.text)
-        print str(channelObj)
-        
-        channelId = ''
-        errorText = ''
-        try:
-            errorText = channelObj['error']
-        except KeyError:
-            errorText = ''   
-        if errorText == '' :
-            try:
-                channelId = channelObj['channel']['id']
-            except KeyError:
-                channelId = ''
-        else :
-            channelId = 'name_taken'
-        
-        print 'channelId is'+channelId
-        return channelId 
-        
-        
-    
-def createUserAndUserOrganizations(organizaionId,contributors,token,b,slackAccessToken):
-    
-    usersInSystem = session.query(cls.User).all()
-    contributionDic = {}
-    for contributor in contributors :
-        contributionDic[contributor['id']] = (float(token)/100)*float(contributor['percentage'])
-    usersDic = {}
-    for u in usersInSystem:
-        usersDic[u.slackId] = u.id
-    # parse response:
-    users = getSlackUsers(slackAccessToken)
-    print 'slack users:'+str(users)
-    for user in users :
-        token = 0
-        reputation = 0
-        try:
-            #token = contributionDic[user['id']]
-            #reputation = (int(token))*10/pow(10,(int(b)/50)) 
-            token = 0
-            reputation = 0
-        except KeyError:
-            token = 0
-            reputation = 0
-        userId = ''
-        if user['deleted'] == True :
-            continue
-        if user['is_bot'] == True :
-            continue
-        try:
-            userId = usersDic[user['id']]
-        except KeyError:
-            userId = ''
-        if userId == '':            
-            jsonStr = {"name":user['name'],"slackId":user['id'],"imgUrl":user['profile']['image_48'],"imgUrl72":user['profile']['image_72'],"real_name":user['profile']['real_name']}
-            u = cls.User(jsonStr,session)
-            session.add(u) 
-            session.flush() 
-            userId = u.id
-            usersDic[user['id']] = u.id
-                         
-        jsonStr = {"user_id":userId,
-                    "organization_id":organizaionId,
-                    "org_tokens":token,
-                    "org_reputation":reputation
-                    }
-        userOrganization = cls.UserOrganization(jsonStr,session)
-        session.add(userOrganization)  
-        session.flush()  
-    return usersDic     
-    
-  
-    
-def allContributionsFromUser(): 
-    
-    users_api_url = 'https://slack.com/api/auth.test'
-
-    params = {
-        'slackAccessToken': request.form['token'],
-    }
-    slackAccessToken = params["slackAccessToken"]
-    channelId = request.form['channelId']
-    headers = {'User-Agent': 'DEAP'}
-    print 'slackAccessToken:'+str(slackAccessToken)
-
-    # Step 2. Retrieve information about the current user.
-    r = requests.get(users_api_url, params={'token':slackAccessToken}, headers=headers)
-    profile = json.loads(r.text)
-    print 'slack profile:'+str(profile)  
-    contribitions = [];
-    milestones = [];
-    closedContribitions = [];
-    closedMilestones = [];
-    user = session.query(cls.User).filter(cls.User.slackId == profile['user_id']).first()
-    if not user:
-        return [] 
-    orgObj = session.query(cls.Organization).filter(cls.Organization.channelId == channelId).filter(cls.Organization.slack_teamid == profile['team_id']).first()
-    if not orgObj:
-        return []
-    userOrganizationObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgObj.id).filter(cls.UserOrganization.user_id == user.id).first()
-    if not userOrganizationObj:
-        return []
-    allClosedContribution = session.query(cls.Contribution).filter(cls.Contribution.status == 'Closed').all()
-    for contribution in allClosedContribution :
-        milestoneObj = session.query(cls.Milestone).filter(cls.Milestone.contribution_id == contribution.id).first()
-        if milestoneObj :
-            closedMilestones.append(milestoneObj.id)
-        else:
-            closedContribitions.append(contribution.id)
-       
-    bidsList = session.query(cls.Bid).filter(cls.Bid.userId == user.id).filter(cls.Bid.contribution_id == cls.Contribution.id).all()
-    for bid in bidsList:        
-        milestoneObj = session.query(cls.Milestone).filter(cls.Milestone.contribution_id == bid.contribution_id).first()
-        contributionObj = session.query(cls.Contribution).filter(cls.Contribution.id == bid.contribution_id).first()
-        if milestoneObj :
-             if contributionObj.status != 'Closed':
-                 milestones.append(milestoneObj.id)
-                
-        else :
-            if contributionObj.status != 'Closed':
-                 contribitions.append(bid.contribution_id)
-                
-            
-    
-    jsonString = {'contribitions':contribitions,'milestones':milestones,'closedContribitions':closedContribitions,'closedMilestones':closedMilestones}
-    return jsonString
-
-
-def allChannelIdsForTeam(): 
-    slackTeamId = request.form['team']
-    orgs = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).all()
-    orgChannelId = ''
-    count = 1
-    for org in orgs:
-            if count == 1:
-                orgChannelId = org.channelId
-            else:
-                orgChannelId = orgChannelId + ','+ org.channelId
-            count = count + 1;
-    return orgChannelId
-
-def showreservetokens(): 
-    slackTeamId = request.form['team_id']
-    channelId = request.form['channel_id']
-    print 'slackTeamId is'+str(slackTeamId)
-    print 'channelId is'+str(channelId)
-    if(slackTeamId != '' and  channelId != ''):
-        orgObj = session.query(cls.Organization).filter(cls.Organization.slack_teamid == slackTeamId).filter(cls.Organization.channelId == channelId).first()
-    if not orgObj:
-            return "No Project Exists"
-    else:
-           return 'Reserved Token for this channel is: '+str(orgObj.reserveTokens)
-    
-
-
-
-class MilestoneResource(Resource):
-    @marshal_with(milestone_fields)
+class EvaluationParameterResource(Resource):
+    @marshal_with(evaluation_fields)
     def get(self, id):
-        milestoneObject = session.query(cls.Milestone).filter(cls.Milestone.id == id).first()
-        print 'got Get for Milestone fbid:'+id
-        if not milestoneObject:
-            abort(404, message="Milestone {} doesn't exist".format(id))
-        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == milestoneObject.userOrganization.organization_id).all()
-        usersReputationDic = {}
-        for userOrgObject in userOrgObjects:
-            usersReputationDic[userOrgObject.user_id]=userOrgObject.org_reputation
-        for milestoneContributor in milestoneObject.contributors:
-            milestoneContributor.name= getUser(milestoneContributor.contributor_id).name
-            milestoneContributor.real_name= getUser(milestoneContributor.contributor_id).real_name
-            milestoneContributor.imgUrl= getUser(milestoneContributor.contributor_id).imgUrl
-        milestoneObject.current_org_id = milestoneObject.userOrganization.organization_id
-        milestoneObject.channelName = milestoneObject.userOrganization.organization.channelName
-        milestoneObject.code = milestoneObject.userOrganization.organization.code
-        milestoneObject.tokenName = milestoneObject.userOrganization.organization.token_name
-        for milestoneContribution in milestoneObject.contributions:
-            countOfLines = 0
-            shortDescription = '';
-            milestoneContributionObject = session.query(cls.Contribution).filter(cls.Contribution.id == milestoneContribution.contribution_id).first()
-            if milestoneContributionObject.description != None :
-                for line in milestoneContributionObject.description.splitlines():
-                    countOfLines = countOfLines + 1
-                    if(shortDescription != ''):
-                        shortDescription = shortDescription  + '\n'
-                    shortDescription = shortDescription + line
-                    if countOfLines == 3 :
-                        shortDescription = shortDescription + '....'
-                        break    
-            
-                   
-            contributionContributorsObjs =milestoneContributionObject.contributors
-            finalCountOfContributors = 0
-            for contributionContributorsObj in contributionContributorsObjs:
-                finalCountOfContributors = finalCountOfContributors + 1
-                contributionContributorsObj.reputation = usersReputationDic[contributionContributorsObj.contributor_id]                
-            contributionContributorsObjs.sort(key=lambda x: x.reputation, reverse=True)
-            totalCountOfContrbutors = 0
-            milestoneContribution.contributors = []
-            for contributionContributorsObj in contributionContributorsObjs:
-                totalCountOfContrbutors = totalCountOfContrbutors +1
-                contributionContributorsObj.memberId = getUser(contributionContributorsObj.contributor_id).slackId
-                contributionContributorsObj.imgUrl= getUser(contributionContributorsObj.contributor_id).imgUrl
-                contributionContributorsObj.displayName= getUser(contributionContributorsObj.contributor_id).name
-                contributionContributorsObj.id = contributionContributorsObj.contributor_id
-                milestoneContribution.contributors.append(contributionContributorsObj)
-                print 'contributionContributorsObj.reputation'+str(contributionContributorsObj.reputation)
-                if totalCountOfContrbutors == 8 :
-                    break
-            milestoneContribution.remainingContributors = finalCountOfContributors - totalCountOfContrbutors
-            milestoneContribution.title= milestoneContributionObject.title
-            milestoneContribution.date= milestoneContributionObject.time_created.date()
-            milestoneContribution.description = shortDescription
-            currentValuation = 0
-            last_bid = None
-            bids = milestoneContributionObject.bids
-            bids.sort(key=lambda x: x.time_created, reverse=False)
-            for bid in bids:
-                last_bid = bid
-            if (last_bid):
-                currentValuation = last_bid.contribution_value_after_bid
-            milestoneContribution.valuation = currentValuation
-        return milestoneObject
+        evaluation = session.query(cls.Evaluation).filter(cls.Evaluation.id == id).first()
+        if not evaluation:
+            abort(404, message="EvaluationId {} doesn't exist".format(id))
+        return evaluation
 
     def delete(self, id):
-        milestoneObject = session.query(cls.Milestone).filter(cls.Milestone.id == id).first()
-        if not milestoneObject:
-            abort(404, message="Milestone {} doesn't exist".format(id))
-        for milestoneContributor in milestoneObject.contributors:
-            session.delete(milestoneContributor)
-        for milestoneBid in milestoneObject.milestoneBids:
-            session.delete(milestoneBid)
-        for milestoneContribution in milestoneObject.contributions:
-            session.delete(milestoneContribution)
-        session.delete(milestoneObject)
+        evaluation = session.query(cls.Evaluation).filter(cls.Evaluation.id == id).first()
+        if not evaluation:
+            abort(404, message="EvaluationId {} doesn't exist".format(id))
+        session.delete(evaluation)
         session.commit()
-        return {}, 204
-    
-    @marshal_with(milestone_fields)   
-    def post(self): 
-        json = request.json         
-        milestone = cls.Milestone()
-        milestone.description = json['description']
-        milestone.title = json['title']
-        payload = parse_token(request)
-        userId = payload['sub']
-        orgObject = session.query(cls.Organization).filter(cls.Organization.channelId == json['channelId']).first()
-        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgObject.id).filter(cls.UserOrganization.user_id == userId).first()
-        milestone.users_organizations_id = userOrgObjectForOwner.id
-        milestone.destination_org_id = json['evaluatingProject']
-        destOrgObject = session.query(cls.Organization).filter(cls.Organization.id == json['evaluatingProject']).first()
-        milestone.destChannelId = destOrgObject.channelId
-        milestone.destChannelName = destOrgObject.channelName
-        session.add(milestone)
-        session.flush()
-        totalContributions = 0
-        totalValue = 0
-        totalTokens = 0    
-        contributorsDic = {}        
-        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).all()
-        for userOrgObject in userOrgObjects:
-            totalTokens = totalTokens + userOrgObject.org_tokens
-            if userOrgObject.org_tokens > 0 :
-                contributorsDic[userOrgObject.user.id] = userOrgObject.org_tokens
-            userOrgObject.org_tokens = 0
-            session.add(userOrgObject)
-            
-        milestone.tokens = totalTokens
-        allContributionObjects = session.query(cls.Contribution).filter(cls.Contribution.status == 'Open').filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == userOrgObjectForOwner.organization_id).all()
-        
-        
-        for contribution in allContributionObjects:
-            totalContributions = totalContributions + 1 
-            last_bid = None
-            currentValuation = 0
-            bids = contribution.bids
-            bids.sort(key=lambda x: x.time_created, reverse=False)
-            for bid in bids:
-                last_bid = bid
-            if (last_bid):
-                currentValuation = last_bid.contribution_value_after_bid
-            totalValue = totalValue + currentValuation             
-            milestoneContribution = cls.MilestoneContribution()
-            milestoneContribution.contribution_id = contribution.id
-            milestoneContribution.milestone_id = milestone.id
-            milestone.contributions.append(milestoneContribution) 
-            contribution.status='Closed'
-            session.add(contribution)
-         
-        milestone.totalValue =  totalValue
-        perc = 0
-        userId = ''
-        for key, elem in contributorsDic.items():
-            milestoneContributor = cls.MilestoneContributor()
-            milestoneContributor.milestone_id = milestone.id
-            milestoneContributor.contributor_id = key
-            milestoneContributor.percentage = round(float((elem/totalTokens)*100),0)
-            if float(milestoneContributor.percentage) > perc:
-                perc = float(milestoneContributor.percentage)
-                userId = milestoneContributor.contributor_id
-            milestone.contributors.append(milestoneContributor)
-        userOrgObjectForTargetOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == json['evaluatingProject']).first()
-        contribution = cls.Contribution()
-        contribution.userId = userId
-        milestone.userId = userId
-        contribution.min_reputation_to_close = 0
-        contribution.description = json['description']
-        contribution.title = json['title']
-        contribution.users_organizations_id = userOrgObjectForTargetOwner.id
-        session.add(contribution)
-        session.flush()
-        for contributor in milestone.contributors:             
-            contributionContributor = cls.ContributionContributor()
-            contributionContributor.contributor_id = contributor.contributor_id
-            contributionContributor.contribution_id=contribution.id
-            contributionContributor.percentage=contributor.percentage
-            contribution.contributors.append(contributionContributor)  
-        
-        session.add(contribution)
-        milestone.contribution_id =  contribution.id 
-        
-        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == json['evaluatingProject']).all()
-        for userOrgObject in userOrgObjects :
-              contributionValue = cls.ContributionValue()
-              contributionValue.user_id = userOrgObject.user_id
-              contributionValue.users_organizations_id = userOrgObject.id
-              contributionValue.contribution_id = contribution.id
-              contributionValue.reputationGain = 0
-              contributionValue.reputation = userOrgObject.org_reputation
-              contributionValue.user_id = userOrgObject.user_id
-              session.add(contributionValue)
-                
-        session.commit()  
-        for contributor in milestone.contributors:             
-            contributor.id = contributor.contributor_id
-        return milestone, 201
-
-    
-    
-    
-class OrganizationCurrentStatusResource(Resource):
-    @marshal_with(milestone_fields)
-    def get(self, orgId):
-        milestone = cls.Milestone()
-        totalTokens = 0
-        userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgId).all()
-        usersReputationDic = {}
-        contributorsDic = {}
-        orgObject = session.query(cls.Organization).filter(cls.Organization.id == orgId).first()
-        for userOrgObject in userOrgObjects:
-            totalTokens = totalTokens + userOrgObject.org_tokens
-            usersReputationDic[userOrgObject.user_id]=userOrgObject.org_reputation
-            if userOrgObject.org_tokens > 0 :
-                contributorsDic[userOrgObject.user_id]=userOrgObject.org_tokens
-            
-        milestone.tokens = totalTokens
-        milestone.code = orgObject.code
-        milestone.tokenName = orgObject.token_name
-        milestone.channelName = orgObject.channelName
-        allContributionObjects = session.query(cls.Contribution).filter(cls.Contribution.status == 'Open').filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == orgId).all()
-        
-        totalContributions = 0
-        totalValue = 0
-        for contribution in allContributionObjects:
-            shortDescription = ''
-            countOfLines = 0
-            if contribution.description != None :
-                for line in contribution.description.splitlines():
-                    countOfLines = countOfLines + 1
-                    if(shortDescription != ''):
-                        shortDescription = shortDescription  + '\n'
-                    shortDescription = shortDescription + line
-                    if countOfLines == 3 :
-                        shortDescription = shortDescription + '....'
-                        break
-            
-            totalContributions = totalContributions + 1 
-            last_bid = None
-            currentValuation = 0
-            bids = contribution.bids
-            bids.sort(key=lambda x: x.time_created, reverse=False)
-            for bid in bids:
-                last_bid = bid
-            if (last_bid):
-                currentValuation = last_bid.contribution_value_after_bid
-            
-            totalValue = totalValue + currentValuation             
-            milestoneContribution = cls.MilestoneContribution()
-            milestoneContribution.valuation = currentValuation
-            milestoneContribution.description = shortDescription
-            contributionContributorsObjs = contribution.contributors
-            finalCountOfContributors = 0
-            for contributionContributorsObj in contributionContributorsObjs:
-                finalCountOfContributors = finalCountOfContributors + 1
-                contributionContributorsObj.reputation = usersReputationDic[contributionContributorsObj.contributor_id]
-                
-            contributionContributorsObjs.sort(key=lambda x: x.reputation, reverse=True)
-            totalCountOfContrbutors = 0
-            milestoneContribution.contributors = []
-            for contributionContributorsObj in contributionContributorsObjs:
-                totalCountOfContrbutors = totalCountOfContrbutors +1
-                contributionContributorsObj.memberId = getUser(contributionContributorsObj.contributor_id).slackId
-                contributionContributorsObj.imgUrl= getUser(contributionContributorsObj.contributor_id).imgUrl
-                contributionContributorsObj.displayName= getUser(contributionContributorsObj.contributor_id).name
-                milestoneContribution.contributors.append(contributionContributorsObj)
-                print 'contributionContributorsObj.reputation'+str(contributionContributorsObj.reputation)
-                if totalCountOfContrbutors == 8 :
-                    break
-            milestoneContribution.remainingContributors = finalCountOfContributors - totalCountOfContrbutors
-            milestoneContribution.contribution_id = contribution.id
-            milestoneContribution.title= contribution.title
-            milestoneContribution.date= contribution.time_created.date()
-            milestone.contributions.append(milestoneContribution) 
-         
-        milestone.totalValue =  totalValue
-        for key, elem in contributorsDic.items():
-            milestoneContributor = cls.MilestoneContributor()
-            milestoneContributor.id = key
-            milestoneContributor.percentage = round(float((elem/totalTokens)*100),0)
-            milestoneContributor.name= getUser(milestoneContributor.id).name
-            milestoneContributor.real_name= getUser(milestoneContributor.id).real_name
-            milestoneContributor.imgUrl= getUser(milestoneContributor.id).imgUrl
-            milestone.contributors.append(milestoneContributor)
-        return milestone
+        return "Evaluation deleted successfully", 200
 
 
-class AllMilestonesForOrgResource(Resource):
+    
+    
+class CollaborationStatsForContributionsResource(Resource):
+    
+    @marshal_with(contribution_fields)
     def get(self, id):
-        allMilestoneObjects = session.query(cls.Milestone).filter(cls.Milestone.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == id).all()
-        milestonesJson = []
-        for milestone in allMilestoneObjects:
-            jsonStr = {"id":milestone.id,"title":milestone.title}
-            milestonesJson.append(jsonStr)
-        return milestonesJson
+        collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == id).first()
+        if not collaboration :
+            abort(404, message="collaborationId {} does not exists".format(id))
+        collaborationContributions = session.query(cls.Contribution).filter(cls.Contribution.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.Contribution.AgentCollaboration.collaborationId == cls.Collaboration.id).all()
+        return collaborationContributions
+    
+class CollaborationStatsForEvaluationsResource(Resource):
+    
+    @marshal_with(evaluation_fields)
+    def get(self, id):
+        collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == id).first()
+        if not collaboration :
+            abort(404, message="collaborationId {} does not exists".format(id))
+        collaborationEvaluations = session.query(cls.Evaluation).filter(cls.Evaluation.contributionId == cls.Contribution.id).filter(cls.Contribution.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.Contribution.AgentCollaboration.collaborationId == cls.Collaboration.id).all()
+        return collaborationEvaluations
+    
+class AgentStatsForContributionsResource(Resource):
+    
+    @marshal_with(contribution_fields)
+    def get(self, id):
+        agent = session.query(cls.Agent).filter(cls.Agent.id == id).first()
+        if not agent :
+            abort(404, message="agentId {} does not exists".format(id))
+        agentContributions = session.query(cls.Contribution).filter(cls.Contribution.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.Contribution.AgentCollaboration.agentId == cls.Agent.id).all()
+        return agentContributions
+    
+class AgentStatsForEvaluationsResource(Resource):
+    
+    @marshal_with(evaluation_fields)
+    def get(self, id):
+        agent = session.query(cls.Agent).filter(cls.Agent.id == id).first()
+        if not agent :
+            abort(404, message="agentId {} does not exists".format(id))
+        agentEvaluations = session.query(cls.Evaluation).filter(cls.Evaluation.contributionId == cls.Contribution.id).filter(cls.Contribution.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.Contribution.AgentCollaboration.agentId == cls.Agent.id).all()
+        return agentEvaluations
+    
+def getAgent(id):
+    agent = session.query(cls.Agent).filter(cls.Agent.id == id).first()    
+    return agent
+
+
+
+def getByAgentAndHandle(id,handleId):
+    agentHandle = session.query(cls.AgentHandle).filter(cls.AgentHandle.agentId == id).filter(cls.AgentHandle.handleId == handleId).first()    
+    return agentHandle
+
+def getByHandle(handleId):
+    agentHandles = session.query(cls.AgentHandle).filter(cls.AgentHandle.handleId == handleId).first()    
+    return agentHandles
+
+def getAgentHandle(id):
+    agentHandle = session.query(cls.AgentHandle).filter(cls.AgentHandle.id == id).first()    
+    return agentHandle
+
+def getAgentByName(name):
+    agent = session.query(cls.Agent).filter(cls.Agent.name == name).first()    
+    return agent
+
+def getAgentByNameAndType(name,handleName,handleType):
+    agentHandle = session.query(cls.AgentHandle).filter(cls.Agent.name == name).filter(cls.AgentHandle.agentId == cls.Agent.id).filter(cls.AgentHandle.handleName == handleName).filter(cls.AgentHandle.handleType == handleType).first()    
+    return agentHandle
+
+def getAgentByIdAndType(id,handleName,handleType):
+    agentHandle = session.query(cls.AgentHandle).filter(cls.Agent.id == id).filter(cls.AgentHandle.agentId == cls.Agent.id).filter(cls.AgentHandle.handleName == handleName).filter(cls.AgentHandle.handleType == handleType).first()    
+    return agentHandle
+
+def getAgentNetwork(agentHandleId,networkId):
+    agentNetwork = session.query(cls.AgentNetwork).filter(cls.AgentNetwork.agentHandleId == agentHandleId).filter(cls.AgentNetwork.networkId == networkId).first()    
+    return agentNetwork
+
+
+def deleteContribution(contribution):
+    for contributionValue in contribution.contributionValues:
+            session.delete(contributionValue)
+    for contributor in contribution.contributors:
+            session.delete(contributor)
+    for evaluation in contribution.evaluations:
+            session.delete(evaluation)
+    session.delete(contribution)
+    
+def deleteAgentCollaboration(agentCollaboration):
+    contributions = session.query(cls.Contribution).filter(cls.Contribution.agentCollaborationId == agentCollaboration.id).all()
+    for contribution in contributions :
+        deleteContribution(contribution)
+    session.delete(agentCollaboration)
+
+def deleteCollaboration(collaboration):
+    agentCollaborations = session.query(cls.AgentCollaboration).filter(cls.AgentCollaboration.collaborationId == collaboration.id).all()
+    for agentCollaboration in agentCollaborations:
+        deleteAgentCollaboration(agentCollaboration)
+    handles = collaboration.handles
+    for handle in handles :
+        session.delete(handle)
+    session.delete(collaboration)
+
+def deleteNetwork(network):  
+    agentNetworks = network.agentNetworks  
+    for agentNetwork in agentNetworks :
+        session.delete(agentNetwork)
+    collaborations = network.collaborations
+    for collaboration in collaborations :
+        deleteCollaboration(collaboration)
+    session.delete(network)
+        
+def deleteAgent(agent):
+    networks = session.query(cls.Network).filter(cls.Network.agentId == agent.id).all()
+    for network in networks :
+        deleteNetwork(network)
+    agentHandles = session.query(cls.AgentHandle).filter(cls.AgentHandle.agentId == agent.id).all()
+    for agentHandle in agentHandles :
+        deleteAgentHandle(agentHandle)
+    
+    session.delete(agent)
+    
+def deleteHandle(handle):
+    agentHandles = session.query(cls.AgentHandle).filter(cls.AgentHandle.handleId == handle.id).all()
+    for agentHandle in agentHandles :
+        deleteAgentHandle(agentHandle)
+    session.delete(handle)
+    
+def deleteAgentHandle(agentHandle):
+    networks = session.query(cls.Network).filter(cls.Network.agentHandleId == agentHandle.id).all()
+    for network in networks :
+        deleteNetwork(network)
+    collaborations = session.query(cls.Collaboration).filter(cls.Collaboration.agentHandleId == agentHandle.id).all()
+    for collaboration in collaborations :
+        deleteCollaboration(collaboration)
+    session.delete(agentHandle)
+    
+    
+def getContributionDetail(contribution):
+    for contributor in contribution.contributors:
+            contributor.name= getAgentHandle(contributor.contributorId).agent.name
+            contributor.id = contributor.contributorId
+            
+    last_evaluation = None 
+    currentValuation = 0  
+    evaluations = contribution.evaluations
+    evaluations.sort(key=lambda x: x.timeCreated, reverse=False)    
+    for evaluation in evaluations:
+        last_evaluation = evaluation
+        
+    if (last_evaluation):
+        currentValuation = last_evaluation.contributionValueAfterEvaluation
+    contribution.tokenName = contribution.agentCollaboration.collaboration.tokenName
+    contribution.currentValuation = currentValuation
+    contribution.tokenSymbol = contribution.agentCollaboration.collaboration.tokenSymbol
+    return contribution
+
+def fillAgentDetails(agentHandle):
+    agentHandle.name = agentHandle.agent.name
+    agentHandle.fullName = agentHandle.agent.fullName
+    agentHandle.imgUrl = agentHandle.agent.imgUrl
+    return agentHandle
