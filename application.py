@@ -9,7 +9,12 @@ from flask import send_file
 import os
 
 from resources import AgentResource, AgentFindByHandle, AgentUpdateHandle,\
-    AgentFindByNetwork, AgentFindByCollaboration, AgentUpdateNetwork
+    AgentFindByNetwork, AgentFindByCollaboration, AgentUpdateNetwork,\
+    RegisterAgentResource, GetCollaborationsByNetworkResource,\
+    GetCollaborationsByAgentResource, GetContributionByCollaborationResource,\
+    GetContributionByAgentResource, GetEvaluationForContributionResource,\
+    AllTagsResource, GetLinksByTagResource, GetTagsByLinkResource,\
+    GetLinksANDTagsResource
 from resources import NetworkResource
 from resources import NetworkParameterResource
 from resources import CollaborationResource
@@ -52,17 +57,25 @@ api.add_resource(AgentUpdateNetwork, '/v1/agents/updateNetwork/<int:id>')
 api.add_resource(AgentFindByNetwork, '/v1/agents/allByNetwork')
 api.add_resource(AgentFindByCollaboration, '/v1/agents/allInCollaboration')
 
+api.add_resource(RegisterAgentResource, '/v1/handles/agents/<int:id>')
+
+
 api.add_resource(NetworkResource, '/v1/networks')
 api.add_resource(NetworkParameterResource, '/v1/networks/<int:id>')
 
 api.add_resource(CollaborationResource, '/v1/collaborations')
 api.add_resource(CollaborationParameterResource, '/v1/collaborations/<int:id>')
+api.add_resource(GetCollaborationsByNetworkResource, '/v1/collaborations/network/<int:id>')
+api.add_resource(GetCollaborationsByAgentResource, '/v1/collaborations/agents/<int:id>')
 
 api.add_resource(ContributionResource, '/v1/contributions')
 api.add_resource(ContributionParameterResource, '/v1/contributions/<int:id>')
+api.add_resource(GetContributionByCollaborationResource, '/v1/contributions/collaborations/<int:id>')
+api.add_resource(GetContributionByAgentResource, '/v1/contributions/agent/<int:id>')
 
-api.add_resource(EvaluationResource, '/v1/evaluations')
+api.add_resource(EvaluationResource, '/v1/evaluations/contributions/<int:id>')
 api.add_resource(EvaluationParameterResource, '/v1/evaluations/<int:id>')
+api.add_resource(GetEvaluationForContributionResource, '/v1/evaluations/contributions/<int:id>')
 
 api.add_resource(CollaborationClose, '/v1/collaborations/close/<int:id>')
 
@@ -71,6 +84,12 @@ api.add_resource(CollaborationStatsForEvaluationsResource, '/v1/collaborations/s
 
 api.add_resource(AgentStatsForContributionsResource, '/v1/agents/status/contributions/<int:id>')
 api.add_resource(AgentStatsForEvaluationsResource, '/v1/agents/status/evaluations/<int:id>')
+
+api.add_resource(AllTagsResource, '/v1/tags')
+api.add_resource(GetLinksByTagResource, '/v1/getLinksByTag')
+api.add_resource(GetTagsByLinkResource, '/v1/getTagsByLinks')
+api.add_resource(GetLinksANDTagsResource, '/v1/search')
+
 
 
 
@@ -87,6 +106,10 @@ def index():
 @auth.login_required
 def me():
 	return auth.me()
+    
+@application.route('/auth/google', methods=['POST'])
+def google_login():
+    return auth.google()
 
 @application.teardown_appcontext
 def shutdown_session(exception=None):

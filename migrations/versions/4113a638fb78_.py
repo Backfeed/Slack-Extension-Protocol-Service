@@ -34,46 +34,47 @@ def upgrade():
     )
     op.create_table('network',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('agentHandleId', sa.INTEGER(), nullable=False),
+    sa.Column('agentId', sa.INTEGER(), nullable=False),
+    sa.Column('protocol', sa.Unicode(length=255)),
     sa.Column('name', sa.Unicode(length=255)),
     sa.Column('description', sa.Unicode(length=255)),
-    sa.ForeignKeyConstraint(['agentHandleId'], ['agent_handle.id'], ),
+    sa.ForeignKeyConstraint(['agentId'], ['agent.id'], ),
     sa.PrimaryKeyConstraint('id')
     )   
     op.create_table('agent_network',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('agentHandleId', sa.INTEGER(), nullable=True),
+    sa.Column('agentId', sa.INTEGER(), nullable=True),
     sa.Column('networkId', sa.INTEGER(), nullable=True),
-    sa.ForeignKeyConstraint(['agentHandleId'], ['agent_handle.id'], ),
+    sa.ForeignKeyConstraint(['agentId'], ['agent.id'], ),
     sa.ForeignKeyConstraint(['networkId'], ['network.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
   
     op.create_table('collaboration',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('agentHandleId', sa.INTEGER(), nullable=False),
+    sa.Column('agentId', sa.INTEGER(), nullable=False),
     sa.Column('networkId', sa.INTEGER(), nullable=False),
-    sa.Column('protocol', sa.Unicode(length=255)),
+    sa.Column('protocol', sa.Unicode(length=2000)),
     sa.Column('tokenName', sa.Unicode(length=60)),
     sa.Column('name', sa.Unicode(length=255)),
     sa.Column('description', sa.Unicode(length=255)),
     sa.Column('tokenSymbol', sa.Unicode(length=3)),
-    sa.Column('comment', sa.Unicode(length=1000)),
+    sa.Column('comment', sa.Unicode(length=2000)),
     sa.Column('tokenTotal', sa.INTEGER()),
     sa.Column('status', sa.Unicode(length=100), nullable=True),
     sa.Column('similarEvaluationRate', sa.INTEGER()),
     sa.Column('passingResponsibilityRate', sa.INTEGER()),
-    sa.ForeignKeyConstraint(['agentHandleId'], ['agent_handle.id'], ),
+    sa.ForeignKeyConstraint(['agentId'], ['agent.id'], ),
     sa.ForeignKeyConstraint(['networkId'], ['network.id'], ),
     sa.PrimaryKeyConstraint('id')
     )   
     op.create_table('agent_collaboration',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('agentHandleId', sa.INTEGER(), nullable=True),
+    sa.Column('agentId', sa.INTEGER(), nullable=True),
     sa.Column('collaborationId', sa.INTEGER(), nullable=True),
     sa.Column('tokens', sa.FLOAT(), nullable=True),
     sa.Column('reputation', sa.FLOAT(), nullable=True),
-    sa.ForeignKeyConstraint(['agentHandleId'], ['agent_handle.id'], ),
+    sa.ForeignKeyConstraint(['agentId'], ['agent.id'], ),
     sa.ForeignKeyConstraint(['collaborationId'], ['collaboration.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -88,7 +89,7 @@ def upgrade():
     )
     op.create_table('contribution',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('agentHandleId', sa.INTEGER(), nullable=True),
+    sa.Column('agentId', sa.INTEGER(), nullable=True),
     sa.Column('agentCollaborationId', sa.INTEGER(), nullable=True),
     sa.Column('timeCreated', sa.DATETIME(), nullable=True),
     sa.Column('type', sa.Unicode(length=340), nullable=True),
@@ -97,7 +98,7 @@ def upgrade():
     sa.Column('valueIndic', sa.INTEGER(), nullable=True),
     sa.Column('content', sa.Unicode(length=10000), nullable=True),
     sa.Column('comment', sa.Unicode(length=2000)),
-    sa.ForeignKeyConstraint(['agentHandleId'], ['agent_handle.id'], ),
+    sa.ForeignKeyConstraint(['agentId'], ['agent.id'], ),
     sa.ForeignKeyConstraint(['agentCollaborationId'], ['agent_collaboration.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -118,10 +119,10 @@ def upgrade():
     sa.Column('id', sa.INTEGER(), nullable=False),
     sa.Column('contributionId', sa.INTEGER(), nullable=True),
     sa.Column('agentCollaborationId', sa.INTEGER(), nullable=True),
-    sa.Column('agentHandleId', sa.INTEGER(), nullable=True),
+    sa.Column('agentId', sa.INTEGER(), nullable=True),
     sa.Column('reputationGain', sa.FLOAT(), nullable=True),
     sa.Column('reputation', sa.FLOAT(), nullable=True),
-    sa.ForeignKeyConstraint(['agentHandleId'], ['agent_handle.id'], ),
+    sa.ForeignKeyConstraint(['agentId'], ['agent.id'], ),
     sa.ForeignKeyConstraint(['contributionId'], ['contribution.id'], ),
     sa.ForeignKeyConstraint(['agentCollaborationId'], ['agent_collaboration.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -130,15 +131,16 @@ def upgrade():
     
     op.create_table('evaluation',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('agentHandleId', sa.INTEGER(), nullable=True),
+    sa.Column('agentId', sa.INTEGER(), nullable=True),
     sa.Column('contributionId', sa.INTEGER(), nullable=True),
     sa.Column('tokens', sa.FLOAT(), nullable=True),
     sa.Column('stake', sa.FLOAT(), nullable=True),
     sa.Column('reputation', sa.FLOAT(), nullable=True),
     sa.Column('contributionValueAfterEvaluation', sa.FLOAT(), nullable=True),
     sa.Column('timeCreated', sa.DATETIME(), nullable=True),
+    sa.Column('comment', sa.Unicode(length=2000)),
     sa.ForeignKeyConstraint(['contributionId'], ['contribution.id'], ),
-    sa.ForeignKeyConstraint(['agentHandleId'], ['agent_handle.id'], ),
+    sa.ForeignKeyConstraint(['agentId'], ['agent.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     

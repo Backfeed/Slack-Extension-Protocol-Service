@@ -61,14 +61,14 @@ class Agent(BaseObject):
 class AgentHandle(object):
 	pass
 
-class Network(BaseObject):
+class Network(object):
 	pass
 
 class AgentNetwork(object):
 	pass
 
 
-class Collaboration(BaseObject):
+class Collaboration(object):
 	pass
 
 class CollaborationHandle(object):
@@ -87,8 +87,16 @@ class ContributionValue(object):
 	pass
 
 
-class Evaluation(BaseObject):
+class Evaluation(object):
 	pass
 
+class Tag(object):
+	pass
+
+class LINK(object):
+	pass
+
+class TagLINK(object):
+	pass
 
 # checkout serlizing : http://www.diveintopython3.net/serializing.html

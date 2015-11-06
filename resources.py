@@ -21,9 +21,7 @@ class Resource(FlaskResource):
    method_decorators = [login_required]   # applies to all inherited resources
 
 
-agent_fields = {
-    'id': fields.Integer,
-}
+
 
 handle_fields = {
     'id': fields.Integer,
@@ -44,11 +42,7 @@ agent_network_fields = {
     'id': fields.Integer,
 }
 
-network_fields = {
-    'id': fields.Integer,
-    'name': fields.String, 
-    'description': fields.String,
-}
+
 
 collaboration_fields = {
     'id': fields.Integer,
@@ -103,6 +97,12 @@ contribution_fields['currentValuation'] = fields.Integer
 contribution_fields['evaluations'] = fields.Nested(evaluation_nested_fields)
 contribution_fields['contributors'] = fields.Nested(contributor_nested_fields)
 
+tag_fields = {}
+tag_fields['name'] = fields.String
+
+link_fields = {}
+link_fields['name'] = fields.String
+
     
 class AgentResource(FlaskResource):
     @marshal_with(agent_handle_fields)
@@ -137,47 +137,45 @@ class AgentResource(FlaskResource):
         return "Agents deleted successfully", 200
     
 
-    @marshal_with(agent_fields)
     def post(self):
         name = request.args.get('name')
         if(name == '' or name == None ):
             abort(404, message="name is required")
-        handleName = request.args.get('handleName')
-        handleType = request.args.get('handleType')
-        if handleName == None :
-            handleName = name
-        if handleType == None :
-            handleType = 'Backfeed'
-        agentHandle = getAgentByNameAndType(name,handleName,handleType)
-        if agentHandle :
-            abort(404, message="Agent {} with handleName {} and handleType {} already exist".format(name,handleName,handleType))
-        agent = getAgentByName(name) 
-        if not agent :
-            jsonStr = {
-                    "name":name
-                    }
-            agent = cls.Agent(jsonStr,session)
-            session.add(agent)
-            session.flush()
-        
-        agentHandle = cls.AgentHandle()
-        agentHandle.agentId = agent.id
-        agentHandle.handleType = handleType
-        agentHandle.handleName = handleName
-        session.add(agentHandle)
+        jsonStr = {"name":name}
+        agent = cls.Agent(jsonStr,session)
+        session.add(agent)
+        session.flush()
+        postData = request.data
+        handles = None
+        if postData != '' and postData != None :
+            postDataJSON = json.loads(postData)
+            try :
+                handles = postDataJSON['handles']
+            except KeyError :
+                handles = None
+        if handles != None :
+            for handle in handles :
+                handleName = handle['name']
+                handleType = handle['type']
+                agentHandle = getAgentByHandleNameAndType(handleName, handleType)
+                if agentHandle :
+                    abort(404, message="handleName {} and handleType {} already exist".format(handleName,handleType))
+                agentHandle = cls.AgentHandle()
+                agentHandle.agentId = agent.id
+                agentHandle.handleType = handleType
+                agentHandle.handleName = handleName
+                session.add(agentHandle)
+                
         session.commit()
-        return agentHandle, 201
-        
-    
-    
+        return {"id":agent.id}, 201
+            
 class AgentParameterResource(Resource):
-    @marshal_with(agent_handle_fields)
     def get(self, id):
-        agentHandle = getAgentHandle(id)
-        if not agentHandle:
+        agent = getAgent(id)
+        fields = request.args.get('fields')
+        if not agent:
             abort(404, message="Agent {} doesn't exist".format(id)) 
-        agentHandle = fillAgentDetails(agentHandle)
-        return agentHandle 
+        return agentString(agent,fields) 
     
     
     def delete(self, id):
@@ -211,7 +209,6 @@ class AgentParameterResource(Resource):
         
         
     
-    @marshal_with(agent_fields)
     def post(self,id):
         handleName = request.args.get('handleName')
         handleType = request.args.get('handleType')
@@ -237,6 +234,60 @@ class AgentParameterResource(Resource):
         session.add(agentHandle)
         session.commit()   
         return agentHandle, 201
+    
+class RegisterAgentResource(FlaskResource):
+
+    def post(self,id):
+        agent = getAgent(id)
+        if not agent:
+            abort(404, message="Agent {} doesn't exist".format(id))
+        postData = request.data
+        handles = None
+        if postData != '' and postData != None :
+            postDataJSON = json.loads(postData)
+            try :
+                handles = postDataJSON['handles']
+            except KeyError :
+                handles = None
+        if handles != None :
+            for handle in handles :
+                handleName = handle['name']
+                handleType = handle['type']
+                agentHandle = getAgentByHandleNameAndType(handleName, handleType)
+                if agentHandle :
+                    abort(404, message="handleName {} and handleType {} already exist".format(handleName,handleType))
+                agentHandle = cls.AgentHandle()
+                agentHandle.agentId = agent.id
+                agentHandle.handleType = handleType
+                agentHandle.handleName = handleName
+                session.add(agentHandle)
+                
+        session.commit()
+        return {"id":agent.id}, 201
+    
+    def delete(self,id):
+        agent = getAgent(id)
+        if not agent:
+            abort(404, message="Agent {} doesn't exist".format(id))
+        postData = request.data
+        handles = None
+        if postData != '' and postData != None :
+            postDataJSON = json.loads(postData)
+            try :
+                handles = postDataJSON['handles']
+            except KeyError :
+                handles = None
+        if handles != None :
+            for handle in handles :
+                handleName = handle['name']
+                handleType = handle['type']
+                agentHandle = getAgentByHandleNameAndType(handleName, handleType)
+                if not agentHandle :
+                    abort(404, message="handleName {} and handleType {} doesn't exist".format(handleName,handleType))
+                session.delete(agentHandle)
+                
+        session.commit()
+        return "agent handles deleted successfully", 200
     
 class AgentFindByHandle(Resource):
     @marshal_with(agent_handle_fields)
@@ -338,65 +389,91 @@ class AgentUpdateNetwork(Resource):
 
 class NetworkResource(Resource):
     
-    @marshal_with(network_fields)
     def get(self):
         networks = session.query(cls.Network).all()
-        return networks
-    
-    def delete(self):
-        networks = session.query(cls.Network).all()
+        fields = request.args.get('fields')
+        networksToShow = []
         for network in networks :
-            deleteNetwork(network)
-        session.commit()
-        return "Networks deleted successfully", 200
+            networksToShow.append(networkString(network,fields))
+        return networksToShow
+        
     
-    @marshal_with(network_fields)
     def post(self):
-        name = request.args.get('name')
-        description = request.args.get('description')        
-        agentHandleId = request.args.get('creator')
+        postData = request.data
+        description = ''
+        networkProtocol = ''
+        agent = None
+        memberNetworks = []
+        if postData != '' and postData != None :
+            postDataJSON = json.loads(postData)
+            try :
+                agentId = postDataJSON['creator']
+                agent = getAgent(agentId)
+                if not agent :
+                    abort(404, message="creator does not exists".format(agentId))
+            except KeyError :
+                abort(404, message="creator is required")
+                
+            try :
+                description = postDataJSON['description']
+            except KeyError :
+                abort(404, message="description is required")
+                
+            try :
+                name = postDataJSON['name']
+            except KeyError :
+                abort(404, message="name is required")
+                
+            try :
+                networkProtocol = postDataJSON['networkProtocol']
+            except KeyError :
+                abort(404, message="protocol is required")
+                
+            try :
+                agents = postDataJSON['agents']
+                for agentId in agents:
+                    memberNetwork = getAgent(agentId)
+                    if not memberNetwork :
+                        abort(404, message="member agent does not exists".format(agentId))
+                    memberNetworks.append(memberNetwork)
+            except KeyError :
+                memberNetworks = []
         
-        if name == '' or name == None:
-            abort(404, message="name is required")
-        if agentHandleId == '' or agentHandleId == None:
-            abort(404, message="creator is required")
-        else :
-            agentHandle = getAgentHandle(agentHandleId)
-            if not agentHandle :
-                abort(404, message="agentId {} does not exists".format(agentHandleId))
+        network = cls.Network()
+        network.name = name
+        network.description = description
+        network.agentId = agent.id
+        if networkProtocol == '' or networkProtocol == None:
+            abort(404, message="protocol is required")
+        network.protocol = json.dumps(networkProtocol)
         
-            
-        network = session.query(cls.Network).filter(cls.Network.name == name).first()
-        if network:
-            abort(404, message="Network for name {} already exist".format(name))
-        
-        jsonStr = {"name":name,
-                    "description":description,"agentHandleId":agentHandleId}
-        network = cls.Network(jsonStr,session)
         session.add(network)
+        session.flush()
+        
+        for memberNetwork in memberNetworks :
+            agentNetwork = cls.AgentNetwork()
+            agentNetwork.agentId = memberNetwork.id
+            agentNetwork.networkId = network.id
+            session.add(agentNetwork)
+            
         session.commit()
-        return network, 201
+        return {"id":network.id}, 201
     
 class NetworkParameterResource(Resource):
     
-    @marshal_with(network_fields)
     def get(self, id):
         network = session.query(cls.Network).filter(cls.Network.id == id).first()
         if not network :
             abort(404, message="Network {} does not exists".format(id))
-        return network
+        fields = request.args.get('fields')
+        networksToShow = networkString(network,fields)
+        return networksToShow
     
-    def delete(self, id):
-        network = session.query(cls.Network).filter(cls.Network.id == id).first()
-        if network :
-            deleteNetwork(network)           
-            session.commit()
-        return "Network deleted successfully", 200
+    
 
     
 class CollaborationResource(Resource):
     
-    @marshal_with(collaboration_fields)
     def get(self):
         networkId = request.args.get('networkId')
         agentId = request.args.get('agentId')
@@ -421,8 +498,11 @@ class CollaborationResource(Resource):
                         
         else :
             collaborations = session.query(cls.Collaboration).all()       
-        
-        return collaborations
+        fields = request.args.get('fields')
+        collaborationsToShow = []
+        for collaboration in collaborations :
+            collaborationsToShow.append(collaborationString(collaboration,fields))
+        return collaborationsToShow
     
     def delete(self):
         networkId = request.args.get('networkId')
@@ -439,110 +519,195 @@ class CollaborationResource(Resource):
         session.commit()
         return "Collaborations deleted successfully", 200
     
-    @marshal_with(collaboration_fields)
+    
     def post(self):
-        tokenName = request.args.get('tokenName')
-        name = request.args.get('name')
-        description = request.args.get('description')
-        tokenSymbol = request.args.get('tokenSymbol')
-        agentHandleId = request.args.get('creator')
-        tokenTotal = request.args.get('tokenTotal')
-        networkId = request.args.get('networkId')
-        comment = request.args.get('comment')
-        handles = request.args.get('handles')
-        protocol = request.args.get('protocol')
-        handlesJSON = {}
-        contributorsJSON = {}
-        if handles != '' and handles != None :
-            handlesJSON = json.loads(handles)
-        contributors = request.args.get('contributors')
-        print 'contributors'+contributors
-        if contributors != '' and contributors != None :
-            contributorsJSON = json.loads(contributors)
-        similarEvaluationRate = request.args.get('similarEvaluationRate')
-        passingResponsibilityRate = request.args.get('passingResponsibilityRate')
-        if protocol == '' or  protocol == None :
-            abort(404, message="Protocol is required")
-        if name == '' or name == None:
-            abort(404, message="collaborationName is required")
-        if networkId != '' and networkId != None:
-            network = session.query(cls.Network).filter(cls.Network.id == networkId).first()
-            if not network :
-                abort(404, message="Network {} does not exists".format(networkId))
-        if agentHandleId == '' or agentHandleId == None:
-            abort(404, message="creator is required")
-        else :
-            agentHandle = getAgentHandle(agentHandleId)
-            if not agentHandle :
-                abort(404, message="agent{} does not exists".format(agentHandleId))
-        if similarEvaluationRate == '' or similarEvaluationRate == None :
-            similarEvaluationRate = 50 
-        if passingResponsibilityRate == '' or passingResponsibilityRate == None:
-            passingResponsibilityRate = 50 
+        postData = request.data
+        description = ''
+        network = None
+        agent = None
+        collaboration = cls.Collaboration()
+        if postData != '' and postData != None :
+            postDataJSON = json.loads(postData)
+            try :
+                agentId = postDataJSON['creator']
+                agent = getAgent(agentId)
+                if not agent :
+                    abort(404, message="creator does not exists".format(agentId))
+            except KeyError :
+                abort(404, message="creator is required")
+            collaboration.agentId = agent.id
+            try :
+                networkId = postDataJSON['network']
+                network = getNetwork(networkId)
+                if not network :
+                    abort(404, message="network {} doesn't exist".format(networkId))
+            except KeyError :
+                abort(404, message="network is required")
+            collaboration.networkId = network.id 
+                
+            try :
+                description = postDataJSON['description']
+            except KeyError :
+                abort(404, message="description is required")
+            collaboration.description = description
             
-        collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.name == name).first()
-        if collaboration:
-            abort(404, message="Collaboration for name {} already exist".format(name))
+            try :
+                name = postDataJSON['name']
+            except KeyError :
+                abort(404, message="name is required")
+            collaboration.name = name
+            
+            try :
+                comment = postDataJSON['comment']
+                collaboration.comment = comment
+            except KeyError :
+                comment = ''
+                
+            
+            try :
+                token = postDataJSON['token']
+                collaboration.tokenName = token['name']
+                collaboration.tokenSymbol = token['symbol']
+                collaboration.tokenTotal = token['total']
+            except KeyError :
+                abort(404, message="Tokens is required")
+                
+            try :
+                collaborationProtocol = postDataJSON['collaborationProtocol']
+                if collaborationProtocol != '' or collaborationProtocol != None :
+                    try:
+                        type = collaborationProtocol['type']
+                        parameters = collaborationProtocol['parameters']
+                        collaboration.protocol = json.dumps(collaborationProtocol)
+                    except KeyError :
+                        abort(404, message="collaborationProtocol type and parameters is required")
+                    
+                
+            except KeyError :
+                collaborationProtocol = ''
+                
+                
+            session.add(collaboration)
+            session.flush()
+                
+            try :
+                contributors = postDataJSON['contributors']
+                for contributor in contributors:
+                    agentNetwork = getAgentNetwork(contributor['id'], network.id)
+                    if not agentNetwork :
+                        abort(404, message="contributor {} does not exists in network {}".format(contributor['id'],network.id))
+                    agentCollaboration = cls.AgentCollaboration()
+                    agentCollaboration.collaborationId = collaboration.id
+                    agentCollaboration.agentId = agentNetwork.agent.id
+                    agentCollaboration.tokens = int(collaboration.tokenTotal)*float(contributor['ownership'])
+                    agentCollaboration.reputation = int(collaboration.tokenTotal)*float(contributor['ownership'])
+                    session.add(agentCollaboration)
+                if len(contributors) == 0 :
+                    agentCollaboration = cls.AgentCollaboration()
+                    agentCollaboration.collaborationId = collaboration.id
+                    agentCollaboration.agentId = agent.id
+                    agentCollaboration.tokens = collaboration.tokenTotal
+                    agentCollaboration.reputation = collaboration.tokenTotal
+                    session.add(agentCollaboration)
+            except KeyError :
+                agentCollaboration = cls.AgentCollaboration()
+                agentCollaboration.collaborationId = collaboration.id
+                agentCollaboration.agentId = agent.id
+                agentCollaboration.tokens = collaboration.tokenTotal
+                agentCollaboration.reputation = collaboration.tokenTotal
+                session.add(agentCollaboration)
+                
+            try :
+                handles = postDataJSON['handles']
+                for handle in handles:
+                    collaborationHandle = cls.CollaborationHandle()
+                    collaborationHandle.collaborationId = collaboration.id
+                    collaborationHandle.handleName = handle['name']
+                    collaborationHandle.handleType = handle['type']
+                    session.add(collaborationHandle)
+            except KeyError :
+                handles = ''
         
-        jsonStr = {"tokenName":tokenName,
-                    "similarEvaluationRate":similarEvaluationRate,"passingResponsibilityRate":passingResponsibilityRate,"tokenTotal":tokenTotal,"protocol":protocol,
-                    "tokenSymbol":tokenSymbol,"description":description,"networkId":networkId,"comment":comment,"name":name,"agentHandleId":agentHandleId}
-        collaboration = cls.Collaboration(jsonStr,session)
-        session.add(collaboration)
-        session.flush()   
-        creatorAlreadyCreated = False
-        #create agent collaborations objects
-        for contributor in contributorsJSON :
-            agentCollaboration = cls.AgentCollaboration()
-            agentCollaboration.collaborationId = collaboration.id
-            contributorId = contributor['id']
-            if int(agentHandleId) == int(contributorId):
-                creatorAlreadyCreated = True;
-            agentCollaboration.agentHandleId = contributorId
-            agentCollaboration.tokens = float(int(tokenTotal)*int(contributor['percentage']))/100
-            agentCollaboration.reputation = float(int(tokenTotal)*int(contributor['percentage']))/100
-            session.add(agentCollaboration)
-            
-            agentNetwork = getAgentNetwork(contributorId, networkId)
-            if not agentNetwork:
-                agentNetwork = cls.AgentNetwork()
-                agentNetwork.agentHandleId = contributorId
-                agentNetwork.networkId = networkId
-                session.add(agentNetwork)
-            
-        
-        if creatorAlreadyCreated == False :
-            agentCollaboration = cls.AgentCollaboration()
-            agentCollaboration.collaborationId = collaboration.id
-            agentCollaboration.agentHandleId = agentHandleId
-            agentCollaboration.tokens = 0
-            agentCollaboration.reputation = 0
-            session.add(agentCollaboration)
-            agentNetwork = getAgentNetwork(agentHandleId, networkId)
-            if not agentNetwork:
-                agentNetwork = cls.AgentNetwork()
-                agentNetwork.agentHandleId = agentHandleId
-                agentNetwork.networkId = networkId
-                session.add(agentNetwork)
-            
-        for handle in handlesJSON :
-            collaborationHandle = cls.CollaborationHandle()
-            collaborationHandle.collaborationId = collaboration.id
-            collaborationHandle.handleName = handle['handleName']
-            collaborationHandle.handleType = handle['handleType']
-            session.add(collaborationHandle)
+            #submit founding contribution
             
         session.commit()    
-        return collaboration, 201
+        return {"id":collaboration.id}, 201
+    
+class GetCollaborationsByNetworkResource(Resource):
+    
+    def get(self, id):
+        collaborations = session.query(cls.Collaboration).filter(cls.Collaboration.networkId == id).all()
+        fields = request.args.get('fields')
+        collaborationsToShow = []
+        for collaboration in collaborations :
+            collaborationsToShow.append(collaborationString(collaboration,fields))
+        return collaborationsToShow
+    
+
+class GetCollaborationsByAgentResource(Resource):
+    
+    def get(self, id):
+        agent = getAgent(id)
+        if not agent :
+            abort(404, message="Agent {} does not exists".format(id))
+        networkId = request.args.get('networkId')
+        if networkId != None and networkId != '' :
+            network = getNetwork(networkId)
+            if not network :
+                abort(404, message="network {} does not exists".format(networkId))
+            collaborations = session.query(cls.Collaboration).filter(cls.Collaboration.networkId == networkId).filter(cls.Collaboration.agentId == id).all()
+        else :
+            collaborations = session.query(cls.Collaboration).filter(cls.Collaboration.agentId == id).all()
+        fields = request.args.get('fields')
+        collaborationsToShow = []
+        for collaboration in collaborations :
+            collaborationsToShow.append(collaborationString(collaboration,fields))
+        return collaborationsToShow
+    
+class GetContributionByAgentResource(Resource):
+    
+    def get(self, id):
+        agent = getAgent(id)
+        if not agent :
+            abort(404, message="Agent {} does not exists".format(id))
+        collaborationId = request.args.get('collaborationId')
+        if collaborationId != None and collaborationId != '' :
+            collaboration = getCollaboration(id)
+            if not collaboration :
+                abort(404, message="collaborationId {} does not exists".format(collaborationId))
+            contributions = session.query(cls.Contribution).filter(cls.Contribution.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.AgentCollaboration.agentId == id).filter(cls.AgentCollaboration.collaborationId == collaboration.id).all()
+        else :
+            contributions = session.query(cls.Contribution).filter(cls.Contribution.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.AgentCollaboration.agentId == id).all()
+        fields = request.args.get('fields')
+        contributionssToShow = []
+        for contribution in contributions :
+            contributionssToShow.append(contributionString(contribution,fields))
+        return contributionssToShow
+    
+   
+    
+class GetContributionByCollaborationResource(Resource):
+    
+    def get(self, id):
+        collaboration = getCollaboration(id)
+        if not collaboration :
+            abort(404, message="collaborationId {} does not exists".format(id))
+        contributions = session.query(cls.Contribution).filter(cls.Contribution.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.AgentCollaboration.collaborationId == id).all()
+        fields = request.args.get('fields')
+        contributionssToShow = []
+        for contribution in contributions :
+            contributionssToShow.append(contributionString(contribution,fields))
+        return contributionssToShow
+    
     
 class CollaborationParameterResource(Resource):
     
-    @marshal_with(collaboration_fields)
     def get(self, id):
-        collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == id).first()
+        collaboration = getCollaboration(id)
         if not collaboration :
             abort(404, message="collaborationId {} does not exists".format(id))
-        return collaboration
+        fields = request.args.get('fields')
+        return collaborationString(collaboration,fields)
     
     def delete(self, id):
         collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == id).first()
@@ -576,25 +741,15 @@ class CollaborationClose(Resource):
         return winningContribution, 200
     
 class ContributionResource(Resource):
-    @marshal_with(contribution_fields)
     def get(self):
-        collaborationId = request.args.get('collaborationId')
         key = request.args.get('key')
         contains = request.args.get('contains')
-        if collaborationId != '' and  collaborationId != None  :
-            collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == collaborationId).first()
-            if not collaboration :
-                abort(404, message="Collaboration {} does not exists".format(collaborationId))
-            contributions = []
-            agentCollaborations = collaboration.agentCollaborations
-            for agentCollaboration in agentCollaborations :
-                contributions.extend(agentCollaboration.contributions)
-        elif key != '' and  key != None and contains != '' and  contains != None :
+        if key != '' and  key != None and contains != '' and  contains != None :
             allContributions = session.query(cls.Contribution).all()
             contributions = []
             for contribution in allContributions:
                 content = contribution.content
-                handlesContent = json.loads(content)['content']
+                handlesContent = json.loads(content)
                 try :
                     keyValues = handlesContent[key]
                     if not isinstance(keyValues, (list)):
@@ -612,9 +767,11 @@ class ContributionResource(Resource):
         else :
             contributions = session.query(cls.Contribution).all()            
         
+        fields = request.args.get('fields')
+        contributionssToShow = []
         for contribution in contributions :
-            contribution = getContributionDetail(contribution)
-        return contributions
+            contributionssToShow.append(contributionString(contribution,fields))
+        return contributionssToShow
 
     def delete(self):
         contributions = session.query(cls.Contribution).all()
@@ -623,71 +780,138 @@ class ContributionResource(Resource):
         session.commit()
         return "Contributions deleted successfully", 200
     
-    @marshal_with(contribution_fields)   
     def post(self): 
-        collaborationId = request.args.get('collaborationId')
-        agentHandleId = request.args.get('agentId')
-        comment = request.args.get('comment')
-        type = request.args.get('type')
-        content = request.data
-        agentHandle = None
-        if type == '' or type == None :
-            abort(404, message="Type is required")
-            
-        if agentHandleId == '' or agentHandleId == None :
-            abort(404, message="Agent is required")
-        else :
-            agentHandle = getAgentHandle(agentHandleId)
-            if not agentHandle :
-                abort(404, message="agent {} does not exists".format(agentHandleId))
-        
-        if collaborationId == '' or collaborationId == None  :
-            abort(404, message="Collaboration is required")
-        else :
-            collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == collaborationId).first()
-            if not collaboration :
-                abort(404, message="Collaboration {} does not exists".format(collaborationId))
-        agentCollaboration = session.query(cls.AgentCollaboration).filter(cls.AgentCollaboration.agentHandleId == agentHandleId).filter(cls.AgentCollaboration.collaborationId == collaborationId).first()
-        if not agentCollaboration :
-            abort(404, message="Agent {} does not exists in Collaboration {} ".format(agentHandleId,collaborationId))    
+        type = None
+        agent = None
+        collaboration = None
+        agentCollaboration = None
+        postData = request.data
         contribution = cls.Contribution()
-        contribution.agentHandleId = agentHandleId
-        contribution.agentCollaborationId = agentCollaboration.id
-        contribution.comment = comment
-        contribution.content = content
-        contribution.type = type
-        session.add(contribution) 
-        session.flush()  
-        
-        #adding default contributor
-        
-        contributionContributor = cls.ContributionContributor()
-        contributionContributor.contributorId = agentHandleId
-        contributionContributor.percentage = '100'
-        contributionContributor.name = agentHandle.agent.name
-        contribution.contributors.append(contributionContributor)
-               
+        if postData != '' and postData != None :
+            postDataJSON = json.loads(postData)
+            try :
+                agentId = postDataJSON['creator']
+                agent = getAgent(agentId)
+                if not agent :
+                    abort(404, message="creator does not exists".format(agentId))
+                contribution.agentId = agent.id
+            except KeyError :
+                abort(404, message="creator is required")
+                
+            try :
+                collaborationId = postDataJSON['collaboration']
+                collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == collaborationId).first()
+                if not collaboration :
+                    abort(404, message="Collaboration {} does not exists".format(collaborationId))
+                    
+                agentCollaboration = getAgentCollaboration(agent.id,collaboration.id)
+                if not agentCollaboration :
+                    abort(404, message="Agent {} does not exists in Collaboration {} ".format(agent.id,collaborationId)) 
+                contribution.agentCollaborationId = agentCollaboration.id
+            except KeyError :
+                abort(404, message="collaboration is required")
+                
+            try :
+                comment = postDataJSON['comment']
+                contribution.comment = comment
+            except KeyError :
+                comment = ''
+                
+            try :
+                type = postDataJSON['type']
+                contribution.type = type
+            except KeyError :
+                abort(404, message="Type is required")
+                
+            session.add(contribution)    
+            session.flush()
+                
+            try :
+                content = postDataJSON['content']
+                if type == 'qrate':
+                    linkName = content['url']
+                    tags = content['tags']
+                    link = getLINK(linkName)
+                    if not link :
+                        link = cls.LINK()
+                        link.name = linkName
+                        session.add(link)    
+                        session.flush()
+                    for tagName in tags:
+                        tag = getTag(tagName)
+                        if not tag:
+                            tag = cls.Tag()
+                            tag.name = tagName
+                            session.add(tag)    
+                            session.flush()
+                        tagLINK = cls.TagLINK()
+                        tagLINK.tagId = tag.id
+                        tagLINK.linkId = link.id
+                        tagLINK.contributionId = contribution.id
+                        session.add(tagLINK)    
+                        session.flush()
+                            
+                if type == 'milestone':
+                    contributions = content['contributions']
+                    for contribution in contributions:
+                        if not getCollaborationContribution(contribution.id, collaboration.id) :
+                            abort(404, message="contribution {} does not exist in collaboration".format(contribution.id,collaboration.id)) 
+                    submitter = content['submitter']
+                    submitterCoolaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == submitter).filter(cls.Collaboration.networkId == collaboration.networkId).first()
+                    if submitterCoolaboration == None :
+                        abort(404, message="submitterCoolaboration {} does not exist".format(submitter)) 
+                contribution.content = json.dumps(content)
+            except KeyError :
+                abort(404, message="content is required") 
+                
+            
+            try :
+                contributors = postDataJSON['contributors']
+                for contributor in contributors:
+                    agentCollaboration = getAgentCollaboration(contributor['id'], collaboration.id)
+                    if not agentCollaboration :
+                        abort(404, message="contributor {} does not exists in Collaboration {}".format(contributor['id'],collaboration.id))
+                    contributionContributor = cls.ContributionContributor()
+                    contributionContributor.contributorId = agentCollaboration.agentId
+                    contributionContributor.percentage = float(contributor['ownership'])*100
+                    contributionContributor.contributionId = contribution.id
+                    session.add(contributionContributor)    
+                    
+                if len(contributors) == 0 :
+                    contributionContributor = cls.ContributionContributor()
+                    contributionContributor.contributorId = agent.id
+                    contributionContributor.percentage = 100
+                    contributionContributor.contributionId = contribution.id
+                    session.add(contributionContributor) 
+            except KeyError :
+                    contributionContributor = cls.ContributionContributor()
+                    contributionContributor.contributorId = agent.id
+                    contributionContributor.percentage = 100
+                    contributionContributor.contributionId = contribution.id
+                    session.add(contributionContributor)
+                
         #adding reputation stats for this contribution
-        agentCollaborations = session.query(cls.AgentCollaboration).filter(cls.AgentCollaboration.collaborationId == collaborationId).all()
+        agentCollaborations = session.query(cls.AgentCollaboration).filter(cls.AgentCollaboration.collaborationId == collaboration.id).all()
         for agentCollaboration in agentCollaborations :
               contributionValue = cls.ContributionValue()
-              contributionValue.agentHandleId = agentCollaboration.agentHandleId
+              contributionValue.agentId = agentCollaboration.agentId
               contributionValue.agentCollaborationId = agentCollaboration.id
               contributionValue.contributionId = contribution.id
               contributionValue.reputationGain = 0
               contributionValue.reputation = agentCollaboration.reputation
               session.add(contributionValue)
+              
         session.commit()    
         
-        return contribution, 201
+        return {"id":contribution.id}, 201
     
 class ContributionParameterResource(Resource):
-    @marshal_with(contribution_fields)
     def get(self, id):
         contribution = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
         if not contribution:
             abort(404, message="Contribution {} doesn't exist".format(id))
-        contribution = getContributionDetail(contribution)
+        fields = request.args.get('fields')
+        contribution = contributionString(contribution,fields)
         return contribution
 
     def delete(self, id):
@@ -700,83 +924,97 @@ class ContributionParameterResource(Resource):
     
 
 class EvaluationResource(Resource):
-    @marshal_with(evaluation_fields)
-    def get(self):
-        contributionId = request.args.get('contributionId')
-        evaluations = []
-        if contributionId != '' and contributionId != None:
-            contribution = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()
-            if not contribution :
-                abort(404, message="contributionId {} does not exists".format(contributionId))
-            evaluations = contribution.evaluations
-        evaluations = session.query(cls.Evaluation).all()
-        return evaluations
 
-    def delete(self):
-        evaluations = session.query(cls.Evaluation).all()
-        for evaluation in evaluations :
-            session.delete(evaluation)
-        session.commit()
-        return "Evaluations deleted successfully", 200
-
-
-    @marshal_with(evaluation_fields)
     def post(self):
-        tokens = request.args.get('tokens')
-        contributionId = request.args.get('contributionId')
-        agentHandleId = request.args.get('agentId')
-        stake = request.args.get('stake')
-        agentHandle = None
+        evaluation = cls.Evaluation() 
+        postData = request.data
+        agent = None
         contribution = None
-        if stake == '' or stake == None:
-            abort(404, message="Stake is required")
-        if tokens == '' or tokens == None:
-            abort(404, message="Tokens is required")
-            
-        if agentHandleId == '' or agentHandleId == None:
-            abort(404, message="Agent is required")
-        else :
-            agentHandle = getAgentHandle(agentHandleId)
-            if not agentHandle :
-                abort(404, message="agentId {} does not exists".format(agentHandleId))
-        
-        if contributionId == '' or contributionId == None:
-            abort(404, message="Contribution is required")
-        else :
-            contribution = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).first()
-            if not contribution :
-                abort(404, message="contributionId {} does not exists".format(contributionId))
+        if postData != '' and postData != None :
+            postDataJSON = json.loads(postData)
+            try :
+                agentId = postDataJSON['creator']
+                agent = getAgent(agentId)
+                if not agent :
+                    abort(404, message="creator does not exists".format(agentId))
+                evaluation.agentId = agent.id
+            except KeyError :
+                abort(404, message="creator is required")
+               
+            try :
+                evaluationToken = postDataJSON['evaluation']
+                evaluation.tokens = evaluationToken
+            except KeyError :
+                abort(404, message="evaluation is required") 
+                
+            try :
+                comment = postDataJSON['comment']
+                evaluation.comment = comment
+            except KeyError :
+                comment = ''
+                
+            try :
+                stake = postDataJSON['stake']
+                evaluation.stake = stake
+            except KeyError :
+                abort(404, message="stake is required") 
+                
+            try :
+                contributionId = postDataJSON['contributionId']
+                contribution = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
+                if not contribution :
+                    abort(404, message="contributionId {} does not exists".format(id))
+                evaluation.contributionId = contribution.id        
+            except KeyError :
+                abort(404, message="stake is required") 
                 
         
-        if contribution.status != 'Open':
-            abort(404, message="Contribution {} is not Open".format(contributionId))
-        contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contributionId == contribution.id).filter(cls.ContributionValue.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.AgentCollaboration.agentHandleId == agentHandleId).filter(cls.AgentCollaboration.collaborationId == contribution.agentCollaboration.collaborationId).first()
         
-        jsonStr = {"tokens":tokens,
-                   "reputation":contributionValues.reputation,
-                   "agentHandleId":agentHandleId,
-                   "contributionId":contributionId,
-                   "stake":stake, 
-                   "timeCreated":datetime.now()
-                    }
-
-        evaluation = cls.Evaluation(jsonStr,session) 
+           
+        
+        if contribution.status != 'Open':
+            abort(404, message="Contribution {} is not Open".format(id))
+        contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contributionId == contribution.id).filter(cls.ContributionValue.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.AgentCollaboration.agentId == agent.id).filter(cls.AgentCollaboration.collaborationId == contribution.agentCollaboration.collaborationId).first()
+        evaluation.reputation = contributionValues.reputation
+        previousTokens = getAgentCollaboration(agent.id, contribution.agentCollaboration.collaborationId).tokens
         vd = ValueDistributer('ProtocolFunctionV1')
         vd.process_evaluation(evaluation,session)
         if(vd.error_occured):
             print vd.error_code
             # ToDo :  pass correct error message to agent
-            abort(404, message="Failed to process evaluation {} due to"+vd.error_code.format(contributionId))
-
-        return evaluation, 201
+            abort(404, message="Failed to process evaluation {} due to"+vd.error_code.format(contribution.id))
+        fields = request.args.get('fields')
+        currentTokens = getAgentCollaboration(agent.id, contribution.agentCollaboration.collaborationId).tokens
+        diffrenceTokens = currentTokens - previousTokens
+        return evaluationString(evaluation,fields,diffrenceTokens), 201
     
 class EvaluationParameterResource(Resource):
-    @marshal_with(evaluation_fields)
     def get(self, id):
+        fields = request.args.get('fields')
         evaluation = session.query(cls.Evaluation).filter(cls.Evaluation.id == id).first()
         if not evaluation:
             abort(404, message="EvaluationId {} doesn't exist".format(id))
-        return evaluation
+        return evaluationString(evaluation,fields,'')
+
+    def delete(self, id):
+        evaluation = session.query(cls.Evaluation).filter(cls.Evaluation.id == id).first()
+        if not evaluation:
+            abort(404, message="EvaluationId {} doesn't exist".format(id))
+        session.delete(evaluation)
+        session.commit()
+        return "Evaluation deleted successfully", 200
+    
+class GetEvaluationForContributionResource(Resource):
+    def get(self, id):
+        fields = request.args.get('fields')
+        contribution = session.query(cls.Contribution).filter(cls.Contribution.id == id).first()
+        if not contribution:
+            abort(404, message="Contribution {} doesn't exist".format(id))
+        evaluations = contribution.evaluations
+        evaluationsToShow = []
+        for evaluation in evaluations :
+            evaluationsToShow.append(evaluationString(evaluation,fields,''))
+        return evaluationsToShow
 
     def delete(self, id):
         evaluation = session.query(cls.Evaluation).filter(cls.Evaluation.id == id).first()
@@ -787,7 +1025,77 @@ class EvaluationParameterResource(Resource):
         return "Evaluation deleted successfully", 200
 
 
+class AllTagsResource(Resource):
     
+    @marshal_with(tag_fields)
+    def get(self):
+        query = request.args.get('query')
+        tags = []
+        excludeTagsNames = request.args.get('excludeTagsNames')
+        if query != '' and query != None and excludeTagsNames != '' and excludeTagsNames != None :
+            excludeTagsNamesList = excludeTagsNames.split(",")
+            tags = session.query(cls.Tag).filter(cls.Tag.name.like('%'+query+'%')).filter(cls.Tag.name.notin_(excludeTagsNamesList)).all()
+        elif (query == '' or query == None) and excludeTagsNames != '' and excludeTagsNames != None :
+            excludeTagsNamesList = excludeTagsNames.split(",")
+            tags = session.query(cls.Tag).filter(cls.Tag.name.notin_(excludeTagsNamesList)).all()
+        elif query != '' and query != None and (excludeTagsNames == '' or excludeTagsNames == None) :
+            tags = session.query(cls.Tag).filter(cls.Tag.name.like('%'+query+'%')).all()
+        else :
+            tags = session.query(cls.Tag).all()
+        
+        return tags
+    
+class GetLinksByTagResource(Resource):
+    
+    def get(self):
+        tagName = request.args.get('tag')
+        if tagName == '' and tagName == None :
+            abort(404, message="tagName is required")
+        tagLINKs = session.query(cls.TagLINK).filter(cls.TagLINK.tagId == cls.Tag.id).filter(cls.Tag.name == tagName).all()
+        titles = []
+        contributionIds = {}
+        for tagLINK in tagLINKs :
+            contribution = tagLINK.contribution
+            try :
+                contributionIds[contribution.id]
+            except KeyError :
+                contributionIds[contribution.id] = contribution.id
+                titles.append(json.loads(contribution.content)['title'])
+        return titles
+    
+class GetTagsByLinkResource(Resource):
+    
+    @marshal_with(tag_fields)
+    def get(self):
+        linkName = request.args.get('url')
+        if linkName == '' and linkName == None :
+            abort(404, message="url is required")
+        tags = session.query(cls.Tag).filter(cls.TagLINK.tagId == cls.Tag.id).filter(cls.TagLINK.linkId == cls.LINK.id).filter(cls.LINK.name == linkName).all()
+        return tags
+    
+class GetLinksANDTagsResource(Resource):
+    
+    def get(self):
+        query = request.args.get('query')
+        if query == '' and query == None :
+            abort(404, message="query is required")
+        taglinks = []
+        taglinks.extend(session.query(cls.TagLINK).filter(cls.TagLINK.linkId == cls.LINK.id).filter(cls.LINK.name.like('%'+query+'%')).all())
+        taglinks.extend(session.query(cls.TagLINK).filter(cls.TagLINK.tagId == cls.Tag.id).filter(cls.Tag.name.like('%'+query+'%')).all())
+        titles = []
+        contributionIds = {}
+        for tagLINK in taglinks :
+            contribution = tagLINK.contribution
+            try :
+                contributionIds[contribution.id]
+            except KeyError :
+                contributionIds[contribution.id] = contribution.id
+                titles.append(json.loads(contribution.content)['title'])
+        return titles
+    
+
+        
+        
     
 class CollaborationStatsForContributionsResource(Resource):
     
@@ -829,9 +1137,323 @@ class AgentStatsForEvaluationsResource(Resource):
         agentEvaluations = session.query(cls.Evaluation).filter(cls.Evaluation.contributionId == cls.Contribution.id).filter(cls.Contribution.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.Contribution.AgentCollaboration.agentId == cls.Agent.id).all()
         return agentEvaluations
     
+
+def agentString(agent,fields):
+    data = {}
+    try :
+        if fields == '' or fields == None :
+            data['name'] = agent.name
+            data['id'] = agent.id
+            data['handles'] = []
+            data['networks'] = []
+            data['collaborations'] = []
+            data['contributions'] = []
+            for handle in agent.agentHandles:
+                dataHandles = handleString(handle,None)
+                data['handles'].append(dataHandles)
+            for agentNetwork in agent.agentNetworks:
+                dataNetworks = networkString(agentNetwork.network,None)
+                data['networks'].append(dataNetworks)
+            for agentCollaboration in agent.agentCollaborations:
+                dataCollaborations = collaborationString(agentCollaboration.collaboration,None)
+                dataCollaborations['tokens'] = agentCollaboration.tokens
+                dataCollaborations['reputation'] = agentCollaboration.reputation
+                data['collaborations'].append(dataCollaborations)
+            for contribution in agent.agentContributions:
+                dataContributions = contributionString(contribution,None)
+                data['contributions'].append(dataContributions)        
+        else :
+            fieldSet = fields.split(',')
+            for field in fieldSet :
+                fieldSet1 = field.split('.',1)
+                if fieldSet1[0] == 'networks' :
+                    data['networks'] = []
+                    if(len(fieldSet1) == 1) :
+                        fieldSetForNetwork = None
+                    else :
+                        fieldSetForNetwork = fieldSet1[1]
+                    for agentNetwork in agent.agentNetworks:
+                        dataNetworks = networkString(agentNetwork.network,fieldSetForNetwork)
+                        data['networks'].append(dataNetworks)
+                        
+                elif fieldSet1[0] == 'handles' :
+                    data['handles'] = []
+                    if(len(fieldSet1) == 1) :
+                        fieldSetForHandle = None
+                    else :
+                        fieldSetForHandle = fieldSet1[1]
+                    for handle in agent.agentHandles:
+                        dataHandles = handleString(handle,fieldSetForHandle)
+                        data['handles'].append(dataHandles) 
+                        
+                elif fieldSet1[0] == 'collaborations' :
+                    data['collaborations'] = []
+                    if(len(fieldSet1) == 1) :
+                        fieldSetFoCollaboration = None
+                    else :
+                        fieldSetFoCollaboration = fieldSet1[1]
+                    for agentCollaboration in agent.agentCollaborations:
+                        dataCollaborations = collaborationString(agentCollaboration.collaboration,fieldSetFoCollaboration)
+                        if fieldSetFoCollaboration == 'tokens' :
+                            dataCollaborations['tokens'] = agentCollaboration.tokens
+                        if fieldSetFoCollaboration == 'reputation' :
+                            dataCollaborations['reputation'] = agentCollaboration.reputation
+                        if fieldSetFoCollaboration == None :
+                            dataCollaborations['tokens'] = agentCollaboration.tokens
+                            dataCollaborations['reputation'] = agentCollaboration.reputation
+                        data['collaborations'].append(dataCollaborations)
+                        
+                elif fieldSet1[0] == 'contributions' :
+                    data['contributions'] = []
+                    if(len(fieldSet1) == 1) :
+                        fieldSetFoContribution = None
+                    else :
+                        fieldSetFoContribution = fieldSet1[1]
+                    for contribution in agent.agentContributions:
+                        dataContributions = contributionString(contribution,fieldSetFoContribution)
+                        data['contributions'].append(dataContributions)
+                
+                else :
+                    data[field] = agent.__dict__[field]
+    except :
+            print 'Could not get data from agent.'
+        
+    return data
+
+def evaluationString(evaluation,fields,diffrenceTokens):
+    try:
+        data = {}
+        if fields == '' or fields == None :
+            data['id'] = evaluation.id
+            data['agentId'] = evaluation.agentId
+            data['contributionId'] = evaluation.contributionId
+            data['evaluation'] = evaluation.tokens
+            data['stake'] = evaluation.stake
+            data['comment'] = evaluation.comment
+            if diffrenceTokens != '' :
+                data['senderTokenReputationChange'] = diffrenceTokens
+            data['contributionNewValue'] = evaluation.contributionValueAfterEvaluation
+        else :
+            fieldSet = fields.split(',')
+            for field in fieldSet :
+                print 'field'+field+str(field == 'contributionNewValue')
+                if field.strip() == 'senderTokenReputationChange':
+                    if diffrenceTokens != '':
+                        data[field.strip()] = diffrenceTokens
+                elif field.strip() == 'contributionNewValue' :
+                    data[field.strip()] = evaluation.contributionValueAfterEvaluation
+                elif field.strip() == 'evaluation' :
+                    data[field.strip()] = evaluation.tokens
+                else :
+                    data[field.strip()] = evaluation.__dict__[field.strip()]
+    except :
+            print 'Could not get data from evaluation.'
+            
+    return data
+
+def networkString(network,fields):
+    try :
+        data = {}
+        if fields == '' or fields == None :
+            data['id'] = network.id
+            data['agentId'] = network.agentId
+            data['name'] = network.name
+            data['description'] = network.description
+            data['protocol'] = json.loads(network.protocol)
+        else :
+            fieldSet = fields.split(',')
+            for field in fieldSet :
+                if field == 'protocol' :
+                    data[field] = json.loads(network.protocol)
+                elif field == 'collaborations' :
+                    data[field] = []
+                    for collaboration in network.collaborations:
+                        dataContributors = collaborationString(collaboration,None)
+                        data[field].append(dataContributors)
+                elif 'collaborations' in field :
+                    fields1 = field.split('.',1)
+                    data['collaborations'] = []
+                    for collaboration in network.collaborations:
+                        dataContributors = collaborationString(collaboration,fields1[1])
+                        data['contributors'].append(dataContributors)
+                else :
+                    data[field] = network.__dict__[field]
+            
+    except :
+            print 'Could not get data from network.'  
+    return data
+
+def handleString(handle,fields):
+    try:
+        data = {}
+        if fields == '' or fields == None :
+            data['type'] = handle.handleType
+            data['name'] = handle.handleName
+        else :
+            fieldSet = fields.split(',')
+            for field in fieldSet :
+                if field == 'type' :
+                    data['type'] = handle.handleType
+                elif field == 'name' :
+                    data['name'] = handle.handleName
+                else :    
+                    data[field] = handle.__dict__[field]
+    except :
+            print 'Could not get data from handle.' 
+            
+        
+    return data
+
+def collaborationString(collaboration,fields):
+    try:
+        data = {}
+        if fields == '' or fields == None :
+            data['id'] = collaboration.id
+            data['agentId'] = collaboration.agentId
+            data['networkId'] = collaboration.networkId
+            data['tokenName'] = collaboration.tokenName
+            data['name'] = collaboration.name
+            data['description'] = collaboration.description
+            data['tokenSymbol'] = collaboration.tokenSymbol
+            data['tokenTotal'] = collaboration.tokenTotal
+            data['comment'] = collaboration.comment
+            data['status'] = collaboration.status
+            data['protocol'] = json.loads(collaboration.protocol)
+            data['handles'] = []
+            for handle in collaboration.handles:
+                datahandles = {}
+                datahandles['handleName'] = handle.handleName
+                datahandles['handleType'] = handle.handleType
+                data['handles'].append(datahandles)
+            data['contributors'] = []
+            for contributor in collaboration.agentCollaborations:
+                dataContributors = {}
+                dataContributors['id'] = contributor.id
+                dataContributors['agentId'] = contributor.agentId
+                dataContributors['tokens'] = contributor.tokens
+                dataContributors['reputation'] = contributor.reputation
+                data['contributors'].append(dataContributors)
+        else :
+            fieldSet = fields.split(',')
+            for field in fieldSet :
+                if field == 'protocol' :
+                    data[field] = json.loads(collaboration.protocol)
+                elif field == 'handles' :
+                    data[field] = []
+                    for handle in collaboration.handles:
+                        datahandles = {}
+                        datahandles['handleName'] = handle.handleName
+                        datahandles['handleType'] = handle.handleType
+                        data[field].append(datahandles)
+                elif 'handles' in field :
+                    fields1 = field.split('.')
+                    data['handles'] = []
+                    for handle in collaboration.handles:
+                        datahandles = {}
+                        datahandles[fields1[1]] = handle.__dict__[fields1[1]]
+                        data['handles'].append(datahandles)
+                elif field == 'contributors' :
+                    data[field] = []
+                    for contributor in collaboration.agentCollaborations:
+                        dataContributors = {}
+                        dataContributors['id'] = contributor.id
+                        dataContributors['agentId'] = contributor.agentId
+                        dataContributors['tokens'] = contributor.tokens
+                        dataContributors['reputation'] = contributor.reputation
+                        data[field].append(dataContributors)
+                elif 'contributors' in field :
+                    fields1 = field.split('.')
+                    data['contributors'] = []
+                    for contributor in collaboration.agentCollaborations:
+                        dataContributors = {}
+                        dataContributors[fields1[1]] = contributor.__dict__[fields1[1]]
+                        data['contributors'].append(dataContributors)
+                else :
+                    data[field] = collaboration.__dict__[field]
+    
+    except :
+            print 'Could not get data from collaboration.' 
+            
+        
+    return data
+
+def contributionString(contribution,fields):
+    try: 
+        data = {}
+        dataContributors = {}
+        if fields == '' or fields == None :
+            data['id'] = contribution.id
+            data['agentId'] = contribution.agentId
+            data['agentCollaborationId'] = contribution.agentCollaborationId
+            data['comment'] = contribution.comment
+            data['type'] = contribution.type
+            data['status'] = contribution.status
+            data['content'] = json.loads(contribution.content)
+            data['contributors'] = []
+            for contributor in contribution.contributors:
+                dataContributors = {}
+                dataContributors['id'] = contributor.id
+                dataContributors['contributionId'] = contributor.contributionId
+                dataContributors['contributorId'] = contributor.contributorId
+                dataContributors['ownership'] = contributor.percentage/100
+                data['contributors'].append(dataContributors)
+        else :
+            fieldSet = fields.split(',')
+            for field in fieldSet :
+                if field == 'content' :
+                    data[field] = json.loads(contribution.content)
+                elif field == 'contributors' :
+                    data[field] = []
+                    for contributor in contribution.contributors:
+                        dataContributors = {}
+                        dataContributors['id'] = contributor.id
+                        dataContributors['contributionId'] = contributor.contributionId
+                        dataContributors['contributorId'] = contributor.contributorId
+                        dataContributors['ownership'] = contributor.percentage/100
+                        data[field].append(dataContributors)
+                elif 'contributors' in field :
+                    fields1 = field.split('.')
+                    data['contributors'] = []
+                    for contributor in contribution.contributors:
+                        dataContributors = {}
+                        if fields1[1] == 'ownership' :
+                            dataContributors[fields1[1]] = contributor.percentage/100
+                        else :
+                            dataContributors[fields1[1]] = contributor.__dict__[fields1[1]]
+                    
+                        data['contributors'].append(dataContributors)
+                else :
+                    data[field] = contribution.__dict__[field]
+    except :
+            print 'Could not get data from contribution.'       
+        
+    return data
+            
+    
+
+def getCollaboration(id):
+    collaboration = session.query(cls.Collaboration).filter(cls.Collaboration.id == id).first()    
+    return collaboration
+
 def getAgent(id):
     agent = session.query(cls.Agent).filter(cls.Agent.id == id).first()    
-    return agent
+    return agent 
+
+def getLINK(name):
+    link = session.query(cls.LINK).filter(cls.LINK.name == name).first()    
+    return link
+
+def getTag(name):
+    tag = session.query(cls.Tag).filter(cls.Tag.name == name).first()    
+    return tag
+
+def getTaglink(tagId,linkId):
+    tagLINK = session.query(cls.TagLINK).filter(cls.TagLINK.tagId == tagId).filter(cls.TagLINK.linkId == linkId).first()    
+    return tagLINK
+
+def getNetwork(id):
+    network = session.query(cls.Network).filter(cls.Network.id == id).first()    
+    return network
 
 
 
@@ -855,13 +1477,27 @@ def getAgentByNameAndType(name,handleName,handleType):
     agentHandle = session.query(cls.AgentHandle).filter(cls.Agent.name == name).filter(cls.AgentHandle.agentId == cls.Agent.id).filter(cls.AgentHandle.handleName == handleName).filter(cls.AgentHandle.handleType == handleType).first()    
     return agentHandle
 
+def getAgentByHandleNameAndType(handleName,handleType):
+    agentHandle = session.query(cls.AgentHandle).filter(cls.AgentHandle.handleName == handleName).filter(cls.AgentHandle.handleType == handleType).first()    
+    return agentHandle
+
 def getAgentByIdAndType(id,handleName,handleType):
     agentHandle = session.query(cls.AgentHandle).filter(cls.Agent.id == id).filter(cls.AgentHandle.agentId == cls.Agent.id).filter(cls.AgentHandle.handleName == handleName).filter(cls.AgentHandle.handleType == handleType).first()    
     return agentHandle
 
-def getAgentNetwork(agentHandleId,networkId):
-    agentNetwork = session.query(cls.AgentNetwork).filter(cls.AgentNetwork.agentHandleId == agentHandleId).filter(cls.AgentNetwork.networkId == networkId).first()    
+def getAgentNetwork(agentId,networkId):
+    agentNetwork = session.query(cls.AgentNetwork).filter(cls.AgentNetwork.agentId == agentId).filter(cls.AgentNetwork.networkId == networkId).first()    
     return agentNetwork
+
+def getAgentCollaboration(agentId,collaborationId):
+    agentCollaboration = session.query(cls.AgentCollaboration).filter(cls.AgentCollaboration.agentId == agentId).filter(cls.AgentCollaboration.collaborationId == collaborationId).first()    
+    return agentCollaboration
+
+def getCollaborationContribution(contributionId,collaborationId):
+    contribution = session.query(cls.Contribution).filter(cls.Contribution.id == contributionId).filter(cls.Contribution.agentCollaborationId == cls.AgentCollaboration.id).filter(cls.AgentCollaboration.collaborationId == collaborationId).first()    
+    return contribution
+
+
 
 
 def deleteContribution(contribution):
