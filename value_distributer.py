@@ -32,7 +32,7 @@ class ValueDistributer(ValueDistributerBase):
 	def isEvaluatarFirstEvaluation(self,evaluations, current_evaluation):
 		self.log('\n\n *** isEvaluatarFirstEvaluation: ***:\n')
 		for evaluation in evaluations:
-			if int(evaluation.agentHandleId) == int(current_evaluation.agentHandleId):
+			if int(evaluation.agentId) == int(current_evaluation.agentId):
 				self.log('is not  evaluators first evaluation.')
 				return False
 
@@ -45,13 +45,13 @@ class ValueDistributer(ValueDistributerBase):
 
 		Wi = 0.0
 		agents = self.agentsDict
-		current_evaluator = agents[int(current_evaluation.agentHandleId)]
+		current_evaluator = agents[int(current_evaluation.agentId)]
 		rep = current_evaluation.reputation
 		print 'rep is'+str(rep)
 		#check how much reputation has been engaged by current_evaluator,
 		for evaluation in evaluations:
 			print 'comes here in evaluations'
-			if evaluation.agentHandleId == current_evaluator.agentHandleId:  
+			if evaluation.agentId == current_evaluator.agentId:  
 				Wi += evaluation.reputation
 		self.log('amount of reputation which  has been engaged by the current_evaluator:'+str(Wi))
 		print 'Wi is'+str(Wi)
@@ -89,31 +89,31 @@ class ValueDistributer(ValueDistributerBase):
 		self.log('previous highest eval:'+str(self.highest_eval))
 		self.log('total system reputation:'+str(self.total_system_reputation))	
 
-	# get state : agents Dict which is a dict of (key : value) agentHandleId:agentOrgenization object  ,also calc total_system_reputation and highest_eval:
+	# get state : agents Dict which is a dict of (key : value) agentId:agentOrgenization object  ,also calc total_system_reputation and highest_eval:
 	def getCurrentState(self,contribution,session):
 		agentsDict = {}
 		contributionValuesDict = {}
 		total_system_reputation = 0
 
 		# get agents:
-		agent_collaboration = contribution.agentCollaboration
-		collaboration = agent_collaboration.collaboration
-		agentCollaborations = session.query(cls.AgentCollaboration).filter(cls.AgentCollaboration.collaborationId == agent_collaboration.collaborationId).all()
+		agent_network = contribution.agentNetwork
+		network = agent_network.network
+		agentNetworks = session.query(cls.AgentNetwork).filter(cls.AgentNetwork.networkId == agent_network.networkId).all()
 		contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contributionId == contribution.id).all()
-		for agentCollaboration in agentCollaborations:
-			agentsDict[agentCollaboration.agentHandleId] = agentCollaboration
+		for agentNetwork in agentNetworks:
+			agentsDict[agentNetwork.agentId] = agentNetwork
 		 
 		for contributionValue in contributionValues:
 			total_system_reputation = total_system_reputation + contributionValue.reputation
-			contributionValuesDict[contributionValue.agentCollaborationId] = contributionValue
+			contributionValuesDict[contributionValue.agentNetworkId] = contributionValue
 		
 		self.highest_eval =  0 
 		if(contribution.evaluations and len(contribution.evaluations)):
 			self.highest_eval = self.getHighestEval(contribution.evaluations)
 
 		self.total_system_reputation = total_system_reputation
-		self.similarEvaluationRate = collaboration.similarEvaluationRate
-		self.passingResponsibilityRate = collaboration.passingResponsibilityRate
+		self.similarEvaluationRate = 50
+		self.passingResponsibilityRate = 50
 		self.agentsDict = agentsDict
 		self.contributionValuesDict = contributionValuesDict
 		self.debug_state()
@@ -142,7 +142,7 @@ class ValueDistributer(ValueDistributerBase):
 
 	def distribute_rep(self,evaluations_distribution, current_evaluation,session):
 		agents = self.agentsDict
-		current_evaluator = agents[int(current_evaluation.agentHandleId)]
+		current_evaluator = agents[int(current_evaluation.agentId)]
 		contributionValues = self.contributionValuesDict
 
 		if(not current_evaluation.stake):
@@ -156,12 +156,12 @@ class ValueDistributer(ValueDistributerBase):
 		session.add(current_evaluator)	
 		session.add(contributionValues[current_evaluator.id])
 		#reallocate reputation
-		for agentHandleId in evaluations_distribution:
-			agent = agents[int(agentHandleId)]
-			self.log("\n\nrealocating reputation for evaluator Id:" + str(agentHandleId))
+		for agentId in evaluations_distribution:
+			agent = agents[int(agentId)]
+			self.log("\n\nrealocating reputation for evaluator Id:" + str(agentId))
 			self.log("OLD REP === " + str(agent.reputation))		
-			agent.reputation += evaluations_distribution[agentHandleId] 
-			contributionValues[agent.id].reputationGain= contributionValues[agent.id].reputationGain  + evaluations_distribution[agentHandleId]
+			agent.reputation += evaluations_distribution[agentId] 
+			contributionValues[agent.id].reputationGain= contributionValues[agent.id].reputationGain  + evaluations_distribution[agentId]
 			self.log("NEW REP === " + str(agent.reputation))
 			session.add(agent)
 			session.add(contributionValues[agent.id])
@@ -198,7 +198,7 @@ class ValueDistributer(ValueDistributerBase):
 		# prepare protocol function Input:
 		evaluationsInfo = []
 		for evaluation in evaluations:
-			evaluationsInfo.append( EvaluationInfo(evaluation.tokens,evaluation.reputation,evaluation.stake,evaluation.agentHandleId) )
+			evaluationsInfo.append( EvaluationInfo(evaluation.tokens,evaluation.reputation,evaluation.stake,evaluation.agentId) )
 
 		current_evaluation_info = evaluationsInfo[-1]
 		fin = FIn(evaluationsInfo,current_evaluation_info,self.total_system_reputation,self.similarEvaluationRate)
@@ -212,7 +212,7 @@ class ValueDistributer(ValueDistributerBase):
 		
 		# success: handle result:	
 		self.distribute_rep(result.rep_distributions, current_evaluation,session)
-		self.process_current_evaluation(result.evaluation, contribution.contributors,session,contribution.agentCollaboration.collaboration)
+		self.process_current_evaluation(result.evaluation, contribution.contributors,session,contribution.agentNetwork.network)
 
 		# add current evaluation and commit DB session:
 		current_evaluation.contributionValueAfterEvaluation = result.evaluation

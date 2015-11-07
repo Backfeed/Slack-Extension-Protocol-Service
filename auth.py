@@ -50,6 +50,10 @@ def me():
     return jsonify(dict(message="logged in"))
 
 def google():
+    print 'comes here in google auth'
+    print 'client'+str(request.json['clientId'])
+    print 'redirectUri'+str(request.json['redirectUri'])
+    print 'code'+str(request.json['code'])
     access_token_url = 'https://accounts.google.com/o/oauth2/token'
     people_api_url = 'https://www.googleapis.com/plus/v1/people/me/openIdConnect'
 

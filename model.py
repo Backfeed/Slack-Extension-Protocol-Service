@@ -37,11 +37,11 @@ agent_handle_table = schema.Table('agent_handle', metadata,
 )
 
 """
-Network - schema definition:
+Group - schema definition:
 """
-network_table = schema.Table('network', metadata,
+group_table = schema.Table('group', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('network_seq_id', optional=True), primary_key=True),
+        schema.Sequence('group_seq_id', optional=True), primary_key=True),
     schema.Column('agentId', types.Integer,
         schema.ForeignKey('agent.id'),nullable=False),                              
     schema.Column('name', types.Unicode(255),nullable=False),
@@ -50,28 +50,28 @@ network_table = schema.Table('network', metadata,
 )
 
 """
-Agent networks - schema definition:
+Agent groups - schema definition:
 """
-agent_network_table = schema.Table('agent_network', metadata,
+agent_group_table = schema.Table('agent_group', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('agent_network_seq_id', optional=True), primary_key=True),
+        schema.Sequence('agent_group_seq_id', optional=True), primary_key=True),
     schema.Column('agentId', types.Integer,
         schema.ForeignKey('agent.id')),
-    schema.Column('networkId', types.Integer,
-        schema.ForeignKey('network.id')),
+    schema.Column('groupId', types.Integer,
+        schema.ForeignKey('group.id')),
 )
 
 
 """
-Collaboration - schema definition:
+Network - schema definition:
 """
-collaboration_table = schema.Table('collaboration', metadata,
+network_table = schema.Table('network', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('collaboration_seq_id', optional=True), primary_key=True),
+        schema.Sequence('network_seq_id', optional=True), primary_key=True),
     schema.Column('agentId', types.Integer,
         schema.ForeignKey('agent.id'),nullable=False),
-    schema.Column('networkId', types.Integer,
-        schema.ForeignKey('network.id'),nullable=False),
+    schema.Column('groupId', types.Integer,
+        schema.ForeignKey('group.id'),nullable=False),
     schema.Column('protocol',types.Unicode(2000)),
     schema.Column('tokenName', types.Unicode(60)),
     schema.Column('name', types.Unicode(255),nullable=False),
@@ -85,27 +85,27 @@ collaboration_table = schema.Table('collaboration', metadata,
 )
 
 """
-Agent collaborations - schema definition:
+Agent networks - schema definition:
 """
-agent_collaboration_table = schema.Table('agent_collaboration', metadata,
+agent_network_table = schema.Table('agent_network', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('agent_collaboration_seq_id', optional=True), primary_key=True),
+        schema.Sequence('agent_network_seq_id', optional=True), primary_key=True),
     schema.Column('agentId', types.Integer,
         schema.ForeignKey('agent.id')),
-    schema.Column('collaborationId', types.Integer,
-        schema.ForeignKey('collaboration.id')),
+    schema.Column('networkId', types.Integer,
+        schema.ForeignKey('network.id')),
     schema.Column('tokens', types.Float),
     schema.Column('reputation',  types.Float),   
 )
 
 """
-collaboration hanldes - schema definition:
+network hanldes - schema definition:
 """
-collaboration_handle_table = schema.Table('collaboration_handle', metadata,
+network_handle_table = schema.Table('network_handle', metadata,
     schema.Column('id', types.Integer,
-        schema.Sequence('collaboration_handle_seq_id', optional=True), primary_key=True),
-    schema.Column('collaborationId', types.Integer,
-        schema.ForeignKey('collaboration.id')),
+        schema.Sequence('network_handle_seq_id', optional=True), primary_key=True),
+    schema.Column('networkId', types.Integer,
+        schema.ForeignKey('network.id')),
     schema.Column('handleName', types.Unicode(255)),
     schema.Column('handleType', types.Unicode(255)),   
 )
@@ -121,8 +121,8 @@ contribution_table = schema.Table('contribution', metadata,
         schema.Sequence('contribution_seq_id', optional=True), primary_key=True),
     schema.Column('agentId', types.Integer,
         schema.ForeignKey('agent.id')),
-    schema.Column('agentCollaborationId', types.Integer,
-        schema.ForeignKey('agent_collaboration.id')),
+    schema.Column('agentNetworkId', types.Integer,
+        schema.ForeignKey('agent_network.id')),
     schema.Column('timeCreated', types.DateTime(), default=now),
     schema.Column('comment', types.Unicode(2000)),
     schema.Column('type', types.Unicode(340)),
@@ -155,8 +155,8 @@ contribution_value_table = schema.Table('contributionValue', metadata,
         schema.Sequence('contribution_value_seq_id', optional=True), primary_key=True),
     schema.Column('agentId', types.Integer,
         schema.ForeignKey('agent.id')),
-    schema.Column('agentCollaborationId', types.Integer,
-        schema.ForeignKey('agent_collaboration.id')),
+    schema.Column('agentNetworkId', types.Integer,
+        schema.ForeignKey('agent_network.id')),
     schema.Column('contributionId', types.Integer,
         schema.ForeignKey('contribution.id')),
     schema.Column('reputationGain',  types.Float,default=0),
@@ -191,6 +191,8 @@ tag_table = schema.Table('tag', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('tag_seq_id', optional=True), primary_key=True),
     schema.Column('name', types.Unicode(255),nullable=False),
+    schema.Column('contributionId', types.Integer,
+        schema.ForeignKey('contribution.id'),nullable=False),
 )
 
 """
@@ -200,6 +202,8 @@ link_table = schema.Table('link', metadata,
     schema.Column('id', types.Integer,
         schema.Sequence('link_seq_id', optional=True), primary_key=True),
     schema.Column('name', types.Unicode(255),nullable=False),
+    schema.Column('contributionId', types.Integer,
+        schema.ForeignKey('contribution.id'),nullable=False),
 )
 
 """
@@ -212,8 +216,7 @@ tag_link_table = schema.Table('tag_link', metadata,
         schema.ForeignKey('tag.id'),nullable=False),
     schema.Column('linkId', types.Integer,
         schema.ForeignKey('link.id'),nullable=False), 
-    schema.Column('contributionId', types.Integer,
-        schema.ForeignKey('contribution.id'),nullable=False),                                                       
+                                                           
 )
 
 
@@ -223,50 +226,56 @@ Relationships - definitions
 
 orm.mapper(cls.Agent, agent_table, properties={
     'agentHandles':orm.relation(cls.AgentHandle, backref='agent'),
+    'agentGroups':orm.relation(cls.AgentGroup, backref='agent'),
     'agentNetworks':orm.relation(cls.AgentNetwork, backref='agent'),
-    'agentCollaborations':orm.relation(cls.AgentCollaboration, backref='agent'),
     'agentContributions':orm.relation(cls.Contribution, backref='agent'),
     'agentEvaluations':orm.relation(cls.Evaluation, backref='agent'),
 })
 
 orm.mapper(cls.AgentHandle, agent_handle_table)
 
-orm.mapper(cls.AgentNetwork, agent_network_table)
+orm.mapper(cls.AgentGroup, agent_group_table)
+
+orm.mapper(cls.Group, group_table, properties={
+    'agentGroups':orm.relation(cls.AgentGroup, backref='group'),  
+    'agent':orm.relation(cls.Agent, backref='group'),
+    'networks':orm.relation(cls.Network, backref='group'),                                                
+})
+
 
 orm.mapper(cls.Network, network_table, properties={
     'agentNetworks':orm.relation(cls.AgentNetwork, backref='network'),  
-    'agent':orm.relation(cls.Agent, backref='network'),
-    'collaborations':orm.relation(cls.Collaboration, backref='network'),                                                
+    'handles':orm.relation(cls.NetworkHandle, backref='network'),
+    'agent':orm.relation(cls.Agent, backref='network'),                                                
 })
 
-
-orm.mapper(cls.Collaboration, collaboration_table, properties={
-    'agentCollaborations':orm.relation(cls.AgentCollaboration, backref='collaboration'),  
-    'handles':orm.relation(cls.CollaborationHandle, backref='collaboration'),
-    'agent':orm.relation(cls.Agent, backref='collaboration'),                                                
-})
-
-orm.mapper(cls.AgentCollaboration, agent_collaboration_table, properties={
+orm.mapper(cls.AgentNetwork, agent_network_table, properties={
         'contributions':orm.relation(cls.Contribution),                                                              
 })
 
-orm.mapper(cls.CollaborationHandle, collaboration_handle_table)
+orm.mapper(cls.NetworkHandle, network_handle_table)
 
-orm.mapper(cls.Tag, tag_table)
+orm.mapper(cls.Tag, tag_table, properties={
+        'contribution':orm.relation(cls.Contribution, backref='tag'),                                                 
+    
+})
 
-orm.mapper(cls.LINK, link_table)
+
+orm.mapper(cls.LINK, link_table, properties={
+        'contribution':orm.relation(cls.Contribution, backref='link'),                                                 
+    
+})
 
 orm.mapper(cls.TagLINK, tag_link_table, properties={
     'tag':orm.relation(cls.Tag, backref='links'),  
     'link':orm.relation(cls.LINK, backref='tags'),  
-    'contribution':orm.relation(cls.Contribution, backref='taglink'),                                                 
     
 })
 
 orm.mapper(cls.Contribution, contribution_table, properties={
     'evaluations':orm.relation(cls.Evaluation, backref='contribution'),  
     'contributors':orm.relation(cls.ContributionContributor, backref='contribution'),                                                  
-    'agentCollaboration':orm.relation(cls.AgentCollaboration),
+    'agentNetwork':orm.relation(cls.AgentNetwork),
     'contributionValues':orm.relation(cls.ContributionValue),
     
 })

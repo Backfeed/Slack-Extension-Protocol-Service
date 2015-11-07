@@ -61,20 +61,20 @@ class Agent(BaseObject):
 class AgentHandle(object):
 	pass
 
+class Group(object):
+	pass
+
+class AgentGroup(object):
+	pass
+
+
 class Network(object):
 	pass
 
+class NetworkHandle(object):
+	pass
+
 class AgentNetwork(object):
-	pass
-
-
-class Collaboration(object):
-	pass
-
-class CollaborationHandle(object):
-	pass
-
-class AgentCollaboration(object):
 	pass
 
 class Contribution(object):
