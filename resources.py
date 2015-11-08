@@ -122,6 +122,31 @@ result_fields['linksCount'] = fields.Integer
 result_fields['popularity'] = fields.Integer
 
 
+class QRateAgentResource(FlaskResource):
+    
+
+    def post(self):
+        postData = request.data
+        agent = None
+        if postData != '' and postData != None :
+            postDataJSON = json.loads(postData)
+            try :
+                name = postDataJSON['email']
+                password = postDataJSON['password']
+                agent = getAgentByName(name)
+                if not agent :
+                    jsonStr = {"name":name,"password":password}
+                    agent = cls.Agent(jsonStr,session)
+                    session.add(agent)
+                    session.commit()
+                else :
+                    if agent.password != password :
+                        abort(404, message="Password is wrong ")
+            except KeyError :
+                abort(404, message="EMail and password should be there ")
+        
+        return {"id":agent.id}, 201
+
     
 class AgentResource(FlaskResource):
     @marshal_with(agent_handle_fields)
@@ -1162,11 +1187,11 @@ class LinkResource(Resource):
         contribution.title = json.loads(contribution.content)['title']
         contribution.url = json.loads(contribution.content)['url']
         taglinks = link.tags 
+        contribution.tags = []
         for taglink in taglinks:
             taglink.popularity = 12
             taglink.name = taglink.tag.name
             taglink.linksCount = len(taglink.tag.links)
-            contribution.tags = []
             contribution.tags.append(taglink)
         return contribution
 
@@ -1184,12 +1209,13 @@ class GetLinksByTagResource(Resource):
             contribution = link.contribution
             contribution.title = json.loads(contribution.content)['title']
             contribution.url = json.loads(contribution.content)['url']
-            tags = link.tags 
-            for tag in tags:
-                tag.popularity = 12
-                tag.linksCount = len(tag.links)
-                contribution.tags = []
-                contribution.tags.append(tag)
+            taglinks = link.tags 
+            contribution.tags = []
+            for taglink in taglinks:
+                taglink.id = taglink.tag.id
+                taglink.popularity = 12
+                taglink.linksCount = len(taglink.tag.links)
+                contribution.tags.append(taglink)
             contributions.append(contribution)
         return contributions
     
@@ -1205,7 +1231,7 @@ class GetTagsByLinkResource(Resource):
             abort(404, message="link {} does not exists".format(linkName))
         taglinks = link.tags
         for taglink in taglinks :
-            taglink.id = taglink.tag.id
+            taglink.id = taglink.tag.contribution.id
             taglink.name = taglink.tag.name
             taglink.linksCount = len(taglink.tag.links)
             taglink.popularity = 12

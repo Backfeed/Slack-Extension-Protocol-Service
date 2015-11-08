@@ -15,7 +15,7 @@ from resources import AgentResource, AgentFindByHandle, AgentUpdateHandle,\
     GetNetworksByAgentResource, GetContributionByNetworkResource,\
     GetContributionByAgentResource, GetEvaluationForContributionResource,\
     AllTagsResource, GetLinksByTagResource, GetTagsByLinkResource,\
-    GetLinksANDTagsResource, LinkResource
+    GetLinksANDTagsResource, LinkResource, QRateAgentResource
 from resources import GroupResource
 from resources import GroupParameterResource
 from resources import NetworkResource
@@ -52,6 +52,7 @@ CORS(application)
 
 
 api.add_resource(AgentResource, '/v1/agents')
+api.add_resource(QRateAgentResource, '/v1/qrate/agents')
 api.add_resource(AgentParameterResource, '/v1/agents/<int:id>')
 api.add_resource(AgentFindByHandle, '/v1/agents/findByHandle')
 api.add_resource(AgentUpdateHandle, '/v1/agents/updateHandle/<int:id>')

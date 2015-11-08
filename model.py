@@ -21,6 +21,7 @@ agent_table = schema.Table('agent', metadata,
         schema.Sequence('agent_seq_id', optional=True), primary_key=True),
 
     schema.Column('name', types.Unicode(255)),
+    schema.Column('password', types.Unicode(255)),
     schema.Column('fullName', types.Unicode(255)),
     schema.Column('imgUrl', types.Unicode(255)),
 )
