@@ -6,6 +6,7 @@ from flask import Flask,json
 # -*- coding: utf-8 -*-
 from flask.ext.restful import Api
 from flask import send_file
+from flask.ext.cors import CORS
 import os
 
 from resources import AgentResource, AgentFindByHandle, AgentUpdateHandle,\
@@ -47,6 +48,7 @@ application.config['ERROR_404_HELP'] = False
 
 # API:
 api = Api(application)
+CORS(application)
 
 
 api.add_resource(AgentResource, '/v1/agents')
@@ -90,6 +92,7 @@ api.add_resource(LinkResource, '/v1/links/<int:id>')
 api.add_resource(GetLinksByTagResource, '/v1/getLinksByTag')
 api.add_resource(GetTagsByLinkResource, '/v1/getTagsByLinks')
 api.add_resource(GetLinksANDTagsResource, '/v1/search')
+
 
 
 

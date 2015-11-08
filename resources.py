@@ -121,6 +121,7 @@ result_fields['resultType'] = fields.String
 result_fields['linksCount'] = fields.Integer
 result_fields['popularity'] = fields.Integer
 
+
     
 class AgentResource(FlaskResource):
     @marshal_with(agent_handle_fields)
@@ -831,6 +832,7 @@ class ContributionResource(Resource):
         
         if postData != '' and postData != None :
             postDataJSON = json.loads(postData)
+            
             try :
                 agentId = postDataJSON['creator']
                 agent = getAgent(agentId)

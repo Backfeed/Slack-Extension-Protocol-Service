@@ -7,6 +7,7 @@ import os
 import requests
 import json
 
+
 GOOGLE_SECRET = os.environ.get('GOOGLE_SECRET') or 'Google Client Secret'
 
 def login_required(f):
