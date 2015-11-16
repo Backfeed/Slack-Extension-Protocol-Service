@@ -17,26 +17,25 @@ import sqlalchemy as sa
 def upgrade():
     op.create_table('milestone',
     sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('owner', sa.INTEGER(), nullable=True),
+    sa.Column('userId', sa.INTEGER(), nullable=True),
     sa.Column('users_organizations_id', sa.INTEGER(), nullable=True),
     sa.Column('start_date', sa.DATETIME(), nullable=True),
     sa.Column('end_date', sa.DATETIME(), nullable=True),
-    sa.Column('description', sa.TEXT(), nullable=True),
-    sa.Column('title', sa.TEXT(), nullable=True),
+    sa.Column('description', sa.Unicode(2000), nullable=True),
+    sa.Column('title', sa.Unicode(340), nullable=True),
     sa.Column('tokens', sa.FLOAT(), nullable=True),
     sa.Column('totalValue', sa.FLOAT(), nullable=True),
     sa.Column('destination_org_id', sa.INTEGER(), nullable=True),
-    sa.Column('contributions', sa.INTEGER(), nullable=True),
-    sa.ForeignKeyConstraint(['owner'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['userId'], ['user.id'], ),
     sa.ForeignKeyConstraint(['users_organizations_id'], ['users_organizations.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('milestone_contributer',
     sa.Column('id', sa.INTEGER(), nullable=False),
     sa.Column('milestone_id', sa.INTEGER(), nullable=True),
-    sa.Column('contributer_id', sa.INTEGER(), nullable=True),
-    sa.Column('contributer_percentage', sa.FLOAT(), nullable=True),
-    sa.ForeignKeyConstraint(['contributer_id'], ['user.id'], ),
+    sa.Column('contributor_id', sa.INTEGER(), nullable=True),
+    sa.Column('percentage', sa.FLOAT(), nullable=True),
+    sa.ForeignKeyConstraint(['contributor_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['milestone_id'], ['milestone.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

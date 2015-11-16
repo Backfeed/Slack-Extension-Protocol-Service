@@ -1,31 +1,33 @@
 import math
 
 class BidInfo(object):
-	def __init__(self, tokens,reputation,stake,owner):
+	def __init__(self, tokens,reputation,stake,userId,contributionsSize):
 		self.tokens = float(tokens)
 		self.reputation = float(reputation)
 		self.stake = float(stake)	
-		self.owner = owner	
+		self.userId = userId	
+		self.contributionsSize = contributionsSize
 
 	def debug(self,logger):
 		if(logger):
 			logger.info('tokens: '+str(self.tokens))
 			logger.info('reputation: '+str(self.reputation))
 			logger.info('stake: '+str(self.stake))
-			logger.info('owner: '+str(self.owner))
+			logger.info('userId: '+str(self.userId))
 			
 
 class FIn(object):
-	def __init__(self, bids,current_bid,total_rep,a):
+	def __init__(self, bids,current_bid,total_rep,a,contributionsSize):
 		self.bids = bids
 		self.current_bid = current_bid
 		self.total_system_reputation = total_rep
 		self.a = a
+		self.contributionsSize = contributionsSize
 		
 	def isValid(self):
 		if (not self.bids or
 			not self.total_system_reputation or
-			not self):
+			not self) and (self.contributionsSize > 1):
 			return False
 		return True
 		
@@ -101,16 +103,19 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 		
 		for bid in bids:
 			current_decay = self.decay(bid.tokens, current_bid.tokens,fIn.a)
-			new_rep_weight = ( bid.reputation * current_decay  ) / summ
+			if fIn.contributionsSize > 1 :
+				new_rep_weight = ( bid.reputation * current_decay  ) / summ
+			else:
+				new_rep_weight = 0
 			# bug fix: we round up and thus create reputation from thin air
 			#bidders_rep_distribution =  math.ceil(float(current_bid.stake) * new_rep_weight ) 
 			bidders_rep_distribution =  current_bid.stake * new_rep_weight 
 			
-			fout.rep_distributions[str(bid.owner)] = bidders_rep_distribution
+			fout.rep_distributions[str(bid.userId)] = bidders_rep_distribution
 			
 			# debug:
 			self.log("\n")
-			self.log("calculating reputation distibution for bidder :" + str(bid.owner))
+			self.log("calculating reputation distibution for bidder :" + str(bid.userId))
 			self.log("bidders evaluation: = " + str(bid.tokens) + ", current bid  = " + str(current_bid.tokens))
 			self.log("calculated decay = " + str(current_decay))
 			self.log('new reputation percentage :'+str(new_rep_weight))
@@ -122,6 +127,14 @@ class ProtocolFunctionV1(AbstractProtocolFunction):
 		self.log("calculating current evaluation:")
 		
 		bids = fIn.bids
+		
+		if fIn.contributionsSize == 1 :
+			for bid in bids:
+				current_evaluation = bid.tokens
+				fout.evaluation = current_evaluation
+				return True
+		
+		
 		
 		# get reputation on zero (un-invested reputation)
 		total_invested_rep = 0

@@ -29,7 +29,7 @@ class ValueDistributer(ValueDistributerBase):
 	def isBidderFirstBid(self,bids, current_bid):
 		self.log('\n\n *** isBidderFirstBid: ***:\n')
 		for bid in bids:
-			if bid.owner == current_bid.owner:
+			if bid.userId == current_bid.userId:
 				self.log('is not  bidders first bid.')
 				return False
 
@@ -42,13 +42,13 @@ class ValueDistributer(ValueDistributerBase):
 
 		Wi = 0.0
 		users = self.usersDict
-		current_bidder = users[current_bid.owner]
+		current_bidder = users[current_bid.userId]
 		rep = current_bid.reputation
 		print 'rep is'+str(rep)
 		#check how much reputation has been engaged by current_bidder,
 		for bid in bids:
 			print 'comes here in bids'
-			if bid.owner == current_bidder.user_id:  
+			if bid.userId == current_bidder.user_id:  
 				Wi += bid.reputation
 		self.log('amount of reputation which  has been engaged by the current_bidder:'+str(Wi))
 		print 'Wi is'+str(Wi)
@@ -66,7 +66,7 @@ class ValueDistributer(ValueDistributerBase):
 				print 'comes here in check2'
 				self.log("bidder has no more reputation to spare for current bid. exit.")
 				return None;
-		elif(not current_bidder.org_reputation):
+		elif(not current_bidder.org_reputation and self.contributionsSize > 1):
 			print 'comes here in check3'
 			self.log("bidder has no more reputation to spare for current bid. exit.")
 			return None;		
@@ -89,24 +89,33 @@ class ValueDistributer(ValueDistributerBase):
 	# get state : users Dict which is a dict of (key : value) userId:userOrgenization object  ,also calc total_system_reputation and highest_eval:
 	def getCurrentState(self,contributionObject,session):
 		usersDict = {}
+		contributionValueObjectsDict = {}
 		total_system_reputation = 0
 
 		# get users:
 		user_org = contributionObject.userOrganization
 		org = user_org.organization
 		userOrgObjects = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == user_org.organization_id).all()
-
+		contributionValueObjects = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).all()
+		contributionObjects = session.query(cls.Contribution).filter(cls.Contribution.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.organization_id == org.id).all()
+		contributionObjectsLength = len(contributionObjects)
+		self.contributionsSize = contributionObjectsLength
 		for userOrg in userOrgObjects:
 			usersDict[userOrg.user_id] = userOrg
-			total_system_reputation = total_system_reputation + userOrg.org_reputation
-
+		 
+		for contributionValueObject in contributionValueObjects:
+			total_system_reputation = total_system_reputation + contributionValueObject.reputation
+			contributionValueObjectsDict[contributionValueObject.users_organizations_id] = contributionValueObject
+		
 		self.highest_eval =  0 
 		if(contributionObject.bids and len(contributionObject.bids)):
 			self.highest_eval = self.getHighestEval(contributionObject.bids)
 
 		self.total_system_reputation = total_system_reputation
 		self.a = org.a
+		self.b = org.b
 		self.usersDict = usersDict
+		self.contributionValueObjectsDict = contributionValueObjectsDict
 		self.debug_state()
 
 
@@ -116,8 +125,9 @@ class ValueDistributer(ValueDistributerBase):
 		self.log('reputation (weight):'+str(current_bid.reputation))	
 		self.log('tokens (eval):'+str(current_bid.tokens))
 
-	def process_current_evaluation(self,current_eval,contributers,session,slackTeamId,organization):
+	def process_current_evaluation(self,current_eval,contributors,session,slackTeamId,organization):
 		eval_delta = current_eval - self.highest_eval
+		contributionValueObjects = self.contributionValueObjectsDict
 		#hardcoding for Lazzoz for right now making it 90% T03K9TS1Q
 		#if (slackTeamId == 'T02UHLXM9') :
 		print 'before eval_delta is'+str(eval_delta)
@@ -131,34 +141,47 @@ class ValueDistributer(ValueDistributerBase):
 			print 'after eval_delta is' + str(eval_delta)
 		if (eval_delta > 0):
 			# Issue tokens and reputation to collaborators:
-			for contributer in contributers:
-				user = self.usersDict[contributer.contributer_id]		
-				tokens_to_add =  ( eval_delta * contributer.contributer_percentage ) / 100 	
+			for contributor in contributors:
+				user = self.usersDict[contributor.contributor_id]		
+				tokens_to_add =  ( float(eval_delta) * float(contributor.percentage) ) / 100 	
 				user.org_tokens += tokens_to_add
-				user.org_reputation += tokens_to_add
+				if self.contributionsSize == 1:
+					if (slackTeamId == 'T02H16QH6') :
+						user.org_reputation += (int(tokens_to_add))*10*10/pow(10,(int(self.b)/50))
+					else :
+						user.org_reputation += (int(tokens_to_add))*10/pow(10,(int(self.b)/50))	
+					 
+				else:
+					user.org_reputation += tokens_to_add
+				contributionValueObjects[user.id].reputationGain = contributionValueObjects[user.id].reputationGain + tokens_to_add
 				session.add(user)
+				session.add(contributionValueObjects[user.id])
 
 	def distribute_rep(self,bids_distribution, current_bid,session):
 		users = self.usersDict
-		current_bidder = users[current_bid.owner]
+		current_bidder = users[current_bid.userId]
+		contributionValueObjects = self.contributionValueObjectsDict
 
 		if(not current_bid.stake):
 			self.log('stake is null --> stake is set to entire bid reputation:'+str(current_bid.reputation))
 			current_bid.stake = current_bid.reputation
 
 		#kill the stake of the current_bidder
+		
 		current_bidder.org_reputation = current_bidder.org_reputation - float(current_bid.stake)
+		contributionValueObjects[current_bidder.id].reputationGain= contributionValueObjects[current_bidder.id].reputationGain  - float(current_bid.stake)
 		session.add(current_bidder)	
-
+		session.add(contributionValueObjects[current_bidder.id])
 		#reallocate reputation
-		for ownerId in bids_distribution:
-			user = users[int(ownerId)]
-			self.log("\n\nrealocating reputation for bidder Id:" + str(ownerId))
+		for userId in bids_distribution:
+			user = users[int(userId)]
+			self.log("\n\nrealocating reputation for bidder Id:" + str(userId))
 			self.log("OLD REP === " + str(user.org_reputation))		
-			user.org_reputation += bids_distribution[ownerId] 
+			user.org_reputation += bids_distribution[userId] 
+			contributionValueObjects[user.id].reputationGain= contributionValueObjects[user.id].reputationGain  + bids_distribution[userId]
 			self.log("NEW REP === " + str(user.org_reputation))
 			session.add(user)
-
+			session.add(contributionValueObjects[user.id])
 
 	def set_error(self,message):
 		self.log('Error:'+message)
@@ -181,7 +204,11 @@ class ValueDistributer(ValueDistributerBase):
 
 		# validate Bid:
 		current_bid = self.validateBid(contributionObject.bids, current_bid)
-		current_bid.weight = (float(current_bid.reputation)/float(self.total_system_reputation))*100
+		if self.contributionsSize > 1:
+			current_bid.weight = (float(current_bid.reputation)/float(self.total_system_reputation))*100
+		else :
+			current_bid.weight = 0
+		
 		if(not current_bid):
 			self.set_error('bid not valid.')
 			return None
@@ -193,10 +220,10 @@ class ValueDistributer(ValueDistributerBase):
 		# prepare protocol function Input:
 		bidsInfo = []
 		for bid in bids:
-			bidsInfo.append( BidInfo(bid.tokens,bid.reputation,bid.stake,bid.owner) )
+			bidsInfo.append( BidInfo(bid.tokens,bid.reputation,bid.stake,bid.userId,self.contributionsSize) )
 
 		current_bid_info = bidsInfo[-1]
-		fin = FIn(bidsInfo,current_bid_info,self.total_system_reputation,self.a)
+		fin = FIn(bidsInfo,current_bid_info,self.total_system_reputation,self.a,self.contributionsSize)
 
 		# protocol function calc:
 		f = ProtocolFunctionV1(logger)
@@ -207,7 +234,7 @@ class ValueDistributer(ValueDistributerBase):
 		
 		# success: handle result:	
 		self.distribute_rep(result.rep_distributions, current_bid,session)
-		self.process_current_evaluation(result.evaluation, contributionObject.contributionContributers,session,contributionObject.userOrganization.organization.slack_teamid,contributionObject.userOrganization.organization)
+		self.process_current_evaluation(result.evaluation, contributionObject.contributors,session,contributionObject.userOrganization.organization.slack_teamid,contributionObject.userOrganization.organization)
 
 		# add current bid and commit DB session:
 		current_bid.contribution_value_after_bid = result.evaluation

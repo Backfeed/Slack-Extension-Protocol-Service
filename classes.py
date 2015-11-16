@@ -70,29 +70,21 @@ class Organization(BaseObject):
 class UserOrganization(BaseObject):
 	pass
 
-class ContributionContributer(object):
+class ContributionContributor(object):
 	pass
 
-class MileStone(object):
+class Milestone(object):
 	pass
 
-class MileStoneBid(BaseObject):
+class MilestoneBid(BaseObject):
 	pass
 
-class MileStoneContributer(object):
+class MilestoneContributor(object):
 	pass
 
-class MileStoneContribution(object):
+class MilestoneContribution(object):
 	pass
 
-class Contributer(object):
-     def __init__(self, contributerId, contributerPercentage):
-        self.obj1 = contributerId
-        self.obj2 = contributerPercentage
-       
-class IntialBid(object):
-    def __init__(self, tokens, reputation):
-        self.obj1 = tokens
-        self.obj2 = reputation        
-		
+class ContributionValue(object):
+	pass
 # checkout serlizing : http://www.diveintopython3.net/serializing.html
