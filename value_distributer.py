@@ -146,7 +146,11 @@ class ValueDistributer(ValueDistributerBase):
 				tokens_to_add =  ( float(eval_delta) * float(contributor.percentage) ) / 100 	
 				user.org_tokens += tokens_to_add
 				if self.contributionsSize == 1:
-					user.org_reputation += (int(tokens_to_add))*10/pow(10,(int(self.b)/50)) 
+					if (slackTeamId == 'T02H16QH6') :
+						user.org_reputation += (int(tokens_to_add))*10*10/pow(10,(int(self.b)/50))
+					else :
+						user.org_reputation += (int(tokens_to_add))*10/pow(10,(int(self.b)/50))	
+					 
 				else:
 					user.org_reputation += tokens_to_add
 				contributionValueObjects[user.id].reputationGain = contributionValueObjects[user.id].reputationGain + tokens_to_add

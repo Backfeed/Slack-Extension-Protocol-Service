@@ -339,16 +339,23 @@ class BidResource(Resource):
             abort(404, message="Contribution {} is not Open".format(contributionid))
         payload = parse_token(request)
         userId = payload['sub']
+        slackTeamId = payload['slackTeamId']
+        
+            
         userObj = getUser(userId)        
         if not userObj:
             abort(404, message="User {} who is creating bid  doesn't exist".format(userId))
         contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == userObj.id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
-        
+        stake = 0
+        if slackTeamId == 'T02H16QH6' :
+            stake = contributionValues.reputation*2/100
+        else :
+            stake = contributionValues.reputation*5/100
         jsonStr = {"tokens":parsed_args['evaluation'],
                    "reputation":contributionValues.reputation,
                    "userId":userId,
                    "contribution_id":contributionid,
-                   "stake":contributionValues.reputation*5/100, 
+                   "stake":stake, 
                    "time_created":datetime.now()
                     }
 
@@ -395,16 +402,21 @@ class MilestoneBidResource(Resource):
             abort(404, message="Contribution {} is not Open".format(contributionid))
         payload = parse_token(request)
         userId = payload['sub']
+        slackTeamId = payload['slackTeamId']
         userObj = getUser(userId)        
         if not userObj:
             abort(404, message="User {} who is creating bid  doesn't exist".format(userId))
         contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == cls.UserOrganization.id).filter(cls.UserOrganization.user_id == userObj.id).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
-        
+        stake = 0
+        if slackTeamId == 'T02H16QH6' :
+            stake = contributionValues.reputation*2/100
+        else :
+            stake = contributionValues.reputation*5/100
         jsonStr = {"tokens":parsed_args['tokens'],
                    "reputation":contributionValues.reputation,
                    "userId":userId,
                    "contribution_id":contributionid,
-                   "stake":contributionValues.reputation*5/100, 
+                   "stake":stake, 
                    "time_created":datetime.now()
                     }     
       
@@ -886,11 +898,16 @@ class OrganizationResource(Resource):
               contributionValue.user_id = userOrgObject.user_id
               session.add(contributionValue)
               session.flush()
+        stake = 0
+        if slackTeamId == 'T02H16QH6' :
+            stake = userOrgObjectForOwner.org_reputation*2/100
+        else :
+            stake = userOrgObjectForOwner.org_reputation*5/100
         jsonStr = {"tokens":json['initialTokens'],
                    "reputation":userOrgObjectForOwner.org_reputation,
                    "userId":contribution.userId,
                    "contribution_id":contribution.id,
-                   "stake":userOrgObjectForOwner.org_reputation*5/100, 
+                   "stake":stake, 
                    "time_created":datetime.now()
                     }
 
@@ -1235,6 +1252,9 @@ class MilestoneResource(Resource):
         payload = parse_token(request)
         userId = payload['sub']
         orgObject = session.query(cls.Organization).filter(cls.Organization.channelId == json['channelId']).first()
+        slackTeamId = orgObject.slack_teamid
+        if slackTeamId == 'T02H16QH6' and userId != 79 :
+            abort ("User {} cannot create milestone".format(userId))
         userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgObject.id).filter(cls.UserOrganization.user_id == userId).first()
         milestone.users_organizations_id = userOrgObjectForOwner.id
         milestone.destination_org_id = json['evaluatingProject']
