@@ -149,8 +149,6 @@ def db_connect():
         pass
     if envType == 'Prod' :
         engine.execute("USE ebdb")
-    if envType == 'Staging' :
-        engine.execute("USE ebdb")
     if envType == 'Develop' :
         engine.execute("USE ebdb")        
   
