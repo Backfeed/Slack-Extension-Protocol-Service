@@ -631,6 +631,7 @@ class ContributionStatusResource(Resource):
         userOrgObj = session.query(cls.UserOrganization).filter(cls.UserOrganization.user_id == userId).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).first()
         userOrgObjs = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == contributionObject.userOrganization.organization_id).all()
         contributionValues = session.query(cls.ContributionValue).filter(cls.ContributionValue.contribution_id == contributionObject.id).filter(cls.ContributionValue.users_organizations_id == userOrgObj.id).first()
+        
         totalSystemReputation = 0
         for userOrgObjVar in userOrgObjs :
             totalSystemReputation = totalSystemReputation + userOrgObjVar.org_reputation
@@ -663,8 +664,11 @@ class ContributionStatusResource(Resource):
                 if contributionObject.currentValuation == 0 and currentValuation != 0 :
                     contributionObject.currentValuation = currentValuation
                     contributionObject.valueIndic = 1
-        contributionObject.myReputationDelta = contributionValues.reputationGain
-        print 'contributionObject.myReputationDelta'+str(contributionObject.myReputationDelta)
+        if not contributionValues:
+            contributionObject.myReputationDelta = 0
+        else :
+            contributionObject.myReputationDelta = contributionValues.reputationGain
+        
         contributionObject.myEvaluation = myValuation
         contributionObject.myWeight = myWeight
         contributionObject.groupWeight = groupWeight
