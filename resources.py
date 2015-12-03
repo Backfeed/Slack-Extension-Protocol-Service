@@ -498,20 +498,13 @@ class ContributionResource(Resource):
     def post(self):        
         json = request.json
         contribution = cls.Contribution()
-        payload = parse_token(request)
-        contribution.userId = payload['sub']
         contribution.min_reputation_to_close = 0
         contribution.description = json['description']
         contribution.title = json['title']
-        orgObject = session.query(cls.Organization).filter(cls.Organization.channelId == json['channelId']).first()
-        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgObject.id).filter(cls.UserOrganization.user_id == contribution.userId).first()
-        contribution.users_organizations_id = userOrgObjectForOwner.id
         session.add(contribution) 
         session.flush()  
-        userObj = getUser(contribution.userId) 
-               
-        if not userObj:
-            abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.userId))    
+        twitterHandle = None  
+        userObj = None
         for contributor in json['contributors']:             
             contributionContributor = cls.ContributionContributor()
             try :
@@ -536,6 +529,23 @@ class ContributionResource(Resource):
                     #userOrgObject.org_reputation = contributor.obj1['contributor_percentage']
                     #session.add(userOrgObject)                                               
             contribution.contributors.append(contributionContributor)  
+         
+        if twitterHandle == None :
+           payload = parse_token(request)
+           contribution.userId = payload['sub']
+        else :
+            contribution.userId = userObj.id
+            
+        
+        orgObject = session.query(cls.Organization).filter(cls.Organization.channelId == json['channelId']).first()
+        userOrgObjectForOwner = session.query(cls.UserOrganization).filter(cls.UserOrganization.organization_id == orgObject.id).filter(cls.UserOrganization.user_id == contribution.userId).first()
+        contribution.users_organizations_id = userOrgObjectForOwner.id
+        session.add(contribution) 
+        userObj = getUser(contribution.userId) 
+             
+        if not userObj:
+            abort(404, message="User who is creating contribution {} doesn't exist".format(contribution.userId))    
+        
         if(len(contribution.contributors) == 0):
             contributionContributor = cls.ContributionContributor()
             contributionContributor.contributor_id = contribution.userId
@@ -568,6 +578,7 @@ class ContributionResource(Resource):
               contributionValue.reputation = userOrgObject.org_reputation
               contributionValue.user_id = userOrgObject.user_id
               session.add(contributionValue)
+        
         session.commit()    
         for contributor in contribution.contributors:             
             contributor.id=contributor.contributor_id

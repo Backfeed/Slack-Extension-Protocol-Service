@@ -16,30 +16,58 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         authHeader = request.headers.get('x-access-token')
-        if not authHeader:
-            response = jsonify(message='Missing authorization header:' + str(authHeader))
-            response.status_code = 401
-            return response
-
-        try:
-            print "Inside login_required"
-            payload = parse_token(request)
-        except DecodeError:
-            response = jsonify(message='Token is invalid')
-            response.status_code = 401
-            return response
-        except ExpiredSignature:
-            response = jsonify(message='Token has expired')
-            response.status_code = 401
-            return response
+        appname = request.headers.get('appname')
+        print 'appname' + str(appname)
+        print 'authHeader' + str(authHeader)
         
-        g.user_id = payload['sub']
-        g.slackTeamId = payload['slackTeamId']
-        g.slackTeamName = payload['slackTeamName']
-        g.slackAccessToken = payload['slackAccessToken'];
-        g.slackUserId = payload['slackUserId']
-        return f(*args, **kwargs)
-
+        if not appname :
+            print 'comes here'
+            if not authHeader:
+                response = jsonify(message='Missing authorization header:' + str(authHeader))
+                response.status_code = 401
+                return response
+    
+            try:
+                print "Inside login_required"
+                payload = parse_token(request)
+            except DecodeError:
+                response = jsonify(message='Token is invalid')
+                response.status_code = 401
+                return response
+            except ExpiredSignature:
+                response = jsonify(message='Token has expired')
+                response.status_code = 401
+                return response
+            
+            g.user_id = payload['sub']
+            g.slackTeamId = payload['slackTeamId']
+            g.slackTeamName = payload['slackTeamName']
+            g.slackAccessToken = payload['slackAccessToken'];
+            g.slackUserId = payload['slackUserId']
+            return f(*args, **kwargs)
+        
+        else :
+           print 'comes here1'
+           if appname != 'stig' :
+               print 'comes here2'
+               response = jsonify(message='App Name is not valid:' + str(appname))
+               response.status_code = 401
+               return response
+           else:
+                if not authHeader:
+                    print 'comes here3'
+                    response = jsonify(message='Missing authorization header:')
+                    response.status_code = 401
+                    return response
+                elif authHeader != 'stigToken$123' :
+                    print 'comes here4'
+                    response = jsonify(message='Token is invalid')
+                    response.status_code = 401
+                    return response
+                else :
+                    print 'comes here5'
+                    return f(*args, **kwargs)
+                
     return decorated_function
 
 
