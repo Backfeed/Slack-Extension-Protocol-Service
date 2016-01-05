@@ -10,7 +10,7 @@ import os
 
 from resources import UserResource, MilestoneBidResource, UserSlackResource
 from resources import BidResource
-from resources import ContributionResource
+from resources import ContributionResource,PendingContributionResource
 from resources import CloseContributionResource
 from resources import AllContributionResource
 from resources import AllUserResource
@@ -68,6 +68,7 @@ api.add_resource(BidResource, '/bids', endpoint='bid')
 api.add_resource(BidContributionResource, '/bid/<string:contributionId>/<string:userId>', endpoint='contributionbids')
 
 api.add_resource(ContributionResource, '/contribution', endpoint='contribution')
+api.add_resource(PendingContributionResource, '/pendingcontribution', endpoint='pendingcontribution')
 api.add_resource(ContributionResource, '/contribution/<string:id>', endpoint='contributions')
 
 
@@ -88,7 +89,7 @@ api.add_resource(AllOrganizationResource, '/organization/all', endpoint='allOrga
 api.add_resource(AllOrganizationForCurrentTeamResource, '/organization/all/team/<string:slackTeamId>', endpoint='allOrganizationsForCurrentTeam')
 api.add_resource(MemberStatusResource, '/member/status/<string:userId>/<string:orgId>', endpoint='memberStatus')
 api.add_resource(MemberStatusAllOrgsResource, '/member/status/<string:userId>', endpoint='memberStatusAllOrgs')
-api.add_resource(OrganizationCurrentStatusResource, '/organization/currentStatus/<string:orgId>', endpoint='organizationCurrentStatus')
+api.add_resource(OrganizationCurrentStatusResource, '/organization/currentStatus/<string:orgId>/<string:fromMilestone>', endpoint='organizationCurrentStatus')
 
 api.add_resource(MilestoneResource, '/milestone', endpoint='milestone')
 api.add_resource(MilestoneResource, '/milestone/<string:id>', endpoint='milestones')
@@ -129,9 +130,17 @@ def slack():
 def allContributionsFromUser():
     return json.dumps(resources.allContributionsFromUser())
 
+@application.route('/allContributionsFromUserV1', methods=['POST'])
+def allContributionsFromUserV1():
+    return json.dumps(resources.allContributionsFromUserV1())
+
 @application.route('/showreservetokens', methods=['POST'])
 def showreservetokens():
     return resources.showreservetokens()
+
+@application.route('/trelloIntegration', methods=['POST'])
+def trelloIntegration():
+    return resources.trelloIntegration()
 
 
 @application.route('/allChannelIdsForTeam', methods=['POST'])
